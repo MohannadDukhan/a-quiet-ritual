@@ -26,7 +26,7 @@ export default async function ArchivePage() {
         <main className="bw-archiveWrap">
           <div className="bw-hint" style={{ marginTop: 46 }}>
             <Link className="bw-link" href="/sign-in?next=/archive">
-              continue with email
+              sign in
             </Link>{" "}
             to view your private archive.
           </div>

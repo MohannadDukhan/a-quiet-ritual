@@ -231,7 +231,7 @@ export default function HomePage() {
             </button>
           ) : (
             <Link className="bw-link" href="/sign-in?next=/">
-              continue with email
+              sign in
             </Link>
           )}
         </div>
@@ -292,9 +292,14 @@ export default function HomePage() {
                 {needsSignIn && (
                   <div className="bw-hint">
                     <Link className="bw-link" href="/sign-in?next=/">
-                      continue with email
+                      sign in
                     </Link>{" "}
                     to save privately across devices.
+                    {" "}
+                    <Link className="bw-link" href="/sign-up">
+                      create account
+                    </Link>
+                    .
                   </div>
                 )}
 

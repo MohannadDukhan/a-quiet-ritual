@@ -7,19 +7,18 @@ import { signIn, useSession } from "next-auth/react";
 
 type SignInFormProps = {
   nextPath: string;
-  sentInitially: boolean;
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function SignInForm({ nextPath, sentInitially }: SignInFormProps) {
+export function SignInForm({ nextPath }: SignInFormProps) {
   const router = useRouter();
   const { status } = useSession();
 
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(sentInitially);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -30,7 +29,6 @@ export function SignInForm({ nextPath, sentInitially }: SignInFormProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setSent(false);
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!EMAIL_PATTERN.test(normalizedEmail)) {
@@ -39,19 +37,31 @@ export function SignInForm({ nextPath, sentInitially }: SignInFormProps) {
     }
 
     setIsPending(true);
-    const result = await signIn("email", {
+    const result = await signIn("credentials", {
       email: normalizedEmail,
+      password,
       redirect: false,
       callbackUrl: nextPath,
     });
     setIsPending(false);
 
-    if (result?.error) {
-      setError("could not send link right now.");
+    if (result?.ok) {
+      router.replace(nextPath);
       return;
     }
 
-    setSent(true);
+    const code = (result?.error || "").toUpperCase();
+    if (code.includes("VERIFY_EMAIL_FIRST")) {
+      setError("verify your email first.");
+      return;
+    }
+
+    if (code.includes("TOO_MANY_ATTEMPTS")) {
+      setError("too many attempts. try again shortly.");
+      return;
+    }
+
+    setError("invalid email or password.");
   }
 
   return (
@@ -60,16 +70,16 @@ export function SignInForm({ nextPath, sentInitially }: SignInFormProps) {
         <Link className="bw-link" href={nextPath}>
           back
         </Link>
-        <span className="bw-brand">continue with email</span>
-        <span className="bw-brand" style={{ opacity: 0 }}>
-          ghost
-        </span>
+        <span className="bw-brand">sign in</span>
+        <Link className="bw-link" href="/sign-up">
+          create account
+        </Link>
       </div>
 
       <main className="bw-stage">
         <div className="bw-panel show" style={{ width: "min(560px, 94vw)" }}>
           <div className="bw-prompt" style={{ fontStyle: "normal" }}>
-            private sign-in. no username. no public profile.
+            private account access. no public profiles.
           </div>
 
           <form onSubmit={handleSubmit} className="bw-panel show" style={{ gap: 10 }}>
@@ -84,18 +94,32 @@ export function SignInForm({ nextPath, sentInitially }: SignInFormProps) {
               style={{ height: 44 }}
               required
             />
+            <input
+              className="bw-input"
+              type="password"
+              autoComplete="current-password"
+              placeholder="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              style={{ height: 44 }}
+              required
+            />
 
             <button className="bw-btn" type="submit" disabled={isPending}>
-              {isPending ? "sending..." : "continue with email"}
+              {isPending ? "signing in..." : "sign in"}
             </button>
           </form>
 
+          <div className="bw-row">
+            <Link className="bw-link" href="/forgot-password">
+              forgot password
+            </Link>
+            <Link className="bw-link" href="/sign-up">
+              create account
+            </Link>
+          </div>
+
           {error && <div className="bw-hint">{error}</div>}
-          {sent && (
-            <div className="bw-hint">
-              check your inbox for a sign-in link. it expires shortly.
-            </div>
-          )}
         </div>
       </main>
     </div>

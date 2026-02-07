@@ -10,9 +10,5 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const nextValue = Array.isArray(rawNext) ? rawNext[0] : rawNext;
   const nextPath = nextValue && nextValue.startsWith("/") ? nextValue : "/";
 
-  const rawSent = params.sent;
-  const sentValue = Array.isArray(rawSent) ? rawSent[0] : rawSent;
-  const sentInitially = sentValue === "1";
-
-  return <SignInForm nextPath={nextPath} sentInitially={sentInitially} />;
+  return <SignInForm nextPath={nextPath} />;
 }

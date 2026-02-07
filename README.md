@@ -1,12 +1,13 @@
 # a quiet ritual
 
-Minimal, private journaling ritual built with Next.js App Router, TypeScript, Tailwind, Postgres, Prisma, and email magic-link auth.
+Minimal, private journaling ritual built with Next.js App Router, TypeScript, Tailwind, Postgres, Prisma, and NextAuth credentials auth.
 
 ## Core stack
 
 - Next.js (App Router)
 - Prisma + PostgreSQL
-- NextAuth (email magic link, no passwords)
+- NextAuth (email + password)
+- Resend HTTP API (verification + password reset emails)
 - Zod for request validation
 
 ## Local development
@@ -53,15 +54,20 @@ npm run dev
 - `GET /api/entries` authenticated user entries
 - `POST /api/entries` authenticated create entry
 - `DELETE /api/account` authenticated account + data deletion
+- `POST /api/auth/signup` create account + send verification email
+- `POST /api/auth/verify-email` verify one-time email token
+- `POST /api/auth/forgot-password` request reset email
+- `POST /api/auth/reset-password` reset password with one-time token
 
 ## Privacy and security notes
 
-- No passwords, only email magic link sign-in.
+- Passwords are hashed with bcrypt before storage.
 - No public profiles, usernames, or follower mechanics.
 - Journal reads/writes are authenticated and scoped to session user ID.
 - Input validation on write/delete endpoints with Zod.
 - Same-origin check for mutating endpoints (`POST`/`DELETE`) to reduce CSRF risk.
 - Rate limiting on auth and write endpoints.
+- Verification/reset tokens are one-time, hashed in DB, and expire in 1 hour.
 - No server logging of journal content.
 - Secrets are environment variables only.
 
@@ -70,13 +76,11 @@ npm run dev
 1. Provision managed Postgres and set `DATABASE_URL`.
 2. Set auth/email env vars in Vercel:
    - `AUTH_SECRET`
+   - `AUTH_URL` (or `NEXTAUTH_URL`)
    - `EMAIL_FROM`
-   - `EMAIL_SERVER_HOST`
-   - `EMAIL_SERVER_PORT`
-   - `EMAIL_SERVER_USER`
-   - `EMAIL_SERVER_PASSWORD`
+   - `RESEND_API_KEY`
 3. Run migrations in deploy pipeline:
    - `npm run prisma:migrate:deploy`
 4. Seed prompts once:
    - `npm run prisma:seed`
-5. Confirm email deliverability (SPF/DKIM/DMARC) for your sender domain.
+5. Confirm email deliverability (SPF/DKIM/DMARC) for your sender domain in Resend.
