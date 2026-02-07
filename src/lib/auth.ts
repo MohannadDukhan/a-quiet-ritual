@@ -6,9 +6,16 @@ import { prisma } from "@/lib/db";
 
 const smtpPort = Number(process.env.EMAIL_SERVER_PORT ?? "587");
 
-export const authOptions: NextAuthOptions = {
+type ExtendedAuthOptions = NextAuthOptions & {
+  trustHost?: boolean;
+  debug?: boolean;
+};
+
+export const authOptions: ExtendedAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
+  debug: process.env.NODE_ENV !== "production",
   useSecureCookies: process.env.NODE_ENV === "production",
   session: {
     strategy: "database",
