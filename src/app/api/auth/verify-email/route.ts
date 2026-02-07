@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { hashToken } from "@/lib/auth-tokens";
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
-import { getClientIp, isSameOrigin } from "@/lib/security";
+import { getClientIp } from "@/lib/security";
 
 const verifyEmailSchema = z.object({
   email: z.string().trim().email(),
@@ -14,8 +15,9 @@ const verifyEmailSchema = z.object({
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  if (!isSameOrigin(request)) {
-    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+  const originError = assertSameOrigin(request);
+  if (originError) {
+    return originError;
   }
 
   const ip = getClientIp(request);

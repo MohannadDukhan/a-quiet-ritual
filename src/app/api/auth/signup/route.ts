@@ -3,11 +3,12 @@ import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { createRawToken, hashToken, tokenExpiry } from "@/lib/auth-tokens";
 import { getAuthBaseUrl, sendEmailVerificationEmail } from "@/lib/auth-email";
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
-import { getClientIp, isSameOrigin } from "@/lib/security";
+import { getClientIp } from "@/lib/security";
 
 const signupSchema = z
   .object({
@@ -23,8 +24,9 @@ const signupSchema = z
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  if (!isSameOrigin(request)) {
-    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+  const originError = assertSameOrigin(request);
+  if (originError) {
+    return originError;
   }
 
   const ip = getClientIp(request);

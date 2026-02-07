@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { createRawToken, hashToken, tokenExpiry } from "@/lib/auth-tokens";
 import { getAuthBaseUrl, sendPasswordResetEmail } from "@/lib/auth-email";
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
-import { getClientIp, isSameOrigin } from "@/lib/security";
+import { getClientIp } from "@/lib/security";
 
 const forgotPasswordSchema = z.object({
   email: z.string().trim().email(),
@@ -19,8 +20,9 @@ const GENERIC_RESPONSE = {
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  if (!isSameOrigin(request)) {
-    return NextResponse.json(GENERIC_RESPONSE, { status: 200 });
+  const originError = assertSameOrigin(request);
+  if (originError) {
+    return originError;
   }
 
   const ip = getClientIp(request);
