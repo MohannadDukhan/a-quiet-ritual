@@ -30,6 +30,8 @@ async function sendMagicLinkWithResend({
   url: string;
   provider: { from?: string | null };
 }) {
+  console.log("RESEND_API_KEY present?", Boolean(process.env.RESEND_API_KEY));
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     const message = "RESEND_API_KEY is not set";
