@@ -24,42 +24,54 @@ const signupSchema = z
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  const originError = assertSameOrigin(request);
-  if (originError) {
-    return originError;
-  }
-
-  const ip = getClientIp(request);
-  const ipLimit = consumeMemoryRateLimit({
-    namespace: "signup-ip",
-    key: ip,
-    limit: 10,
-    windowMs: 15 * 60 * 1000,
-  });
-  if (!ipLimit.ok) {
-    return NextResponse.json({ error: "Too many signup attempts. Try later." }, { status: 429 });
-  }
-
-  const json = await request.json().catch(() => null);
-  const parsed = signupSchema.safeParse(json);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid signup input." }, { status: 400 });
-  }
-
-  const email = parsed.data.email.toLowerCase();
-  const emailLimit = consumeMemoryRateLimit({
-    namespace: "signup-email-ip",
-    key: `${email}:${ip}`,
-    limit: 4,
-    windowMs: 15 * 60 * 1000,
-  });
-  if (!emailLimit.ok) {
-    return NextResponse.json({ error: "Too many signup attempts. Try later." }, { status: 429 });
-  }
-
-  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-
   try {
+    console.log("signup start");
+
+    const originError = assertSameOrigin(request);
+    if (originError) {
+      return originError;
+    }
+
+    const ip = getClientIp(request);
+    const ipLimit = consumeMemoryRateLimit({
+      namespace: "signup-ip",
+      key: ip,
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!ipLimit.ok) {
+      return NextResponse.json({ error: "Too many signup attempts. Try later." }, { status: 429 });
+    }
+
+    const json = await request.json().catch(() => null);
+    const parsed = signupSchema.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid signup input." }, { status: 400 });
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not set");
+    }
+    if (!process.env.EMAIL_FROM) {
+      throw new Error("EMAIL_FROM is not set");
+    }
+    if (!process.env.AUTH_URL && !process.env.NEXTAUTH_URL) {
+      throw new Error("AUTH_URL or NEXTAUTH_URL must be set");
+    }
+
+    const email = parsed.data.email.toLowerCase();
+    const emailLimit = consumeMemoryRateLimit({
+      namespace: "signup-email-ip",
+      key: `${email}:${ip}`,
+      limit: 4,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!emailLimit.ok) {
+      return NextResponse.json({ error: "Too many signup attempts. Try later." }, { status: 429 });
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+
     await prisma.user.create({
       data: {
         email,
@@ -67,6 +79,28 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true },
     });
+    console.log("user created");
+
+    const rawToken = createRawToken();
+    const tokenHash = hashToken(rawToken);
+
+    await prisma.emailVerificationToken.create({
+      data: {
+        identifier: email,
+        tokenHash,
+        expires: tokenExpiry(60),
+      },
+    });
+    console.log("verification token created");
+
+    const verificationUrl = `${getAuthBaseUrl()}/verify-email?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(email)}`;
+    await sendEmailVerificationEmail({
+      to: email,
+      verificationUrl,
+    });
+    console.log("verification email sent");
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -74,30 +108,10 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json({ error: "account already exists" }, { status: 409 });
     }
-    return NextResponse.json({ error: "Could not create account." }, { status: 500 });
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("SIGNUP_ERROR", { message, stack });
+    return NextResponse.json({ error: "SIGNUP_ERROR", message }, { status: 500 });
   }
-
-  const rawToken = createRawToken();
-  const tokenHash = hashToken(rawToken);
-
-  await prisma.emailVerificationToken.create({
-    data: {
-      identifier: email,
-      tokenHash,
-      expires: tokenExpiry(60),
-    },
-  });
-
-  try {
-    const verificationUrl = `${getAuthBaseUrl()}/verify-email?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(email)}`;
-    await sendEmailVerificationEmail({
-      to: email,
-      verificationUrl,
-    });
-  } catch (error) {
-    console.error("[auth][signup] verification email failed:", error);
-    return NextResponse.json({ error: "Could not send verification email." }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true });
 }

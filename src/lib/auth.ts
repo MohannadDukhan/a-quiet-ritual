@@ -40,7 +40,7 @@ export const authOptions: ExtendedAuthOptions = {
   debug: process.env.NODE_ENV !== "production",
   useSecureCookies: process.env.NODE_ENV === "production",
   session: {
-    strategy: "database",
+    strategy: "jwt",
     maxAge: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,
   },
@@ -115,9 +115,15 @@ export const authOptions: ExtendedAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       return session;
     },
