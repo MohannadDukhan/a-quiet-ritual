@@ -119,6 +119,10 @@ export function SignInForm({ nextPath }: SignInFormProps) {
             </Link>
           </div>
 
+          <div className="bw-hint">
+            used email links before? choose forgot password to set one now.
+          </div>
+
           {error && <div className="bw-hint">{error}</div>}
         </div>
       </main>
