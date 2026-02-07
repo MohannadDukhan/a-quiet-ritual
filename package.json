@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node scripts/start-server.mjs",
+    "start": "node scripts/start-prod.mjs",
+    "postinstall": "prisma generate",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
