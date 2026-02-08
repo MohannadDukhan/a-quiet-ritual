@@ -1,6 +1,25 @@
 import { Resend } from "resend";
 
 const EMAIL_SEND_TIMEOUT_MS = 12000;
+const RESEND_WRAPPER_ID = "src/lib/auth-email.ts:sendTransactionalEmail";
+
+export class TransactionalEmailError extends Error {
+  readonly statusCode: number | null;
+  readonly providerCode: string | null;
+
+  constructor(
+    message: string,
+    options?: {
+      statusCode?: number | null;
+      providerCode?: string | null;
+    },
+  ) {
+    super(message);
+    this.name = "TransactionalEmailError";
+    this.statusCode = options?.statusCode ?? null;
+    this.providerCode = options?.providerCode ?? null;
+  }
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -27,6 +46,19 @@ function getFromAddress() {
   return from;
 }
 
+function maskEmailAddress(email: string): string {
+  const value = email.trim().toLowerCase();
+  const atIndex = value.indexOf("@");
+  if (atIndex <= 0 || atIndex === value.length - 1) {
+    return "***";
+  }
+
+  const local = value.slice(0, atIndex);
+  const domain = value.slice(atIndex + 1);
+  const visibleLocal = local.slice(0, 2);
+  return `${visibleLocal}***@${domain}`;
+}
+
 export function getAuthBaseUrl() {
   const baseUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL;
   if (!baseUrl) {
@@ -44,6 +76,15 @@ export async function sendTransactionalEmail(input: {
   const resend = getResendClient();
   const from = getFromAddress();
 
+  console.info("[TEMP DEBUG][auth-email] resend send attempt", {
+    wrapper: RESEND_WRAPPER_ID,
+    resendClient: "resend npm package (Resend.emails.send over HTTP API)",
+    resendApiKeyPresent: Boolean(process.env.RESEND_API_KEY),
+    envEmailFrom: process.env.EMAIL_FROM ?? null,
+    from,
+    toMasked: maskEmailAddress(input.to),
+  });
+
   const sendPromise = resend.emails.send({
     from,
     to: input.to,
@@ -53,13 +94,56 @@ export async function sendTransactionalEmail(input: {
   });
 
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error("Resend request timed out")), EMAIL_SEND_TIMEOUT_MS);
+    setTimeout(
+      () =>
+        reject(
+          new TransactionalEmailError("Resend request timed out", {
+            providerCode: "timeout",
+          }),
+        ),
+      EMAIL_SEND_TIMEOUT_MS,
+    );
   });
 
-  const result = await Promise.race([sendPromise, timeoutPromise]);
-  if ("error" in result && result.error) {
-    throw new Error(result.error.message || "Resend rejected email send");
+  let result: Awaited<typeof sendPromise>;
+  try {
+    result = await Promise.race([sendPromise, timeoutPromise]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Resend request failed";
+    console.error("[TEMP DEBUG][auth-email] resend transport error", {
+      wrapper: RESEND_WRAPPER_ID,
+      from,
+      toMasked: maskEmailAddress(input.to),
+      resendApiKeyPresent: Boolean(process.env.RESEND_API_KEY),
+      message,
+    });
+    if (error instanceof TransactionalEmailError) {
+      throw error;
+    }
+    throw new TransactionalEmailError(message);
   }
+
+  if ("error" in result && result.error) {
+    console.error("[TEMP DEBUG][auth-email] resend provider rejection", {
+      wrapper: RESEND_WRAPPER_ID,
+      from,
+      toMasked: maskEmailAddress(input.to),
+      statusCode: result.error.statusCode ?? null,
+      providerCode: result.error.name ?? null,
+      message: result.error.message || "Resend rejected email send",
+    });
+    throw new TransactionalEmailError(result.error.message || "Resend rejected email send", {
+      statusCode: result.error.statusCode ?? null,
+      providerCode: result.error.name ?? null,
+    });
+  }
+
+  console.info("[TEMP DEBUG][auth-email] resend send success", {
+    wrapper: RESEND_WRAPPER_ID,
+    from,
+    toMasked: maskEmailAddress(input.to),
+    emailId: "data" in result && result.data ? result.data.id : null,
+  });
 }
 
 export async function sendEmailVerificationEmail(input: {
