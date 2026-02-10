@@ -407,6 +407,24 @@ body {
   gap: 12px;
 }
 
+.bw-checkRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  text-transform: lowercase;
+}
+
+.bw-checkbox {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: rgba(180, 150, 255, 0.85);
+}
+
 .bw-date {
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -474,6 +492,25 @@ body {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-faint);
+}
+
+.bw-cardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bw-collectiveBadge {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: var(--text-faint);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .bw-cardPrompt {
@@ -1021,6 +1058,10 @@ body.bw-light .bw-archiveTitle {
 
 body.bw-light .bw-song {
   border-top-color: rgba(20, 20, 20, 0.12);
+}
+
+body.bw-light .bw-collectiveBadge {
+  background: rgba(20, 20, 20, 0.03);
 }
 
 body.bw-light .bw-ball {

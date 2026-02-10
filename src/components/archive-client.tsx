@@ -7,6 +7,7 @@ export type ArchiveEntry = {
   id: string;
   content: string;
   promptTextSnapshot: string;
+  isCollective: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -76,7 +77,10 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
         <div style={{ display: "grid", gap: 12 }}>
           {entries.map((entry) => (
             <div key={entry.id} className="bw-card">
-              <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
+              <div className="bw-cardMeta">
+                <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
+                {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
+              </div>
               <div className="bw-cardPrompt">&quot;{entry.promptTextSnapshot}&quot;</div>
               <div className="bw-cardText">{entry.content || " "}</div>
             </div>

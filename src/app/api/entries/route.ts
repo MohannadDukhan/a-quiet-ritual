@@ -9,6 +9,7 @@ import { getClientIp, isSameOrigin } from "@/lib/security";
 const createEntrySchema = z.object({
   promptId: z.string().uuid(),
   content: z.string().trim().min(1).max(8000),
+  shareOnCollective: z.boolean().optional(),
   publishPublic: z.boolean().optional(),
   spotifyTrack: z.union([z.string().trim().max(300), z.null()]).optional(),
   spotifyUrl: z.union([z.string().trim().max(300), z.null()]).optional(),
@@ -97,6 +98,8 @@ export async function GET() {
       id: true,
       content: true,
       promptTextSnapshot: true,
+      isCollective: true,
+      collectivePublishedAt: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -118,6 +121,7 @@ export async function POST(request: NextRequest) {
   }
 
   const publishPublic = parsed.data.publishPublic === true;
+  const shareOnCollective = parsed.data.shareOnCollective === true;
   const ip = getClientIp(request);
   const prompt = await prisma.prompt.findUnique({
     where: { id: parsed.data.promptId },
@@ -181,6 +185,8 @@ export async function POST(request: NextRequest) {
         id: true,
         content: true,
         promptTextSnapshot: true,
+        isCollective: true,
+        collectivePublishedAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -233,11 +239,15 @@ export async function POST(request: NextRequest) {
       promptId: prompt.id,
       promptTextSnapshot: prompt.text,
       content: parsed.data.content,
+      isCollective: shareOnCollective,
+      collectivePublishedAt: shareOnCollective ? new Date() : null,
     },
     select: {
       id: true,
       content: true,
       promptTextSnapshot: true,
+      isCollective: true,
+      collectivePublishedAt: true,
       createdAt: true,
       updatedAt: true,
     },

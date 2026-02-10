@@ -42,6 +42,7 @@ export default async function ArchivePage() {
       id: true,
       content: true,
       promptTextSnapshot: true,
+      isCollective: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -51,6 +52,7 @@ export default async function ArchivePage() {
     id: entry.id,
     content: entry.content,
     promptTextSnapshot: entry.promptTextSnapshot,
+    isCollective: entry.isCollective,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   }));

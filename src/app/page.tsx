@@ -36,6 +36,7 @@ export default function HomePage() {
   const [promptLoading, setPromptLoading] = useState(false);
 
   const [text, setText] = useState("");
+  const [shareOnCollective, setShareOnCollective] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [needsSignIn, setNeedsSignIn] = useState(false);
@@ -186,6 +187,7 @@ export default function HomePage() {
         body: JSON.stringify({
           promptId: promptState.prompt.id,
           content: trimmed,
+          shareOnCollective,
         }),
       });
 
@@ -278,6 +280,19 @@ export default function HomePage() {
                   }}
                   placeholder="write anything. nothing to prove."
                 />
+
+                <label className="bw-checkRow">
+                  <input
+                    className="bw-checkbox"
+                    type="checkbox"
+                    checked={shareOnCollective}
+                    onChange={(event) => {
+                      setShareOnCollective(event.target.checked);
+                      setSaved(false);
+                    }}
+                  />
+                  <span>share this on the collective</span>
+                </label>
 
                 <div className="bw-row">
                   <div className="bw-date">{dateLabel}</div>
