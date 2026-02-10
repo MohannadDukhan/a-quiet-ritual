@@ -227,6 +227,9 @@ export default function HomePage() {
           <Link className="bw-link" href="/archive">
             archive
           </Link>
+          <Link className="bw-link" href="/collective">
+            collective
+          </Link>
           {status === "authenticated" ? (
             <button className="bw-miniLink" onClick={handleSignOut}>
               sign out
