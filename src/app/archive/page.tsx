@@ -19,9 +19,14 @@ export default async function ArchivePage() {
             back
           </BwNavButton>
           <span className="bw-brand">archive</span>
-          <span className="bw-brand" style={{ opacity: 0 }}>
-            ghost
-          </span>
+          <div className="bw-navwrap">
+            <BwNavButton href="/collective">
+              collective
+            </BwNavButton>
+            <BwNavButton href="/about">
+              about
+            </BwNavButton>
+          </div>
         </div>
 
         <main className="bw-archiveWrap">
@@ -65,9 +70,14 @@ export default async function ArchivePage() {
           back
         </BwNavButton>
         <span className="bw-brand">archive</span>
-        <span className="bw-brand" style={{ opacity: 0 }}>
-          ghost
-        </span>
+        <div className="bw-navwrap">
+          <BwNavButton href="/collective">
+            collective
+          </BwNavButton>
+          <BwNavButton href="/about">
+            about
+          </BwNavButton>
+        </div>
       </div>
 
       <main className="bw-archiveWrap">

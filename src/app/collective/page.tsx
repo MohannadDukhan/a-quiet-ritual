@@ -35,9 +35,14 @@ export default async function CollectivePage() {
           back
         </BwNavButton>
         <span className="bw-brand">collective</span>
-        <span className="bw-brand" style={{ opacity: 0 }}>
-          ghost
-        </span>
+        <div className="bw-navwrap">
+          <BwNavButton href="/archive">
+            archive
+          </BwNavButton>
+          <BwNavButton href="/about">
+            about
+          </BwNavButton>
+        </div>
       </div>
 
       <main className="bw-archiveStage">

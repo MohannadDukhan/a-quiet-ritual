@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { InfoPopover } from "@/components/ui/info-popover";
 
 type PromptPayload = {
   prompt: {
@@ -232,6 +233,9 @@ export default function HomePage() {
           <BwNavButton href="/collective">
             collective
           </BwNavButton>
+          <BwNavButton href="/about">
+            about
+          </BwNavButton>
           {status === "authenticated" ? (
             <BwNavButton onClick={handleSignOut}>
               sign out
@@ -286,18 +290,25 @@ export default function HomePage() {
                   placeholder="write anything. nothing to prove."
                 />
 
-                <label className="bw-checkRow">
-                  <input
-                    className="bw-checkbox"
-                    type="checkbox"
-                    checked={shareOnCollective}
-                    onChange={(event) => {
-                      setShareOnCollective(event.target.checked);
-                      setSaved(false);
-                    }}
-                  />
-                  <span>share this on the collective</span>
-                </label>
+                <div className="bw-checkRow">
+                  <label className="bw-checkLabel">
+                    <input
+                      className="bw-checkbox"
+                      type="checkbox"
+                      checked={shareOnCollective}
+                      onChange={(event) => {
+                        setShareOnCollective(event.target.checked);
+                        setSaved(false);
+                      }}
+                    />
+                    <span>share this on the collective</span>
+                  </label>
+                  <InfoPopover title="what is the collective?">
+                    if you enable this, your response will still save to your private archive, and a copy will also
+                    appear on the collective page. the collective is a shared space where people can read anonymous
+                    responses to today&rsquo;s prompt. your name and account aren&rsquo;t shown.
+                  </InfoPopover>
+                </div>
 
                 <div className="bw-row">
                   <div className="bw-date">{dateLabel}</div>
