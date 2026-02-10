@@ -3,6 +3,8 @@
 import { signOut } from "next-auth/react";
 import { useMemo, useState } from "react";
 
+import { BwNavButton } from "@/components/ui/bw-nav-button";
+
 export type ArchiveEntry = {
   id: string;
   content: string;
@@ -64,9 +66,9 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
     <>
       <div className="bw-row" style={{ marginBottom: 14 }}>
         <div className="bw-date">private archive</div>
-        <button className="bw-miniLink" onClick={() => signOut({ callbackUrl: "/" })}>
+        <BwNavButton onClick={() => signOut({ callbackUrl: "/" })}>
           sign out
-        </button>
+        </BwNavButton>
       </div>
 
       {empty ? (

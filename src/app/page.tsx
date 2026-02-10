@@ -4,6 +4,8 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { BwNavButton } from "@/components/ui/bw-nav-button";
+
 type PromptPayload = {
   prompt: {
     id: string;
@@ -223,21 +225,21 @@ export default function HomePage() {
     <div className={rootClass}>
       <div className="bw-top">
         <span className="bw-brand">a quiet ritual</span>
-        <div className="bw-topRight">
-          <Link className="bw-link" href="/archive">
+        <div className="bw-navwrap">
+          <BwNavButton href="/archive">
             archive
-          </Link>
-          <Link className="bw-link" href="/collective">
+          </BwNavButton>
+          <BwNavButton href="/collective">
             collective
-          </Link>
+          </BwNavButton>
           {status === "authenticated" ? (
-            <button className="bw-miniLink" onClick={handleSignOut}>
+            <BwNavButton onClick={handleSignOut}>
               sign out
-            </button>
+            </BwNavButton>
           ) : (
-            <Link className="bw-link" href="/sign-in?next=/">
+            <BwNavButton href="/sign-in?next=/">
               sign in
-            </Link>
+            </BwNavButton>
           )}
         </div>
       </div>

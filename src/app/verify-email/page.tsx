@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { VerifyEmailState } from "@/components/verify-email-state";
 
 type VerifyEmailPageProps = {
@@ -17,9 +16,9 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
     return (
       <div className="bw-bg">
         <div className="bw-top">
-          <Link className="bw-link" href="/sign-in">
+          <BwNavButton href="/sign-in">
             sign in
-          </Link>
+          </BwNavButton>
           <span className="bw-brand">verify email</span>
           <span className="bw-brand" style={{ opacity: 0 }}>
             ghost

@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 
@@ -32,9 +31,9 @@ export default async function CollectivePage() {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <Link className="bw-link" href="/">
+        <BwNavButton href="/">
           back
-        </Link>
+        </BwNavButton>
         <span className="bw-brand">collective</span>
         <span className="bw-brand" style={{ opacity: 0 }}>
           ghost

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 
+import { BwNavButton } from "@/components/ui/bw-nav-button";
+
 type SignInFormProps = {
   nextPath: string;
 };
@@ -67,13 +69,13 @@ export function SignInForm({ nextPath }: SignInFormProps) {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <Link className="bw-link" href={nextPath}>
+        <BwNavButton href={nextPath}>
           back
-        </Link>
+        </BwNavButton>
         <span className="bw-brand">sign in</span>
-        <Link className="bw-link" href="/sign-up">
+        <BwNavButton href="/sign-up">
           create account
-        </Link>
+        </BwNavButton>
       </div>
 
       <main className="bw-stage">

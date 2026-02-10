@@ -14,14 +14,10 @@ body {
   box-sizing: border-box;
 }
 
-.bw-topRight {
+.bw-navwrap {
   display: flex;
-  gap: 18px;
   align-items: center;
-}
-
-.bw-link {
-  font-size: 13px; /* slightly bigger */
+  gap: 10px;
 }
 
 body {
@@ -81,6 +77,74 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-dim);
   text-transform: lowercase;
+}
+
+.bw-navbtn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(5, 5, 5, 0.78);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: lowercase;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.bw-navbtn-hover:hover {
+  border-color: rgba(255, 255, 255, 0.48);
+  background: rgba(12, 12, 12, 0.9);
+}
+
+.bw-navbtn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(5, 5, 5, 0.96),
+    0 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+.bw-navbtn:active {
+  transform: translateY(0.5px);
+}
+
+.bw-navbtn.is-active {
+  border-color: rgba(255, 255, 255, 0.58);
+}
+
+.bw-navbtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.bw-breathe {
+  animation: bwBreathe 7.8s ease-in-out infinite;
+}
+
+@keyframes bwBreathe {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    opacity: 0.95;
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 10px rgba(255, 255, 255, 0.06);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    opacity: 0.95;
+  }
 }
 
 .bw-link {
@@ -532,18 +596,13 @@ body {
 /* motion accessibility */
 @media (prefers-reduced-motion: reduce) {
   .bw-float,
-  .bw-shake {
+  .bw-shake,
+  .bw-breathe {
     animation: none !important;
   }
   .bw-parallax {
     transition: none !important;
   }
-}
-
-.bw-topRight {
-  display: flex;
-  gap: 18px;
-  align-items: center;
 }
 
 .bw-actions {
@@ -1112,7 +1171,7 @@ body.bw-light .bw-input {
     align-items: flex-start;
   }
 
-  .bw-topRight {
+  .bw-navwrap {
     gap: 12px;
   }
 }

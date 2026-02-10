@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { BwNavButton } from "@/components/ui/bw-nav-button";
+
 type VerifyEmailStateProps = {
   email: string;
   token: string;
@@ -50,9 +52,9 @@ export function VerifyEmailState({ email, token }: VerifyEmailStateProps) {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <Link className="bw-link" href="/sign-in">
+        <BwNavButton href="/sign-in">
           sign in
-        </Link>
+        </BwNavButton>
         <span className="bw-brand">verify email</span>
         <span className="bw-brand" style={{ opacity: 0 }}>
           ghost

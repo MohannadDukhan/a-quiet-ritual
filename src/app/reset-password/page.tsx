@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { ResetPasswordForm } from "@/components/reset-password-form";
 
 type ResetPasswordPageProps = {
@@ -17,9 +16,9 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
     return (
       <div className="bw-bg">
         <div className="bw-top">
-          <Link className="bw-link" href="/sign-in">
+          <BwNavButton href="/sign-in">
             sign in
-          </Link>
+          </BwNavButton>
           <span className="bw-brand">reset password</span>
           <span className="bw-brand" style={{ opacity: 0 }}>
             ghost

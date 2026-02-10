@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
+import { BwNavButton } from "@/components/ui/bw-nav-button";
+
 type ResetPasswordFormProps = {
   email: string;
   token: string;
@@ -62,9 +64,9 @@ export function ResetPasswordForm({ email, token }: ResetPasswordFormProps) {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <Link className="bw-link" href="/sign-in">
+        <BwNavButton href="/sign-in">
           sign in
-        </Link>
+        </BwNavButton>
         <span className="bw-brand">reset password</span>
         <span className="bw-brand" style={{ opacity: 0 }}>
           ghost

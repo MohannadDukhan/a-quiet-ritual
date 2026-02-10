@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ArchiveClient, type ArchiveEntry } from "@/components/archive-client";
+import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -14,9 +15,9 @@ export default async function ArchivePage() {
     return (
       <div className="bw-bg">
         <div className="bw-top">
-          <Link className="bw-link" href="/">
+          <BwNavButton href="/">
             back
-          </Link>
+          </BwNavButton>
           <span className="bw-brand">archive</span>
           <span className="bw-brand" style={{ opacity: 0 }}>
             ghost
@@ -60,9 +61,9 @@ export default async function ArchivePage() {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <Link className="bw-link" href="/">
+        <BwNavButton href="/">
           back
-        </Link>
+        </BwNavButton>
         <span className="bw-brand">archive</span>
         <span className="bw-brand" style={{ opacity: 0 }}>
           ghost

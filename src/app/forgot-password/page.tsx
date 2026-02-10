@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
+
+import { BwNavButton } from "@/components/ui/bw-nav-button";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -35,9 +36,9 @@ export default function ForgotPasswordPage() {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <Link className="bw-link" href="/sign-in">
+        <BwNavButton href="/sign-in">
           back
-        </Link>
+        </BwNavButton>
         <span className="bw-brand">forgot password</span>
         <span className="bw-brand" style={{ opacity: 0 }}>
           ghost
