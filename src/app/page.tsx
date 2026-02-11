@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { AnimationEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { BwModal } from "@/components/ui/bw-modal";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { InfoPopover } from "@/components/ui/info-popover";
 
@@ -55,6 +57,7 @@ function fallbackDateId() {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const { status } = useSession();
 
   const [revealed, setRevealed] = useState(false);
@@ -71,10 +74,12 @@ export default function HomePage() {
   const [saving, setSaving] = useState(false);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showSavedModal, setShowSavedModal] = useState(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const isAnimatingRef = useRef(false);
   const lastAnimationRef = useRef<BallAnimationClass | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
   const promptText = promptState?.prompt.text ?? "";
@@ -146,6 +151,31 @@ export default function HomePage() {
     return () => mediaQuery.removeListener(sync);
   }, []);
 
+  useEffect(() => {
+    const audio = new Audio("/sounds/ball-click.wav");
+    audio.preload = "auto";
+    audio.volume = 0.34;
+    audioRef.current = audio;
+
+    return () => {
+      audioRef.current = null;
+    };
+  }, []);
+
+  function playBallClickSound() {
+    let audio = audioRef.current;
+    if (!audio) {
+      audio = new Audio("/sounds/ball-click.wav");
+      audio.preload = "auto";
+      audio.volume = 0.34;
+      audioRef.current = audio;
+    }
+    audio.currentTime = 0;
+    void audio.play().catch(() => {
+      // ignore autoplay/restriction failures without impacting interaction
+    });
+  }
+
   async function loadPrompt() {
     setPromptLoading(true);
     setPromptError(null);
@@ -188,6 +218,7 @@ export default function HomePage() {
 
   function handleBallClick() {
     if (isAnimatingRef.current) return;
+    playBallClickSound();
     if (revealed) {
       resetReveal();
       return;
@@ -259,6 +290,7 @@ export default function HomePage() {
       setSaved(true);
       setNeedsSignIn(false);
       localStorage.removeItem(DRAFT_KEY);
+      setShowSavedModal(true);
     } catch {
       setSaveError("could not save right now.");
     } finally {
@@ -268,6 +300,15 @@ export default function HomePage() {
 
   async function handleSignOut() {
     await signOut({ callbackUrl: "/" });
+  }
+
+  function closeSavedModal() {
+    setShowSavedModal(false);
+  }
+
+  function goToCollectiveFromModal() {
+    setShowSavedModal(false);
+    router.push("/collective");
   }
 
   const rootClass = ["bw-bg", revealed ? "bw-revealed" : ""].filter(Boolean).join(" ");
@@ -392,6 +433,15 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+
+      <BwModal
+        open={showSavedModal}
+        title="saved."
+        description="nothing else is required today. if you want, you can read what others wrote on the collective."
+        primaryLabel="go to collective"
+        onPrimary={goToCollectiveFromModal}
+        onClose={closeSavedModal}
+      />
     </div>
   );
 }
