@@ -27,7 +27,9 @@ export function AppHeader({ active, showLogo = false }: AppHeaderProps) {
           />
         </Link>
       ) : (
-        <BwMenu align="left" />
+        <BwNavButton href="/">
+          home
+        </BwNavButton>
       )}
 
       <div className="bw-navwrap">
