@@ -34,7 +34,9 @@ export default async function CollectivePage() {
         <BwNavButton href="/">
           back
         </BwNavButton>
-        <span className="bw-brand">collective</span>
+        <span className="bw-brand" style={{ opacity: 0 }}>
+          ghost
+        </span>
         <div className="bw-navwrap">
           <BwNavButton href="/archive">
             archive
@@ -47,6 +49,9 @@ export default async function CollectivePage() {
 
       <main className="bw-collectiveWrap">
         <section className="bw-collectiveHero">
+          <div className="bw-collectiveBadgeRow">
+            <span className="bw-navbtn bw-breathe bw-collectivePill">collective</span>
+          </div>
           <div className="bw-collectiveEyebrow">today&rsquo;s prompt</div>
           <h1 className="bw-collectivePrompt">today&rsquo;s prompt: {todaysPrompt.text}</h1>
           <p className="bw-collectiveNotice">

@@ -32,8 +32,9 @@ const BALL_ANIMATION_CLASSES = [
   "bw-anim-rattle",
   "bw-anim-roll",
 ] as const;
+const REDUCED_BALL_ANIMATION_CLASS = "bw-anim-reduced" as const;
 
-type BallAnimationClass = (typeof BALL_ANIMATION_CLASSES)[number];
+type BallAnimationClass = (typeof BALL_ANIMATION_CLASSES)[number] | typeof REDUCED_BALL_ANIMATION_CLASS;
 
 function pickRandomBallAnimation(previous: BallAnimationClass | null): BallAnimationClass {
   if (BALL_ANIMATION_CLASSES.length <= 1) return BALL_ANIMATION_CLASSES[0];
@@ -193,7 +194,9 @@ export default function HomePage() {
     }
 
     if (prefersReducedMotion) {
-      revealPromptFlow();
+      isAnimatingRef.current = true;
+      setIsBallAnimating(true);
+      setActiveBallAnimation(REDUCED_BALL_ANIMATION_CLASS);
       return;
     }
 
@@ -301,7 +304,7 @@ export default function HomePage() {
           <div className="bw-float">
             <div className="bw-parallax">
               <div
-                className={`bw-ball ${activeBallAnimation ?? ""}`}
+                className={`bw-ball ${activeBallAnimation ?? ""} ${isBallAnimating ? "bw-ball-impact" : ""}`}
                 onClick={handleBallClick}
                 onAnimationEnd={handleBallAnimationEnd}
                 style={{
