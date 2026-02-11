@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useMemo, useState } from "react";
 
@@ -7,6 +8,7 @@ import { BwNavButton } from "@/components/ui/bw-nav-button";
 
 export type ArchiveEntry = {
   id: string;
+  type: "PROMPT" | "JOURNAL";
   content: string;
   promptTextSnapshot: string;
   isCollective: boolean;
@@ -62,6 +64,12 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
     }
   }
 
+  function previewJournalContent(content: string) {
+    const compact = content.replace(/\s+/g, " ").trim();
+    if (compact.length <= 120) return compact;
+    return `${compact.slice(0, 120).trimEnd()}...`;
+  }
+
   return (
     <>
       <div className="bw-row" style={{ marginBottom: 14 }}>
@@ -78,14 +86,24 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           {entries.map((entry) => (
-            <div key={entry.id} className="bw-card">
-              <div className="bw-cardMeta">
-                <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
-                {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
+            entry.type === "JOURNAL" ? (
+              <Link key={entry.id} href={`/journal/${entry.id}`} className="bw-card bw-cardLink">
+                <div className="bw-cardMeta">
+                  <span className="bw-collectiveBadge">regular journal entry</span>
+                  <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
+                </div>
+                <div className="bw-cardText">{previewJournalContent(entry.content) || " "}</div>
+              </Link>
+            ) : (
+              <div key={entry.id} className="bw-card">
+                <div className="bw-cardMeta">
+                  <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
+                  {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
+                </div>
+                <div className="bw-cardPrompt">&quot;{entry.promptTextSnapshot}&quot;</div>
+                <div className="bw-cardText">{entry.content || " "}</div>
               </div>
-              <div className="bw-cardPrompt">&quot;{entry.promptTextSnapshot}&quot;</div>
-              <div className="bw-cardText">{entry.content || " "}</div>
-            </div>
+            )
           ))}
         </div>
       )}

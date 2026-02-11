@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ArchiveClient, type ArchiveEntry } from "@/components/archive-client";
+import { BwMenu } from "@/components/ui/bw-menu";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -15,17 +16,15 @@ export default async function ArchivePage() {
     return (
       <div className="bw-bg">
         <div className="bw-top">
-          <BwNavButton href="/">
-            back
-          </BwNavButton>
           <span className="bw-brand">archive</span>
           <div className="bw-navwrap">
+            <BwNavButton href="/archive" active>
+              archive
+            </BwNavButton>
             <BwNavButton href="/collective">
               collective
             </BwNavButton>
-            <BwNavButton href="/about">
-              about
-            </BwNavButton>
+            <BwMenu />
           </div>
         </div>
 
@@ -46,6 +45,7 @@ export default async function ArchivePage() {
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
+      type: true,
       content: true,
       promptTextSnapshot: true,
       isCollective: true,
@@ -56,6 +56,7 @@ export default async function ArchivePage() {
 
   const serializedEntries: ArchiveEntry[] = entries.map((entry) => ({
     id: entry.id,
+    type: entry.type,
     content: entry.content,
     promptTextSnapshot: entry.promptTextSnapshot,
     isCollective: entry.isCollective,
@@ -66,17 +67,15 @@ export default async function ArchivePage() {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <BwNavButton href="/">
-          back
-        </BwNavButton>
         <span className="bw-brand">archive</span>
         <div className="bw-navwrap">
+          <BwNavButton href="/archive" active>
+            archive
+          </BwNavButton>
           <BwNavButton href="/collective">
             collective
           </BwNavButton>
-          <BwNavButton href="/about">
-            about
-          </BwNavButton>
+          <BwMenu />
         </div>
       </div>
 

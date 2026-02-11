@@ -96,6 +96,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
+      type: true,
       content: true,
       promptTextSnapshot: true,
       isCollective: true,
@@ -177,12 +178,14 @@ export async function POST(request: NextRequest) {
     const entry = await prisma.entry.create({
       data: {
         userId: publicUserId,
+        type: "PROMPT",
         promptId: prompt.id,
         promptTextSnapshot: prompt.text,
         content: storedContent,
       },
       select: {
         id: true,
+        type: true,
         content: true,
         promptTextSnapshot: true,
         isCollective: true,
@@ -236,6 +239,7 @@ export async function POST(request: NextRequest) {
   const entry = await prisma.entry.create({
     data: {
       userId,
+      type: "PROMPT",
       promptId: prompt.id,
       promptTextSnapshot: prompt.text,
       content: parsed.data.content,
@@ -244,6 +248,7 @@ export async function POST(request: NextRequest) {
     },
     select: {
       id: true,
+      type: true,
       content: true,
       promptTextSnapshot: true,
       isCollective: true,

@@ -1,3 +1,4 @@
+import { BwMenu } from "@/components/ui/bw-menu";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
@@ -17,6 +18,7 @@ export default async function CollectivePage() {
   const todaysPrompt = await getTodaysPrompt();
   const entries = await prisma.entry.findMany({
     where: {
+      type: "PROMPT",
       isCollective: true,
       promptId: todaysPrompt.id,
     },
@@ -31,19 +33,15 @@ export default async function CollectivePage() {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <BwNavButton href="/">
-          back
-        </BwNavButton>
-        <span className="bw-brand" style={{ opacity: 0 }}>
-          ghost
-        </span>
+        <span className="bw-brand">collective</span>
         <div className="bw-navwrap">
           <BwNavButton href="/archive">
             archive
           </BwNavButton>
-          <BwNavButton href="/about">
-            about
+          <BwNavButton href="/collective" active>
+            collective
           </BwNavButton>
+          <BwMenu />
         </div>
       </div>
 

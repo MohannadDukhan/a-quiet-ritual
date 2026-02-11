@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import type { AnimationEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BwModal } from "@/components/ui/bw-modal";
+import { BwMenu } from "@/components/ui/bw-menu";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { InfoPopover } from "@/components/ui/info-popover";
 
@@ -298,10 +299,6 @@ export default function HomePage() {
     }
   }
 
-  async function handleSignOut() {
-    await signOut({ callbackUrl: "/" });
-  }
-
   function closeSavedModal() {
     setShowSavedModal(false);
   }
@@ -325,18 +322,7 @@ export default function HomePage() {
           <BwNavButton href="/collective">
             collective
           </BwNavButton>
-          <BwNavButton href="/about">
-            about
-          </BwNavButton>
-          {status === "authenticated" ? (
-            <BwNavButton onClick={handleSignOut}>
-              sign out
-            </BwNavButton>
-          ) : (
-            <BwNavButton href="/sign-in?next=/">
-              sign in
-            </BwNavButton>
-          )}
+          <BwMenu />
         </div>
       </div>
 

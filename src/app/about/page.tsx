@@ -1,12 +1,10 @@
+import { BwMenu } from "@/components/ui/bw-menu";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 
 export default function AboutPage() {
   return (
     <div className="bw-bg">
       <div className="bw-top">
-        <BwNavButton href="/">
-          back
-        </BwNavButton>
         <span className="bw-brand">about</span>
         <div className="bw-navwrap">
           <BwNavButton href="/archive">
@@ -15,9 +13,7 @@ export default function AboutPage() {
           <BwNavButton href="/collective">
             collective
           </BwNavButton>
-          <BwNavButton href="/about" active>
-            about
-          </BwNavButton>
+          <BwMenu />
         </div>
       </div>
 
@@ -28,6 +24,10 @@ export default function AboutPage() {
           <p className="bw-aboutText">
             a quiet ritual is a minimalist journaling space. it&rsquo;s meant to feel like a calm daily ritual, not a
             productivity app.
+          </p>
+          <p className="bw-aboutText">
+            no streaks. no scores. no pressure. just a daily prompt, a place to write, and an archive that stays
+            simple.
           </p>
         </section>
 
