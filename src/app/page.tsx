@@ -312,7 +312,7 @@ export default function HomePage() {
 
   return (
     <div className={rootClass}>
-      <AppHeader active="home" />
+      <AppHeader showLogo />
 
       <main className="bw-stage">
         <div className="bw-orbWrap">

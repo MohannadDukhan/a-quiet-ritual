@@ -5,7 +5,11 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
-export function BwMenu() {
+type BwMenuProps = {
+  align?: "left" | "right";
+};
+
+export function BwMenu({ align = "right" }: BwMenuProps) {
   const pathname = usePathname();
   const { status } = useSession();
   const [open, setOpen] = useState(false);
@@ -58,7 +62,7 @@ export function BwMenu() {
       </button>
 
       {open && (
-        <div className="bw-menuPanel" role="menu" aria-label="main menu">
+        <div className={`bw-menuPanel ${align === "left" ? "is-left" : ""}`} role="menu" aria-label="main menu">
           <Link className="bw-menuItem" href="/journal" role="menuitem" onClick={() => setOpen(false)}>
             regular journal
           </Link>

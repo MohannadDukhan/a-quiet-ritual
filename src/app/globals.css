@@ -50,6 +50,11 @@ body {
   pointer-events: auto;
 }
 
+.bw-menuPanel.is-left {
+  left: 0;
+  right: auto;
+}
+
 .bw-menuItem {
   min-height: 34px;
   padding: 0 12px;
