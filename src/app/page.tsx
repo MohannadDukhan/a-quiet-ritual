@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -314,7 +315,17 @@ export default function HomePage() {
   return (
     <div className={rootClass}>
       <div className="bw-top">
-        <span className="bw-brand">a quiet ritual</span>
+        <Link href="/" className="bw-logoLink" aria-label="a quiet ritual">
+          <Image
+            src="/logo.png"
+            alt="a quiet ritual"
+            width={568}
+            height={185}
+            className="bw-logo"
+            sizes="(max-width: 640px) 118px, 144px"
+            priority
+          />
+        </Link>
         <div className="bw-navwrap">
           <BwNavButton href="/archive">
             archive

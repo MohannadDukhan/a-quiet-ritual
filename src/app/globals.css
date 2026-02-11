@@ -141,6 +141,21 @@ body {
   text-transform: lowercase;
 }
 
+.bw-logoLink {
+  display: inline-flex;
+  align-items: center;
+  padding-left: 2px;
+  border-radius: 10px;
+}
+
+.bw-logo {
+  width: 128px;
+  height: auto;
+  max-height: 34px;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .bw-navbtn {
   min-height: 36px;
   padding: 0 14px;
@@ -1779,6 +1794,15 @@ body.bw-light .bw-input {
 
   .bw-top {
     padding: 14px 12px;
+  }
+
+  .bw-logoLink {
+    padding-left: 1px;
+  }
+
+  .bw-logo {
+    width: 108px;
+    max-height: 30px;
   }
 
   .bw-navbtn {
