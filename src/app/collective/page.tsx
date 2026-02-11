@@ -45,14 +45,14 @@ export default async function CollectivePage() {
         </div>
       </div>
 
-      <main className="bw-archiveStage">
-        <div className="bw-archiveHeader">
-          <div className="bw-archiveTitle">collective</div>
-          <div className="bw-archiveSub">&quot;{todaysPrompt.text}&quot;</div>
-          <div className="bw-archiveSub">
+      <main className="bw-collectiveWrap">
+        <section className="bw-collectiveHero">
+          <div className="bw-collectiveEyebrow">today&rsquo;s prompt</div>
+          <h1 className="bw-collectivePrompt">today&rsquo;s prompt: {todaysPrompt.text}</h1>
+          <p className="bw-collectiveNotice">
             this is a respectful space. hate, threats, or harassment can&rsquo;t be shared.
-          </div>
-        </div>
+          </p>
+        </section>
 
         {entries.length === 0 ? (
           <div className="bw-empty">no shared entries yet.</div>

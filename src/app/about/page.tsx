@@ -29,10 +29,6 @@ export default function AboutPage() {
             a quiet ritual is a minimalist journaling space. it&rsquo;s meant to feel like a calm daily ritual, not a
             productivity app.
           </p>
-          <p className="bw-aboutText">
-            no streaks. no scores. no pressure. just a daily prompt, a place to write, and an archive that stays
-            simple.
-          </p>
         </section>
 
         <section className="bw-aboutSection">

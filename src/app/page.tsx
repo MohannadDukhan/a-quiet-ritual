@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import type { AnimationEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BwNavButton } from "@/components/ui/bw-nav-button";
@@ -16,10 +17,33 @@ type PromptPayload = {
 };
 
 const DRAFT_KEY = "bw_entry_draft";
-const SHAKE_MS = 1200;
 const IDLE_SIZE = 360;
 const REVEALED_SIZE = 300;
 const INSIDE_PROMPT_MAX = 64;
+const BALL_ANIMATION_CLASSES = [
+  "bw-anim-shake",
+  "bw-anim-spin",
+  "bw-anim-flip",
+  "bw-anim-wobble",
+  "bw-anim-tilt-return",
+  "bw-anim-float-settle",
+  "bw-anim-pulse",
+  "bw-anim-orbit",
+  "bw-anim-rattle",
+  "bw-anim-roll",
+] as const;
+
+type BallAnimationClass = (typeof BALL_ANIMATION_CLASSES)[number];
+
+function pickRandomBallAnimation(previous: BallAnimationClass | null): BallAnimationClass {
+  if (BALL_ANIMATION_CLASSES.length <= 1) return BALL_ANIMATION_CLASSES[0];
+  let next = BALL_ANIMATION_CLASSES[Math.floor(Math.random() * BALL_ANIMATION_CLASSES.length)];
+  if (next === previous) {
+    const index = BALL_ANIMATION_CLASSES.indexOf(next);
+    next = BALL_ANIMATION_CLASSES[(index + 1) % BALL_ANIMATION_CLASSES.length];
+  }
+  return next;
+}
 
 function fallbackDateId() {
   const d = new Date();
@@ -33,7 +57,9 @@ export default function HomePage() {
   const { status } = useSession();
 
   const [revealed, setRevealed] = useState(false);
-  const [isShaking, setIsShaking] = useState(false);
+  const [isBallAnimating, setIsBallAnimating] = useState(false);
+  const [activeBallAnimation, setActiveBallAnimation] = useState<BallAnimationClass | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [promptState, setPromptState] = useState<PromptPayload | null>(null);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [promptLoading, setPromptLoading] = useState(false);
@@ -46,7 +72,8 @@ export default function HomePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const shakeTimeoutRef = useRef<number | null>(null);
+  const isAnimatingRef = useRef(false);
+  const lastAnimationRef = useRef<BallAnimationClass | null>(null);
 
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
   const promptText = promptState?.prompt.text ?? "";
@@ -94,14 +121,6 @@ export default function HomePage() {
   }, [revealed]);
 
   useEffect(() => {
-    return () => {
-      if (shakeTimeoutRef.current !== null) {
-        window.clearTimeout(shakeTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     const onMove = (event: MouseEvent) => {
       const x = (event.clientX / window.innerWidth) * 2 - 1;
       const y = (event.clientY / window.innerHeight) * 2 - 1;
@@ -110,6 +129,20 @@ export default function HomePage() {
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setPrefersReducedMotion(mediaQuery.matches);
+    sync();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", sync);
+      return () => mediaQuery.removeEventListener("change", sync);
+    }
+
+    mediaQuery.addListener(sync);
+    return () => mediaQuery.removeListener(sync);
   }, []);
 
   async function loadPrompt() {
@@ -134,32 +167,47 @@ export default function HomePage() {
   }
 
   function resetReveal() {
-    if (shakeTimeoutRef.current !== null) {
-      window.clearTimeout(shakeTimeoutRef.current);
-      shakeTimeoutRef.current = null;
-    }
-    setIsShaking(false);
+    isAnimatingRef.current = false;
+    setIsBallAnimating(false);
+    setActiveBallAnimation(null);
     setRevealed(false);
     setSaved(false);
     setNeedsSignIn(false);
     setSaveError(null);
   }
 
+  function revealPromptFlow() {
+    isAnimatingRef.current = false;
+    setIsBallAnimating(false);
+    setActiveBallAnimation(null);
+    setRevealed(true);
+    void loadPrompt();
+    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function handleBallClick() {
-    if (isShaking) return;
+    if (isAnimatingRef.current) return;
     if (revealed) {
       resetReveal();
       return;
     }
 
-    setIsShaking(true);
-    shakeTimeoutRef.current = window.setTimeout(() => {
-      setIsShaking(false);
-      setRevealed(true);
-      void loadPrompt();
-      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      shakeTimeoutRef.current = null;
-    }, SHAKE_MS);
+    if (prefersReducedMotion) {
+      revealPromptFlow();
+      return;
+    }
+
+    const selectedAnimation = pickRandomBallAnimation(lastAnimationRef.current);
+    lastAnimationRef.current = selectedAnimation;
+    isAnimatingRef.current = true;
+    setIsBallAnimating(true);
+    setActiveBallAnimation(selectedAnimation);
+  }
+
+  function handleBallAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
+    if (event.currentTarget !== event.target) return;
+    if (!isAnimatingRef.current) return;
+    revealPromptFlow();
   }
 
   async function handleSave() {
@@ -253,8 +301,9 @@ export default function HomePage() {
           <div className="bw-float">
             <div className="bw-parallax">
               <div
-                className={`bw-ball ${isShaking ? "bw-shake" : ""}`}
+                className={`bw-ball ${activeBallAnimation ?? ""}`}
                 onClick={handleBallClick}
+                onAnimationEnd={handleBallAnimationEnd}
                 style={{
                   width: `min(${ballSize}px, 82vw)`,
                   height: `min(${ballSize}px, 82vw)`,
@@ -271,7 +320,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {!revealed && <div className="bw-hint">{isShaking ? "..." : "tap the 8-ball"}</div>}
+          {!revealed && <div className="bw-hint">{isBallAnimating ? "..." : "tap the 8-ball"}</div>}
           {revealed && <div className="bw-hint">tap again to reset</div>}
 
           <div ref={panelRef} className={`bw-panel ${revealed ? "show" : ""}`}>
