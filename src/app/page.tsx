@@ -1,15 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { AnimationEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { AppHeader } from "@/components/layout/app-header";
 import { BwModal } from "@/components/ui/bw-modal";
-import { BwMenu } from "@/components/ui/bw-menu";
-import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { InfoPopover } from "@/components/ui/info-popover";
 
 type PromptPayload = {
@@ -314,28 +312,7 @@ export default function HomePage() {
 
   return (
     <div className={rootClass}>
-      <div className="bw-top">
-        <Link href="/" className="bw-logoLink" aria-label="a quiet ritual">
-          <Image
-            src="/logo.png"
-            alt="a quiet ritual"
-            width={568}
-            height={185}
-            className="bw-logo"
-            sizes="(max-width: 640px) 118px, 144px"
-            priority
-          />
-        </Link>
-        <div className="bw-navwrap">
-          <BwNavButton href="/archive">
-            archive
-          </BwNavButton>
-          <BwNavButton href="/collective">
-            collective
-          </BwNavButton>
-          <BwMenu />
-        </div>
-      </div>
+      <AppHeader active="home" />
 
       <main className="bw-stage">
         <div className="bw-orbWrap">

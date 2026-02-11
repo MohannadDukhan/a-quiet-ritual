@@ -1,16 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { signOut } from "next-auth/react";
-import { useMemo, useState } from "react";
-
-import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { useMemo } from "react";
 
 export type ArchiveEntry = {
   id: string;
   type: "PROMPT" | "JOURNAL";
   content: string;
-  promptTextSnapshot: string;
+  promptText: string;
   isCollective: boolean;
   createdAt: string;
   updatedAt: string;
@@ -30,41 +27,8 @@ type ArchiveClientProps = {
 };
 
 export function ArchiveClient({ entries }: ArchiveClientProps) {
-  const [confirmText, setConfirmText] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
   const empty = useMemo(() => entries.length === 0, [entries.length]);
-
-  async function deleteAccount() {
-    setDeleteError(null);
-    if (confirmText !== "DELETE MY DATA") {
-      setDeleteError('type "DELETE MY DATA" to confirm.');
-      return;
-    }
-
-    setDeleting(true);
-    try {
-      const response = await fetch("/api/account", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmation: confirmText }),
-      });
-      const data = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) {
-        setDeleteError(data?.error ?? "could not delete account.");
-        return;
-      }
-
-      await signOut({ callbackUrl: "/" });
-    } catch {
-      setDeleteError("could not delete account.");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  function previewJournalContent(content: string) {
+  function previewContent(content: string) {
     const compact = content.replace(/\s+/g, " ").trim();
     if (compact.length <= 120) return compact;
     return `${compact.slice(0, 120).trimEnd()}...`;
@@ -74,9 +38,6 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
     <>
       <div className="bw-row" style={{ marginBottom: 14 }}>
         <div className="bw-date">private archive</div>
-        <BwNavButton onClick={() => signOut({ callbackUrl: "/" })}>
-          sign out
-        </BwNavButton>
       </div>
 
       {empty ? (
@@ -92,42 +53,21 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
                   <span className="bw-collectiveBadge">regular journal entry</span>
                   <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
                 </div>
-                <div className="bw-cardText">{previewJournalContent(entry.content) || " "}</div>
+                <div className="bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             ) : (
-              <div key={entry.id} className="bw-card">
+              <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-card bw-cardLink">
                 <div className="bw-cardMeta">
                   <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
                   {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
                 </div>
-                <div className="bw-cardPrompt">&quot;{entry.promptTextSnapshot}&quot;</div>
-                <div className="bw-cardText">{entry.content || " "}</div>
-              </div>
+                <div className="bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
+                <div className="bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
+              </Link>
             )
           ))}
         </div>
       )}
-
-      <div className="bw-card" style={{ marginTop: 22 }}>
-        <div className="bw-cardDate">delete account + all entries</div>
-        <div className="bw-hint" style={{ textAlign: "left", marginTop: 8 }}>
-          type <code>DELETE MY DATA</code> to confirm permanent deletion.
-        </div>
-        <input
-          className="bw-input"
-          value={confirmText}
-          onChange={(event) => setConfirmText(event.target.value)}
-          placeholder="DELETE MY DATA"
-          style={{ marginTop: 10, height: 40 }}
-        />
-        <div className="bw-row" style={{ marginTop: 8 }}>
-          <div className="bw-date">this action cannot be undone.</div>
-          <button className="bw-btn" onClick={deleteAccount} disabled={deleting}>
-            {deleting ? "deleting..." : "delete account"}
-          </button>
-        </div>
-        {deleteError && <div className="bw-hint">{deleteError}</div>}
-      </div>
     </>
   );
 }

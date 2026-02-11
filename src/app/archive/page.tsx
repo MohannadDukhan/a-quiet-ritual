@@ -1,8 +1,7 @@
 import Link from "next/link";
 
 import { ArchiveClient, type ArchiveEntry } from "@/components/archive-client";
-import { BwMenu } from "@/components/ui/bw-menu";
-import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -15,18 +14,7 @@ export default async function ArchivePage() {
   if (!userId) {
     return (
       <div className="bw-bg">
-        <div className="bw-top">
-          <span className="bw-brand">archive</span>
-          <div className="bw-navwrap">
-            <BwNavButton href="/archive" active>
-              archive
-            </BwNavButton>
-            <BwNavButton href="/collective">
-              collective
-            </BwNavButton>
-            <BwMenu />
-          </div>
-        </div>
+        <AppHeader active="archive" />
 
         <main className="bw-archiveWrap">
           <div className="bw-hint" style={{ marginTop: 46 }}>
@@ -48,6 +36,11 @@ export default async function ArchivePage() {
       type: true,
       content: true,
       promptTextSnapshot: true,
+      prompt: {
+        select: {
+          text: true,
+        },
+      },
       isCollective: true,
       createdAt: true,
       updatedAt: true,
@@ -58,7 +51,7 @@ export default async function ArchivePage() {
     id: entry.id,
     type: entry.type,
     content: entry.content,
-    promptTextSnapshot: entry.promptTextSnapshot,
+    promptText: entry.promptTextSnapshot || entry.prompt?.text || "",
     isCollective: entry.isCollective,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
@@ -66,18 +59,7 @@ export default async function ArchivePage() {
 
   return (
     <div className="bw-bg">
-      <div className="bw-top">
-        <span className="bw-brand">archive</span>
-        <div className="bw-navwrap">
-          <BwNavButton href="/archive" active>
-            archive
-          </BwNavButton>
-          <BwNavButton href="/collective">
-            collective
-          </BwNavButton>
-          <BwMenu />
-        </div>
-      </div>
+      <AppHeader active="archive" />
 
       <main className="bw-archiveWrap">
         <ArchiveClient entries={serializedEntries} />

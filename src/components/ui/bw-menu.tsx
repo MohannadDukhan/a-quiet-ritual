@@ -54,7 +54,7 @@ export function BwMenu() {
         aria-label="open menu"
         onClick={() => setOpen((value) => !value)}
       >
-        ⋯
+        menu
       </button>
 
       {open && (

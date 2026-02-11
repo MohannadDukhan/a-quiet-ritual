@@ -1,8 +1,7 @@
 import Link from "next/link";
 
 import { JournalEditor } from "@/components/journal-editor";
-import { BwMenu } from "@/components/ui/bw-menu";
-import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -13,18 +12,7 @@ export default async function JournalPage() {
 
   return (
     <div className="bw-bg">
-      <div className="bw-top">
-        <span className="bw-brand">regular journal</span>
-        <div className="bw-navwrap">
-          <BwNavButton href="/archive">
-            archive
-          </BwNavButton>
-          <BwNavButton href="/collective">
-            collective
-          </BwNavButton>
-          <BwMenu />
-        </div>
-      </div>
+      <AppHeader />
 
       <main className="bw-journalWrap">
         {!userId ? (

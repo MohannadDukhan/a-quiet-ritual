@@ -1,5 +1,4 @@
-import { BwMenu } from "@/components/ui/bw-menu";
-import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { AppHeader } from "@/components/layout/app-header";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 
@@ -32,18 +31,7 @@ export default async function CollectivePage() {
 
   return (
     <div className="bw-bg">
-      <div className="bw-top">
-        <span className="bw-brand">collective</span>
-        <div className="bw-navwrap">
-          <BwNavButton href="/archive">
-            archive
-          </BwNavButton>
-          <BwNavButton href="/collective" active>
-            collective
-          </BwNavButton>
-          <BwMenu />
-        </div>
-      </div>
+      <AppHeader active="collective" />
 
       <main className="bw-collectiveWrap">
         <section className="bw-collectiveHero">

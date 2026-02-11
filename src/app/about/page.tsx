@@ -1,21 +1,9 @@
-import { BwMenu } from "@/components/ui/bw-menu";
-import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { AppHeader } from "@/components/layout/app-header";
 
 export default function AboutPage() {
   return (
     <div className="bw-bg">
-      <div className="bw-top">
-        <span className="bw-brand">about</span>
-        <div className="bw-navwrap">
-          <BwNavButton href="/archive">
-            archive
-          </BwNavButton>
-          <BwNavButton href="/collective">
-            collective
-          </BwNavButton>
-          <BwMenu />
-        </div>
-      </div>
+      <AppHeader />
 
       <main className="bw-aboutWrap">
         <h1 className="bw-aboutTitle">about</h1>

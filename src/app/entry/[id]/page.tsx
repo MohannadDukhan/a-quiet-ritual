@@ -5,11 +5,11 @@ import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-type JournalEntryDetailPageProps = {
+type PromptEntryDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-function formatJournalDate(date: Date): string {
+function formatEntryDate(date: Date): string {
   return date.toLocaleString(undefined, {
     year: "numeric",
     month: "short",
@@ -19,7 +19,7 @@ function formatJournalDate(date: Date): string {
   });
 }
 
-export default async function JournalEntryDetailPage({ params }: JournalEntryDetailPageProps) {
+export default async function PromptEntryDetailPage({ params }: PromptEntryDetailPageProps) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
@@ -31,18 +31,26 @@ export default async function JournalEntryDetailPage({ params }: JournalEntryDet
     where: {
       id,
       userId,
-      type: "JOURNAL",
+      type: "PROMPT",
     },
     select: {
-      id: true,
       content: true,
+      promptTextSnapshot: true,
+      isCollective: true,
       createdAt: true,
+      prompt: {
+        select: {
+          text: true,
+        },
+      },
     },
   });
 
   if (!entry) {
     notFound();
   }
+
+  const promptText = entry.promptTextSnapshot || entry.prompt?.text || "";
 
   return (
     <div className="bw-bg">
@@ -51,14 +59,15 @@ export default async function JournalEntryDetailPage({ params }: JournalEntryDet
       <main className="bw-journalWrap">
         <div className="bw-card">
           <div className="bw-cardMeta">
-            <span className="bw-collectiveBadge">regular journal entry</span>
-            <div className="bw-cardDate">{formatJournalDate(entry.createdAt).toLowerCase()}</div>
+            <div className="bw-cardDate">{formatEntryDate(entry.createdAt).toLowerCase()}</div>
+            {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
           </div>
+          <div className="bw-cardPrompt">&quot;{promptText}&quot;</div>
           <div className="bw-cardText">{entry.content}</div>
         </div>
 
         <div className="bw-row">
-          <div className="bw-date">private entry</div>
+          <div className="bw-date">private prompt entry</div>
           <BwNavButton href="/archive">
             back to archive
           </BwNavButton>

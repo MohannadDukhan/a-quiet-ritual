@@ -26,10 +26,12 @@ body {
 }
 
 .bw-menuTrigger {
-  min-width: 36px;
-  padding: 0 10px;
-  font-size: 18px;
+  min-width: 0;
+  padding: 0 14px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   line-height: 1;
+  text-transform: lowercase;
 }
 
 .bw-menuPanel {
@@ -1024,6 +1026,10 @@ body {
   color: rgba(255, 255, 255, 0.86);
 }
 
+.bw-cardPreview {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .bw-aboutWrap {
   width: min(760px, 100%);
   margin: 0 auto;
@@ -1746,6 +1752,10 @@ body.bw-light .bw-archiveTitle {
   color: rgba(18, 18, 18, 0.78);
 }
 
+body.bw-light .bw-cardPreview {
+  color: rgba(18, 18, 18, 0.66);
+}
+
 body.bw-light .bw-song {
   border-top-color: rgba(20, 20, 20, 0.12);
 }
@@ -1812,8 +1822,8 @@ body.bw-light .bw-input {
   }
 
   .bw-menuTrigger {
-    min-width: 34px;
-    font-size: 16px;
+    min-width: 0;
+    font-size: 11px;
   }
 
   .bw-textarea {
