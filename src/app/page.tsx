@@ -312,7 +312,7 @@ export default function HomePage() {
 
   return (
     <div className={rootClass}>
-      <AppHeader />
+      <AppHeader brandTone={revealed ? "dark" : "light"} />
 
       <main className="bw-stage">
         <div className="bw-orbWrap">
