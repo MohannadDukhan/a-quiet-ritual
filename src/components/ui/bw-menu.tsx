@@ -5,7 +5,17 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
-export function BwMenu() {
+type HeaderSection = "archive" | "collective";
+
+type BwMenuProps = {
+  active?: HeaderSection;
+};
+
+function getMenuItemClassName(isActive: boolean): string {
+  return isActive ? "bw-navText bw-navDropdownItem is-active" : "bw-navText bw-navDropdownItem";
+}
+
+export function BwMenu({ active }: BwMenuProps) {
   const pathname = usePathname();
   const { status } = useSession();
   const [open, setOpen] = useState(false);
@@ -39,33 +49,49 @@ export function BwMenu() {
   const signInHref = `/sign-in?next=${encodeURIComponent(pathname || "/")}`;
 
   return (
-    <div ref={containerRef} className="bw-menuWrap">
+    <div ref={containerRef} className="bw-menuWrap bw-navMenuWrap">
       <button
         ref={triggerRef}
         type="button"
-        className="bw-navbtn bw-navbtn-hover bw-menuTrigger"
+        className="bw-navText bw-navMenuButton"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="open menu"
         onClick={() => setOpen((value) => !value)}
       >
-        menu
+        +menu
       </button>
 
       {open && (
-        <div className="bw-menuPanel" role="menu" aria-label="main menu">
-          <Link className="bw-menuItem" href="/journal" role="menuitem" onClick={() => setOpen(false)}>
+        <div className="bw-navDropdown" role="menu" aria-label="main menu">
+          <Link
+            className={getMenuItemClassName(active === "archive")}
+            href="/archive"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            archive
+          </Link>
+          <Link
+            className={getMenuItemClassName(active === "collective")}
+            href="/collective"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            collective
+          </Link>
+          <Link className="bw-navText bw-navDropdownItem" href="/journal" role="menuitem" onClick={() => setOpen(false)}>
             regular journal
           </Link>
-          <Link className="bw-menuItem" href="/about" role="menuitem" onClick={() => setOpen(false)}>
+          <Link className="bw-navText bw-navDropdownItem" href="/about" role="menuitem" onClick={() => setOpen(false)}>
             about
           </Link>
           {status === "authenticated" ? (
-            <Link className="bw-menuItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
+            <Link className="bw-navText bw-navDropdownItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
               my account
             </Link>
           ) : (
-            <Link className="bw-menuItem" href={signInHref} role="menuitem" onClick={() => setOpen(false)}>
+            <Link className="bw-navText bw-navDropdownItem" href={signInHref} role="menuitem" onClick={() => setOpen(false)}>
               sign in
             </Link>
           )}

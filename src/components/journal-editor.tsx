@@ -81,7 +81,7 @@ export function JournalEditor() {
             // ignore storage errors
           }
         }}
-        placeholder="write anything what's on your mind."
+        placeholder="write anything. what's on your mind."
       />
 
       <div className="bw-row">

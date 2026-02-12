@@ -14,74 +14,102 @@ body {
   box-sizing: border-box;
 }
 
-.bw-navwrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .bw-menuWrap {
   position: relative;
   pointer-events: auto;
 }
 
-.bw-menuTrigger {
-  min-width: 0;
-  padding: 0 14px;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: lowercase;
+.bw-navBar {
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-.bw-menuPanel {
+.bw-navSide {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.bw-navSideRight {
+  justify-content: flex-end;
+}
+
+.bw-navLogoLink {
   position: absolute;
-  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding-left: 0;
+}
+
+.bw-navText {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.bw-navMenuWrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bw-navMenuButton {
+  min-height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.bw-navMenuButton:hover {
+  opacity: 0.72;
+}
+
+.bw-navMenuButton:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bw-navDropdown {
+  position: absolute;
+  top: calc(100% + 10px);
   right: 0;
-  width: min(240px, calc(100vw - 30px));
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(8, 8, 10, 0.95);
+  width: min(260px, calc(100vw - 30px));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 8, 10, 0.96);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.56);
-  padding: 8px;
+  padding: 10px 12px;
   display: grid;
-  gap: 6px;
+  gap: 10px;
   z-index: 80;
   pointer-events: auto;
 }
 
-.bw-menuItem {
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.9);
+.bw-navDropdownItem {
   text-decoration: none;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: lowercase;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity 140ms ease;
 }
 
-.bw-menuItem:hover {
-  border-color: rgba(255, 255, 255, 0.34);
-  background: rgba(255, 255, 255, 0.07);
+.bw-navDropdownItem:hover {
+  opacity: 1;
 }
 
-.bw-menuItem:focus-visible {
+.bw-navDropdownItem:focus-visible {
   outline: none;
-  box-shadow:
-    0 0 0 2px rgba(5, 5, 5, 0.96),
-    0 0 0 4px rgba(255, 255, 255, 0.58);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.bw-menuAction {
-  width: 100%;
-  font-family: inherit;
+.bw-navDropdownItem.is-active {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 body {
@@ -1815,21 +1843,18 @@ body.bw-light .bw-modalOverlay {
   background: rgba(220, 220, 216, 0.58);
 }
 
-body.bw-light .bw-menuPanel {
+body.bw-light .bw-navDropdown {
   border-color: rgba(20, 20, 20, 0.12);
   background: rgba(249, 249, 247, 0.95);
   box-shadow: 0 18px 52px rgba(20, 20, 20, 0.18);
 }
 
-body.bw-light .bw-menuItem {
-  border-color: rgba(20, 20, 20, 0.16);
-  background: rgba(20, 20, 20, 0.03);
+body.bw-light .bw-navText {
   color: rgba(18, 18, 18, 0.88);
 }
 
-body.bw-light .bw-menuItem:hover {
-  border-color: rgba(20, 20, 20, 0.28);
-  background: rgba(20, 20, 20, 0.08);
+body.bw-light .bw-navDropdownItem:hover {
+  opacity: 0.75;
 }
 
 body.bw-light .bw-uiModalOverlay {
@@ -2021,15 +2046,26 @@ body.bw-light .bw-input {
     max-height: 30px;
   }
 
+  .bw-navText {
+    font-size: 11px;
+    letter-spacing: 0.055em;
+  }
+
   .bw-navbtn {
     min-height: 34px;
     padding: 0 10px;
     font-size: 11px;
   }
 
-  .bw-menuTrigger {
-    min-width: 0;
-    font-size: 11px;
+  .bw-navMenuButton {
+    min-height: 16px;
+  }
+
+  .bw-navDropdown {
+    width: min(220px, calc(100vw - 24px));
+    right: 0;
+    gap: 9px;
+    padding: 10px;
   }
 
   .bw-textarea {
@@ -2050,7 +2086,4 @@ body.bw-light .bw-input {
     align-items: flex-start;
   }
 
-  .bw-navwrap {
-    gap: 12px;
-  }
 }
