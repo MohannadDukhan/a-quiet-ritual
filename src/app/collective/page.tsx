@@ -1,17 +1,9 @@
 import { AppHeader } from "@/components/layout/app-header";
+import { CollectiveFeed, type CollectiveFeedEntry } from "@/components/collective-feed";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 
 export const dynamic = "force-dynamic";
-
-function formatEntryTime(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date).toLowerCase();
-}
 
 export default async function CollectivePage() {
   const todaysPrompt = await getTodaysPrompt();
@@ -26,8 +18,26 @@ export default async function CollectivePage() {
       id: true,
       content: true,
       createdAt: true,
+      collectiveReplies: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+        },
+      },
     },
   });
+  const serializedEntries: CollectiveFeedEntry[] = entries.map((entry) => ({
+    id: entry.id,
+    content: entry.content,
+    createdAt: entry.createdAt.toISOString(),
+    replies: entry.collectiveReplies.map((reply) => ({
+      id: reply.id,
+      content: reply.content,
+      createdAt: reply.createdAt.toISOString(),
+    })),
+  }));
 
   return (
     <div className="bw-bg">
@@ -48,14 +58,7 @@ export default async function CollectivePage() {
         {entries.length === 0 ? (
           <div className="bw-empty">no shared entries yet.</div>
         ) : (
-          <div className="bw-feed">
-            {entries.map((entry) => (
-              <article key={entry.id} className="bw-fragment">
-                <div className="bw-fragMeta">{formatEntryTime(entry.createdAt)}</div>
-                <div className="bw-fragText">{entry.content}</div>
-              </article>
-            ))}
-          </div>
+          <CollectiveFeed entries={serializedEntries} />
         )}
       </main>
     </div>

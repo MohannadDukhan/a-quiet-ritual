@@ -44,9 +44,41 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Deletion confirmation is required." }, { status: 400 });
   }
 
-  await prisma.user.delete({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: { id: true, email: true },
   });
+  if (!user) {
+    return NextResponse.json({ error: "Account not found." }, { status: 404 });
+  }
+
+  await prisma.$transaction([
+    prisma.collectiveReply.updateMany({
+      where: { userId: user.id },
+      data: { userId: null },
+    }),
+    prisma.entry.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.account.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.session.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.verificationToken.deleteMany({
+      where: { identifier: user.email },
+    }),
+    prisma.emailVerificationToken.deleteMany({
+      where: { identifier: user.email },
+    }),
+    prisma.passwordResetToken.deleteMany({
+      where: { identifier: user.email },
+    }),
+    prisma.user.delete({
+      where: { id: user.id },
+    }),
+  ]);
 
   return NextResponse.json({ ok: true });
 }

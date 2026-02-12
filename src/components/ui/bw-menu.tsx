@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 export function BwMenu() {
@@ -38,11 +38,6 @@ export function BwMenu() {
 
   const signInHref = `/sign-in?next=${encodeURIComponent(pathname || "/")}`;
 
-  async function handleSignOut() {
-    setOpen(false);
-    await signOut({ callbackUrl: "/" });
-  }
-
   return (
     <div ref={containerRef} className="bw-menuWrap">
       <button
@@ -66,9 +61,9 @@ export function BwMenu() {
             about
           </Link>
           {status === "authenticated" ? (
-            <button type="button" className="bw-menuItem bw-menuAction" role="menuitem" onClick={handleSignOut}>
-              sign out
-            </button>
+            <Link className="bw-menuItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
+              my account
+            </Link>
           ) : (
             <Link className="bw-menuItem" href={signInHref} role="menuitem" onClick={() => setOpen(false)}>
               sign in

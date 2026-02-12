@@ -17,6 +17,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   entries       Entry[]
+  collectiveReplies CollectiveReply[]
 }
 
 model Prompt {
@@ -44,9 +45,22 @@ model Entry {
   updatedAt             DateTime  @updatedAt
   prompt                Prompt?   @relation(fields: [promptId], references: [id], onDelete: Restrict)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectiveReplies     CollectiveReply[]
 
   @@index([userId, createdAt])
   @@index([promptId])
+}
+
+model CollectiveReply {
+  id        String   @id @default(cuid())
+  entryId   String   @db.Uuid
+  entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  userId    String?  @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([entryId, createdAt])
 }
 
 model Account {

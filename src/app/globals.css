@@ -1096,6 +1096,65 @@ body {
   color: rgba(255, 255, 255, 0.5);
 }
 
+.bw-accountCard {
+  display: grid;
+  gap: 14px;
+}
+
+.bw-accountTitle {
+  margin: 0;
+  font-size: clamp(20px, 3.1vw, 28px);
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bw-accountMeta {
+  display: grid;
+  gap: 8px;
+}
+
+.bw-accountRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.bw-accountValue {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.78);
+  text-transform: lowercase;
+  text-align: right;
+}
+
+.bw-accountActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bw-accountDanger {
+  margin-top: 2px;
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 10px;
+}
+
+.bw-accountDangerText {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: lowercase;
+}
+
 /* motion accessibility */
 @media (prefers-reduced-motion: reduce) {
   .bw-float,
@@ -1408,6 +1467,88 @@ body {
   font-size: 14px;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.8);
+}
+
+.bw-replyActionRow {
+  margin-top: 12px;
+}
+
+.bw-replyAction {
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.bw-replyForm {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.bw-replyInput {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(8, 8, 10, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  line-height: 1.55;
+  outline: none;
+}
+
+.bw-replyInput::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.bw-replyInput:focus {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.bw-replyFormRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bw-replyHint {
+  margin-top: 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: var(--text-faint);
+}
+
+.bw-replyList {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.bw-replyItem {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bw-replyMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.46);
+  text-transform: lowercase;
+}
+
+.bw-replyText {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .bw-song {
@@ -1744,11 +1885,29 @@ body.bw-light .bw-input::placeholder {
   color: rgba(18, 18, 18, 0.4);
 }
 
+body.bw-light .bw-replyInput {
+  background: rgba(255, 255, 255, 0.84);
+  border-color: rgba(20, 20, 20, 0.14);
+  color: rgba(18, 18, 18, 0.86);
+}
+
+body.bw-light .bw-replyInput::placeholder {
+  color: rgba(18, 18, 18, 0.44);
+}
+
+body.bw-light .bw-replyItem {
+  border-left-color: rgba(20, 20, 20, 0.16);
+}
+
 body.bw-light .bw-cardPrompt,
 body.bw-light .bw-songValue,
 body.bw-light .bw-fragText,
 body.bw-light .bw-cardText,
 body.bw-light .bw-archiveTitle {
+  color: rgba(18, 18, 18, 0.78);
+}
+
+body.bw-light .bw-replyText {
   color: rgba(18, 18, 18, 0.78);
 }
 
@@ -1770,6 +1929,23 @@ body.bw-light .bw-journalTitle {
 
 body.bw-light .bw-journalSub {
   color: rgba(18, 18, 18, 0.5);
+}
+
+body.bw-light .bw-accountTitle {
+  color: rgba(18, 18, 18, 0.88);
+}
+
+body.bw-light .bw-accountValue {
+  color: rgba(18, 18, 18, 0.76);
+}
+
+body.bw-light .bw-accountDanger {
+  border-color: rgba(20, 20, 20, 0.14);
+  background: rgba(20, 20, 20, 0.03);
+}
+
+body.bw-light .bw-accountDangerText {
+  color: rgba(18, 18, 18, 0.64);
 }
 
 body.bw-light .bw-ball {
