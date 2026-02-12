@@ -88,11 +88,11 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
       <main className="bw-journalWrap">
         <div className="bw-card">
           <div className="bw-cardMeta">
-            <div className="bw-cardDate">{formatEntryDate(entry.createdAt).toLowerCase()}</div>
-            {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
+            <div className="bw-ui bw-cardDate">{formatEntryDate(entry.createdAt).toLowerCase()}</div>
+            {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
           </div>
-          <div className="bw-cardPrompt">&quot;{promptText}&quot;</div>
-          <div className="bw-cardText">{entry.content}</div>
+          <div className="bw-writing bw-cardPrompt">&quot;{promptText}&quot;</div>
+          <div className="bw-writing bw-cardText">{entry.content}</div>
         </div>
 
         {entry.isCollective && (
@@ -105,7 +105,7 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
         )}
 
         <div className="bw-row">
-          <div className="bw-date">private prompt entry</div>
+          <div className="bw-ui bw-date">private prompt entry</div>
           <BwNavButton href="/archive">
             back to archive
           </BwNavButton>

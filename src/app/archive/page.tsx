@@ -17,7 +17,7 @@ export default async function ArchivePage() {
         <AppHeader active="archive" />
 
         <main className="bw-archiveWrap">
-          <div className="bw-hint" style={{ marginTop: 46 }}>
+          <div className="bw-ui bw-hint" style={{ marginTop: 46 }}>
             <Link className="bw-link" href="/sign-in?next=/archive">
               sign in
             </Link>{" "}

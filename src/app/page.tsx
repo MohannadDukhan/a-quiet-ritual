@@ -332,22 +332,22 @@ export default function HomePage() {
                   <span>8</span>
                 </div>
                 <div className={`eightball__window ${revealed ? "show" : ""}`}>
-                  <div className="eightball__windowText">{insidePromptText}</div>
+                  <div className="bw-writing eightball__windowText">{insidePromptText}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {!revealed && <div className="bw-hint">{isBallAnimating ? "..." : "tap the 8-ball"}</div>}
-          {revealed && <div className="bw-hint">tap again to reset</div>}
+          {!revealed && <div className="bw-ui bw-hint">{isBallAnimating ? "..." : "tap the 8-ball"}</div>}
+          {revealed && <div className="bw-ui bw-hint">tap again to reset</div>}
 
           <div ref={panelRef} className={`bw-panel ${revealed ? "show" : ""}`}>
             {revealed && (
               <>
-                {showFullPromptBelow && <div className="bw-prompt">&quot;{promptText}&quot;</div>}
+                {showFullPromptBelow && <div className="bw-writing bw-prompt">&quot;{promptText}&quot;</div>}
 
                 <textarea
-                  className="bw-textarea"
+                  className="bw-writing bw-textarea"
                   value={text}
                   onChange={(event) => {
                     setText(event.target.value);
@@ -358,7 +358,7 @@ export default function HomePage() {
                 />
 
                 <div className="bw-checkRow">
-                  <label className="bw-checkLabel">
+                  <label className="bw-ui bw-checkLabel">
                     <input
                       className="bw-checkbox"
                       type="checkbox"
@@ -378,9 +378,9 @@ export default function HomePage() {
                 </div>
 
                 <div className="bw-row">
-                  <div className="bw-date">{dateLabel}</div>
+                  <div className="bw-ui bw-date">{dateLabel}</div>
                   <div className="bw-actions">
-                    {saved && <span className="bw-date">saved.</span>}
+                    {saved && <span className="bw-ui bw-date">saved.</span>}
                     <button className="bw-btn" onClick={handleSave} disabled={saving || promptLoading}>
                       {saving ? "saving..." : "save"}
                     </button>
@@ -388,7 +388,7 @@ export default function HomePage() {
                 </div>
 
                 {needsSignIn && (
-                  <div className="bw-hint">
+                  <div className="bw-ui bw-hint">
                     <Link className="bw-link" href="/sign-in?next=/">
                       sign in
                     </Link>{" "}
@@ -401,7 +401,7 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {saveError && <div className="bw-hint">{saveError}</div>}
+                {saveError && <div className="bw-ui bw-hint">{saveError}</div>}
               </>
             )}
           </div>

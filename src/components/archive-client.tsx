@@ -37,7 +37,7 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
   return (
     <>
       <div className="bw-row" style={{ marginBottom: 14 }}>
-        <div className="bw-date">private archive</div>
+        <div className="bw-ui bw-date">private archive</div>
       </div>
 
       {empty ? (
@@ -50,19 +50,19 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
             entry.type === "JOURNAL" ? (
               <Link key={entry.id} href={`/journal/${entry.id}`} className="bw-card bw-cardLink">
                 <div className="bw-cardMeta">
-                  <span className="bw-collectiveBadge">regular journal entry</span>
-                  <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
+                  <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
+                  <div className="bw-ui bw-cardDate">{formatNice(entry.createdAt)}</div>
                 </div>
-                <div className="bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
+                <div className="bw-writing bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             ) : (
               <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-card bw-cardLink">
                 <div className="bw-cardMeta">
-                  <div className="bw-cardDate">{formatNice(entry.createdAt)}</div>
-                  {entry.isCollective && <span className="bw-collectiveBadge">shared on collective</span>}
+                  <div className="bw-ui bw-cardDate">{formatNice(entry.createdAt)}</div>
+                  {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
                 </div>
-                <div className="bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
-                <div className="bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
+                <div className="bw-writing bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
+                <div className="bw-writing bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             )
           ))}

@@ -97,20 +97,20 @@ export function CollectiveRepliesPanel({
 
   return (
     <section className="bw-repliesBlock">
-      <div className="bw-date">replies</div>
+      <div className="bw-ui bw-date">replies</div>
 
       {replies.length === 0 ? (
-        <div className="bw-replyHint">no replies yet.</div>
+        <div className="bw-ui bw-replyHint">no replies yet.</div>
       ) : (
         <div className="bw-replyList">
           {replies.map((reply) => (
             <div key={reply.id} className="bw-replyItem">
-              <div className="bw-replyMeta">
+              <div className="bw-ui bw-replyMeta">
                 <span>anonymous</span>
                 <span className="bw-fragDot">-</span>
                 <span>{formatCollectiveTime(reply.createdAt)}</span>
               </div>
-              <div className="bw-replyText">{reply.content}</div>
+              <div className="bw-writing bw-replyText">{reply.content}</div>
             </div>
           ))}
         </div>
@@ -120,7 +120,7 @@ export function CollectiveRepliesPanel({
         status === "authenticated" ? (
           <form className="bw-replyForm" onSubmit={handleSubmitReply}>
             <textarea
-              className="bw-replyInput"
+              className="bw-writing bw-replyInput"
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value);
@@ -130,14 +130,14 @@ export function CollectiveRepliesPanel({
               maxLength={MAX_REPLY_LENGTH}
             />
             <div className="bw-replyFormRow">
-              <div className="bw-date">{draft.trim().length}/{MAX_REPLY_LENGTH}</div>
+              <div className="bw-ui bw-date">{draft.trim().length}/{MAX_REPLY_LENGTH}</div>
               <button type="submit" className="bw-btn" disabled={submitting}>
                 {submitting ? "sending..." : "send reply"}
               </button>
             </div>
           </form>
         ) : (
-          <div className="bw-replyHint">
+          <div className="bw-ui bw-replyHint">
             <Link className="bw-link" href={signInHref}>
               sign in
             </Link>{" "}
@@ -145,10 +145,10 @@ export function CollectiveRepliesPanel({
           </div>
         )
       ) : (
-        <div className="bw-replyHint">new replies are only open for today&rsquo;s collective entries.</div>
+        <div className="bw-ui bw-replyHint">new replies are only open for today&rsquo;s collective entries.</div>
       )}
 
-      {error && <div className="bw-replyHint">{error}</div>}
+      {error && <div className="bw-ui bw-replyHint">{error}</div>}
     </section>
   );
 }

@@ -14,6 +14,23 @@ body {
   box-sizing: border-box;
 }
 
+.bw-ui {
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
+.bw-writing {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+  text-transform: lowercase;
+}
+
 .bw-menuWrap {
   position: relative;
   pointer-events: auto;
@@ -169,6 +186,7 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-dim);
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .bw-logoLink {
@@ -197,6 +215,7 @@ body {
   letter-spacing: 0.08em;
   line-height: 1;
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -259,6 +278,7 @@ body {
   letter-spacing: 0.08em;
   color: rgba(180, 150, 255, 0.75);
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   text-decoration: none;
 }
 
@@ -605,7 +625,7 @@ body {
   text-transform: lowercase;
   letter-spacing: 0.02em;
   line-height: 1.34;
-  font-size: clamp(11px, 1.45vw, 14px);
+  font-size: clamp(12px, 1.65vw, 15px);
   text-wrap: balance;
 }
 
@@ -648,8 +668,8 @@ body {
 
 .bw-prompt {
   text-align: center;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 18px;
+  line-height: 1.75;
   color: rgba(255, 255, 255, 0.75);
   font-style: italic;
   padding: 0 8px;
@@ -667,8 +687,8 @@ body {
   padding: 18px 18px;
   color: rgba(255, 255, 255, 0.82);
 
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.78;
   letter-spacing: 0.01em;
 
   outline: none;
@@ -719,6 +739,7 @@ body {
   letter-spacing: 0.04em;
   color: var(--text-faint);
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .bw-checkbox {
@@ -934,12 +955,15 @@ body {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-faint);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-transform: lowercase;
 }
 
 .bw-btn {
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
@@ -958,6 +982,7 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-faint);
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   text-align: center;
 }
 
@@ -967,6 +992,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: rgba(180, 150, 255, 0.65);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: transparent;
   border: 0;
   padding: 0;
@@ -1017,6 +1043,8 @@ body {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-faint);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-transform: lowercase;
 }
 
 .bw-cardMeta {
@@ -1031,6 +1059,7 @@ body {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--text-faint);
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -1040,8 +1069,8 @@ body {
 
 .bw-cardPrompt {
   margin-top: 8px;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 18px;
+  line-height: 1.76;
   color: rgba(255, 255, 255, 0.72);
   font-style: italic;
 }
@@ -1049,8 +1078,8 @@ body {
 .bw-cardText {
   margin-top: 10px;
   white-space: pre-wrap;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 17px;
+  line-height: 1.82;
   color: rgba(255, 255, 255, 0.86);
 }
 
@@ -1081,7 +1110,7 @@ body {
 
 .bw-aboutText {
   margin: 0;
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.78);
   text-transform: lowercase;
@@ -1089,8 +1118,8 @@ body {
 
 .bw-aboutThanks {
   margin: 6px 0 0;
-  font-size: 13px;
-  letter-spacing: 0.08em;
+  font-size: 16px;
+  letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.66);
   text-transform: lowercase;
 }
@@ -1504,6 +1533,7 @@ body {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.42);
   letter-spacing: 0.06em;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .bw-fragDot {
@@ -1512,8 +1542,8 @@ body {
 
 .bw-fragText {
   margin-top: 10px;
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.76;
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -1523,6 +1553,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: rgba(255, 255, 255, 0.38);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .bw-replyForm {
@@ -1540,8 +1571,8 @@ body {
   background: rgba(8, 8, 10, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.82);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.72;
   outline: none;
 }
 
@@ -1566,6 +1597,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: var(--text-faint);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .bw-replyList {
@@ -1588,13 +1620,14 @@ body {
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.46);
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .bw-replyText {
   margin-top: 6px;
   white-space: pre-wrap;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.74;
   color: rgba(255, 255, 255, 0.78);
 }
 
@@ -1688,6 +1721,7 @@ body {
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.32);
   text-transform: lowercase;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 /* share modal */
@@ -2029,6 +2063,11 @@ body.bw-light .bw-input {
 }
 
 @media (max-width: 640px) {
+  .bw-writing {
+    font-size: 16px;
+    line-height: 1.68;
+  }
+
   .bw-stage {
     padding: 78px 14px 20px;
   }

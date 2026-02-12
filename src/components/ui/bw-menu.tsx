@@ -12,7 +12,9 @@ type BwMenuProps = {
 };
 
 function getMenuItemClassName(isActive: boolean): string {
-  return isActive ? "bw-navText bw-navDropdownItem is-active" : "bw-navText bw-navDropdownItem";
+  return isActive
+    ? "bw-ui bw-navText bw-navDropdownItem is-active"
+    : "bw-ui bw-navText bw-navDropdownItem";
 }
 
 export function BwMenu({ active }: BwMenuProps) {
@@ -53,7 +55,7 @@ export function BwMenu({ active }: BwMenuProps) {
       <button
         ref={triggerRef}
         type="button"
-        className="bw-navText bw-navMenuButton"
+        className="bw-ui bw-navText bw-navMenuButton"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="open menu"
@@ -80,18 +82,18 @@ export function BwMenu({ active }: BwMenuProps) {
           >
             collective
           </Link>
-          <Link className="bw-navText bw-navDropdownItem" href="/journal" role="menuitem" onClick={() => setOpen(false)}>
+          <Link className="bw-ui bw-navText bw-navDropdownItem" href="/journal" role="menuitem" onClick={() => setOpen(false)}>
             regular journal
           </Link>
-          <Link className="bw-navText bw-navDropdownItem" href="/about" role="menuitem" onClick={() => setOpen(false)}>
+          <Link className="bw-ui bw-navText bw-navDropdownItem" href="/about" role="menuitem" onClick={() => setOpen(false)}>
             about
           </Link>
           {status === "authenticated" ? (
-            <Link className="bw-navText bw-navDropdownItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
+            <Link className="bw-ui bw-navText bw-navDropdownItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
               my account
             </Link>
           ) : (
-            <Link className="bw-navText bw-navDropdownItem" href={signInHref} role="menuitem" onClick={() => setOpen(false)}>
+            <Link className="bw-ui bw-navText bw-navDropdownItem" href={signInHref} role="menuitem" onClick={() => setOpen(false)}>
               sign in
             </Link>
           )}

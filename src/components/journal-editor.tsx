@@ -63,12 +63,12 @@ export function JournalEditor() {
   return (
     <>
       <div className="bw-journalHead">
-        <h1 className="bw-journalTitle">write what&apos;s on your mind.</h1>
-        <p className="bw-journalSub">no prompt today. just you.</p>
+        <h1 className="bw-writing bw-journalTitle">write what&apos;s on your mind.</h1>
+        <p className="bw-ui bw-journalSub">no prompt today. just you.</p>
       </div>
 
       <textarea
-        className="bw-textarea"
+        className="bw-writing bw-textarea"
         value={text}
         onChange={(event) => {
           const value = event.target.value;
@@ -85,7 +85,7 @@ export function JournalEditor() {
       />
 
       <div className="bw-row">
-        <div className="bw-date">{saved ? "saved." : "private only"}</div>
+        <div className="bw-ui bw-date">{saved ? "saved." : "private only"}</div>
         <button className="bw-btn" onClick={handleSave} disabled={saving}>
           {saving ? "saving..." : "save"}
         </button>

@@ -33,11 +33,11 @@ export default async function CollectivePage() {
       <main className="bw-collectiveWrap">
         <section className="bw-collectiveHero">
           <div className="bw-collectiveBadgeRow">
-            <span className="bw-navbtn bw-breathe bw-collectivePill">collective</span>
+            <span className="bw-ui bw-navbtn bw-breathe bw-collectivePill">collective</span>
           </div>
-          <div className="bw-collectiveEyebrow">today&rsquo;s prompt</div>
-          <h1 className="bw-collectivePrompt">today&rsquo;s prompt: {todaysPrompt.text}</h1>
-          <p className="bw-collectiveNotice">
+          <div className="bw-ui bw-collectiveEyebrow">today&rsquo;s prompt</div>
+          <h1 className="bw-writing bw-collectivePrompt">today&rsquo;s prompt: {todaysPrompt.text}</h1>
+          <p className="bw-ui bw-collectiveNotice">
             this is a respectful space. hate, threats, or harassment can&rsquo;t be shared.
           </p>
         </section>

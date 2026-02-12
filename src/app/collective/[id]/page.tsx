@@ -68,10 +68,10 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
       <main className="bw-journalWrap">
         <div className="bw-card">
           <div className="bw-cardMeta">
-            <div className="bw-cardDate">{formatCollectiveTime(entry.createdAt)}</div>
-            <span className="bw-collectiveBadge">anonymous</span>
+            <div className="bw-ui bw-cardDate">{formatCollectiveTime(entry.createdAt)}</div>
+            <span className="bw-ui bw-collectiveBadge">anonymous</span>
           </div>
-          <div className="bw-cardText">{entry.content}</div>
+          <div className="bw-writing bw-cardText">{entry.content}</div>
         </div>
 
         <CollectiveRepliesPanel
@@ -82,7 +82,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
         />
 
         <div className="bw-row">
-          <div className="bw-date">today&rsquo;s collective entry</div>
+          <div className="bw-ui bw-date">today&rsquo;s collective entry</div>
           <BwNavButton href="/collective">
             back to collective
           </BwNavButton>

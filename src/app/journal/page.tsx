@@ -17,7 +17,7 @@ export default async function JournalPage() {
       <main className="bw-journalWrap">
         {!userId ? (
           <div className="bw-panel show" style={{ width: "min(760px, 100%)" }}>
-            <div className="bw-hint" style={{ marginTop: 12 }}>
+            <div className="bw-ui bw-hint" style={{ marginTop: 12 }}>
               <Link className="bw-link" href="/sign-in?next=/journal">
                 sign in
               </Link>{" "}

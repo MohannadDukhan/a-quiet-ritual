@@ -34,13 +34,13 @@ export function CollectiveFeed({ entries }: CollectiveFeedProps) {
     <div className="bw-feed">
       {entries.map((entry) => (
         <Link key={entry.id} href={`/collective/${entry.id}`} className="bw-fragment bw-fragmentLink">
-          <div className="bw-fragMeta">
+          <div className="bw-ui bw-fragMeta">
             <span>{formatCollectiveTime(entry.createdAt)}</span>
             <span className="bw-fragDot">-</span>
             <span>anonymous</span>
           </div>
-          <div className="bw-fragText">{previewContent(entry.content)}</div>
-          <div className="bw-fragHint">click to view replies or reply</div>
+          <div className="bw-writing bw-fragText">{previewContent(entry.content)}</div>
+          <div className="bw-ui bw-fragHint">click to view replies or reply</div>
         </Link>
       ))}
     </div>

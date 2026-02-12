@@ -51,14 +51,14 @@ export default async function JournalEntryDetailPage({ params }: JournalEntryDet
       <main className="bw-journalWrap">
         <div className="bw-card">
           <div className="bw-cardMeta">
-            <span className="bw-collectiveBadge">regular journal entry</span>
-            <div className="bw-cardDate">{formatJournalDate(entry.createdAt).toLowerCase()}</div>
+            <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
+            <div className="bw-ui bw-cardDate">{formatJournalDate(entry.createdAt).toLowerCase()}</div>
           </div>
-          <div className="bw-cardText">{entry.content}</div>
+          <div className="bw-writing bw-cardText">{entry.content}</div>
         </div>
 
         <div className="bw-row">
-          <div className="bw-date">private entry</div>
+          <div className="bw-ui bw-date">private entry</div>
           <BwNavButton href="/archive">
             back to archive
           </BwNavButton>
