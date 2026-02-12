@@ -1,12 +1,6 @@
 import "./globals.css";
-import { Arimo } from "next/font/google";
 
 import { AuthProvider } from "@/components/auth-provider";
-
-const arimo = Arimo({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-});
 
 export const metadata = {
   title: "a quiet ritual",
@@ -20,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={arimo.className}>
+      <body className="bw-body">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

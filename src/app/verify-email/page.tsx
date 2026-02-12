@@ -19,8 +19,8 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
           <BwNavButton href="/sign-in">
             sign in
           </BwNavButton>
-          <span className="bw-brand">verify email</span>
-          <span className="bw-brand" style={{ opacity: 0 }}>
+          <span className="bw-topLabel">verify email</span>
+          <span className="bw-topLabel" style={{ opacity: 0 }}>
             ghost
           </span>
         </div>

@@ -67,8 +67,8 @@ export function ResetPasswordForm({ email, token }: ResetPasswordFormProps) {
         <BwNavButton href="/sign-in">
           sign in
         </BwNavButton>
-        <span className="bw-brand">reset password</span>
-        <span className="bw-brand" style={{ opacity: 0 }}>
+        <span className="bw-topLabel">reset password</span>
+        <span className="bw-topLabel" style={{ opacity: 0 }}>
           ghost
         </span>
       </div>

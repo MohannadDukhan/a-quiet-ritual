@@ -72,7 +72,7 @@ export function SignInForm({ nextPath }: SignInFormProps) {
         <BwNavButton href={nextPath}>
           back
         </BwNavButton>
-        <span className="bw-brand">sign in</span>
+        <span className="bw-topLabel">sign in</span>
         <BwNavButton href="/sign-up">
           create account
         </BwNavButton>

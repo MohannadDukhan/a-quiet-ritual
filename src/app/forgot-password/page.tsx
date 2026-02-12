@@ -39,8 +39,8 @@ export default function ForgotPasswordPage() {
         <BwNavButton href="/sign-in">
           back
         </BwNavButton>
-        <span className="bw-brand">forgot password</span>
-        <span className="bw-brand" style={{ opacity: 0 }}>
+        <span className="bw-topLabel">forgot password</span>
+        <span className="bw-topLabel" style={{ opacity: 0 }}>
           ghost
         </span>
       </div>

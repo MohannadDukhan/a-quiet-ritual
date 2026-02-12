@@ -7,6 +7,12 @@ body {
   height: 100%;
 }
 
+:root {
+  --bw-nav-font: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bw-body-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --bw-brand-blnd-font: Futura, "Futura PT", "Avenir Next", Avenir, "Century Gothic", system-ui, sans-serif;
+}
+
 /* layout safety */
 *,
 *::before,
@@ -15,7 +21,7 @@ body {
 }
 
 .bw-ui {
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
@@ -24,9 +30,17 @@ body {
 }
 
 .bw-writing {
-  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-family: var(--bw-body-font);
   font-size: 17px;
-  line-height: 1.72;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-transform: lowercase;
+}
+
+.bw-body {
+  font-family: var(--bw-body-font);
+  font-size: 16px;
+  line-height: 1.7;
   letter-spacing: 0.01em;
   text-transform: lowercase;
 }
@@ -37,7 +51,7 @@ body {
 }
 
 .bw-navBar {
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-nav-font);
 }
 
 .bw-navSide {
@@ -58,15 +72,26 @@ body {
   padding: 0;
 }
 
-.bw-wordmark {
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: clamp(18px, 2.1vw, 22px);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  text-transform: uppercase;
+.bw-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  font-size: clamp(24px, 2.8vw, 30px);
+  line-height: 1.02;
+  text-transform: lowercase;
   text-decoration: none;
   transition: opacity 160ms ease;
+}
+
+.bw-brandBlnd {
+  font-family: var(--bw-brand-blnd-font);
+  font-weight: 600;
+  letter-spacing: 0.012em;
+}
+
+.bw-brandWave {
+  font-weight: 500;
+  letter-spacing: 0.006em;
 }
 
 .bw-brandLight {
@@ -77,16 +102,17 @@ body {
   color: rgba(16, 16, 16, 0.92);
 }
 
-.bw-wordmark:hover {
+.bw-brand:hover {
   opacity: 0.76;
 }
 
-.bw-wordmark:focus-visible {
+.bw-brand:focus-visible {
   outline: none;
   opacity: 0.76;
 }
 
 .bw-navText {
+  font-family: var(--bw-nav-font);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -162,6 +188,11 @@ body {
   overflow-x: hidden;
   background: #050505;
   color: rgba(255, 255, 255, 0.86);
+  font-family: var(--bw-body-font);
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-transform: lowercase;
   transition: background-color 500ms ease, color 500ms ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -209,12 +240,12 @@ body {
   pointer-events: auto;
 }
 
-.bw-brand {
+.bw-topLabel {
   font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--text-dim);
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 .bw-logoLink {
@@ -243,7 +274,7 @@ body {
   letter-spacing: 0.08em;
   line-height: 1;
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -306,7 +337,7 @@ body {
   letter-spacing: 0.08em;
   color: rgba(180, 150, 255, 0.75);
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   text-decoration: none;
 }
 
@@ -767,7 +798,7 @@ body {
   letter-spacing: 0.04em;
   color: var(--text-faint);
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 .bw-checkbox {
@@ -983,7 +1014,7 @@ body {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-faint);
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   text-transform: lowercase;
 }
 
@@ -991,7 +1022,7 @@ body {
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
@@ -1010,7 +1041,7 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-faint);
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   text-align: center;
 }
 
@@ -1020,7 +1051,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: rgba(180, 150, 255, 0.65);
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   background: transparent;
   border: 0;
   padding: 0;
@@ -1071,7 +1102,7 @@ body {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-faint);
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   text-transform: lowercase;
 }
 
@@ -1087,7 +1118,7 @@ body {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
   color: var(--text-faint);
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -1561,7 +1592,7 @@ body {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.42);
   letter-spacing: 0.06em;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 .bw-fragDot {
@@ -1581,7 +1612,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: rgba(255, 255, 255, 0.38);
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 .bw-replyForm {
@@ -1625,7 +1656,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: var(--text-faint);
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 .bw-replyList {
@@ -1648,7 +1679,7 @@ body {
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.46);
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 .bw-replyText {
@@ -1749,7 +1780,7 @@ body {
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.32);
   text-transform: lowercase;
-  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--bw-body-font);
 }
 
 /* share modal */
@@ -2113,9 +2144,17 @@ body.bw-light .bw-input {
     max-height: 30px;
   }
 
-  .bw-wordmark {
-    font-size: clamp(16px, 5.2vw, 18px);
-    letter-spacing: 0.018em;
+  .bw-brand {
+    font-size: clamp(22px, 6.8vw, 26px);
+    line-height: 1;
+  }
+
+  .bw-brandBlnd {
+    letter-spacing: 0.01em;
+  }
+
+  .bw-brandWave {
+    letter-spacing: 0.004em;
   }
 
   .bw-navText {
@@ -2140,6 +2179,20 @@ body.bw-light .bw-input {
     padding: 10px;
   }
 
+  .bw-revealed .bw-stage {
+    padding-top: 132px;
+  }
+
+  .bw-revealed .bw-float {
+    transform: translateY(-14px);
+    animation: bwFloatAfterMobile 6.8s ease-in-out infinite;
+  }
+
+  .bw-revealed .bw-ball {
+    width: min(264px, 74vw) !important;
+    height: min(264px, 74vw) !important;
+  }
+
   .bw-textarea {
     min-height: 42svh;
     font-size: 16px;
@@ -2159,3 +2212,10 @@ body.bw-light .bw-input {
   }
 
 }
+
+@keyframes bwFloatAfterMobile {
+  0% { transform: translateY(-14px) translateX(0px); }
+  50% { transform: translateY(-26px) translateX(-2px); }
+  100% { transform: translateY(-14px) translateX(0px); }
+}
+

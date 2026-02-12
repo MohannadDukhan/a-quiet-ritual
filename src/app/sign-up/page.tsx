@@ -69,7 +69,7 @@ export default function SignUpPage() {
         <BwNavButton href="/">
           back
         </BwNavButton>
-        <span className="bw-brand">create account</span>
+        <span className="bw-topLabel">create account</span>
         <BwNavButton href="/sign-in">
           sign in
         </BwNavButton>
