@@ -1449,6 +1449,26 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.bw-fragmentLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.bw-fragmentLink:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.bw-fragmentLink:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(5, 5, 5, 0.96),
+    0 0 0 4px rgba(255, 255, 255, 0.42);
+}
+
 .bw-fragMeta {
   display: flex;
   gap: 10px;
@@ -1469,13 +1489,12 @@ body {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.bw-replyActionRow {
-  margin-top: 12px;
-}
-
-.bw-replyAction {
-  min-height: 30px;
-  padding: 0 12px;
+.bw-fragHint {
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .bw-replyForm {
@@ -1549,6 +1568,13 @@ body {
   font-size: 13px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.78);
+}
+
+.bw-repliesBlock {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  display: grid;
+  gap: 2px;
 }
 
 .bw-song {
@@ -1905,6 +1931,10 @@ body.bw-light .bw-fragText,
 body.bw-light .bw-cardText,
 body.bw-light .bw-archiveTitle {
   color: rgba(18, 18, 18, 0.78);
+}
+
+body.bw-light .bw-fragHint {
+  color: rgba(18, 18, 18, 0.52);
 }
 
 body.bw-light .bw-replyText {

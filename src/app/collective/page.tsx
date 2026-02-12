@@ -18,25 +18,12 @@ export default async function CollectivePage() {
       id: true,
       content: true,
       createdAt: true,
-      collectiveReplies: {
-        orderBy: { createdAt: "asc" },
-        select: {
-          id: true,
-          content: true,
-          createdAt: true,
-        },
-      },
     },
   });
   const serializedEntries: CollectiveFeedEntry[] = entries.map((entry) => ({
     id: entry.id,
     content: entry.content,
     createdAt: entry.createdAt.toISOString(),
-    replies: entry.collectiveReplies.map((reply) => ({
-      id: reply.id,
-      content: reply.content,
-      createdAt: reply.createdAt.toISOString(),
-    })),
   }));
 
   return (

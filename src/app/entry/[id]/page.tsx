@@ -1,9 +1,14 @@
 import { notFound } from "next/navigation";
 
+import {
+  CollectiveRepliesPanel,
+  type CollectiveReplyItem,
+} from "@/components/collective-replies-panel";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getTodaysPrompt } from "@/lib/prompt-service";
 
 type PromptEntryDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -34,6 +39,8 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
       type: "PROMPT",
     },
     select: {
+      id: true,
+      promptId: true,
       content: true,
       promptTextSnapshot: true,
       isCollective: true,
@@ -51,6 +58,28 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
   }
 
   const promptText = entry.promptTextSnapshot || entry.prompt?.text || "";
+  let replies: CollectiveReplyItem[] = [];
+  let canReply = false;
+
+  if (entry.isCollective) {
+    const replyRows = await prisma.collectiveReply.findMany({
+      where: { entryId: entry.id },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+      },
+    });
+    replies = replyRows.map((reply) => ({
+      id: reply.id,
+      content: reply.content,
+      createdAt: reply.createdAt.toISOString(),
+    }));
+
+    const todaysPrompt = await getTodaysPrompt();
+    canReply = entry.promptId === todaysPrompt.id;
+  }
 
   return (
     <div className="bw-bg">
@@ -65,6 +94,15 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
           <div className="bw-cardPrompt">&quot;{promptText}&quot;</div>
           <div className="bw-cardText">{entry.content}</div>
         </div>
+
+        {entry.isCollective && (
+          <CollectiveRepliesPanel
+            entryId={entry.id}
+            initialReplies={replies}
+            signInNextPath={`/entry/${entry.id}`}
+            canReply={canReply}
+          />
+        )}
 
         <div className="bw-row">
           <div className="bw-date">private prompt entry</div>
