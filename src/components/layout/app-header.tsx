@@ -24,9 +24,9 @@ export function AppHeader({ active, brandTone = "light" }: AppHeaderProps) {
     <div className="bw-top bw-navBar">
       <div className="bw-navSide" aria-hidden="true" />
 
-      <Link href="/" className={`bw-navLogoLink bw-brand ${brandToneClass}`} aria-label="blndwave home">
-        <span className="bw-brandBlnd">blnd</span>
-        <span className={`${brandWaveFont.className} bw-brandWave`}>wave</span>
+      <Link href="/" className={`bw-navLogoLink bw-brand ${brandToneClass}`} aria-label="BLNDWAVE home">
+        <span className="bw-brandBlnd">BLND</span>
+        <span className={`${brandWaveFont.className} bw-brandWave`}>WAVE</span>
       </Link>
 
       <div className="bw-navSide bw-navSideRight">
