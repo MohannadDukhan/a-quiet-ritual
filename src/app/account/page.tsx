@@ -4,12 +4,14 @@ import { AccountPanel } from "@/components/account-panel";
 import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getRequestTimeZone } from "@/lib/request-timezone";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await auth();
   const userId = session?.user?.id;
+  const timeZone = await getRequestTimeZone();
 
   if (!userId) {
     return (
@@ -60,6 +62,7 @@ export default async function AccountPage() {
           createdAt={user.createdAt.toISOString()}
           email={user.email}
           emailVerified={Boolean(user.emailVerified)}
+          timeZone={timeZone}
         />
       </main>
     </div>

@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import { AuthProvider } from "@/components/auth-provider";
+import { TimeZoneCookieSync } from "@/components/timezone-cookie-sync";
 
 export const metadata = {
   title: "a quiet ritual",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bw-body">
+        <TimeZoneCookieSync />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

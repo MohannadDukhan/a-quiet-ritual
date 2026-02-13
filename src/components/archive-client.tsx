@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { formatDate } from "@/lib/time";
+
 export type ArchiveEntry = {
   id: string;
   type: "PROMPT" | "JOURNAL";
@@ -13,20 +15,12 @@ export type ArchiveEntry = {
   updatedAt: string;
 };
 
-function formatNice(iso: string) {
-  const date = new Date(iso);
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
-}
-
 type ArchiveClientProps = {
   entries: ArchiveEntry[];
+  timeZone: string;
 };
 
-export function ArchiveClient({ entries }: ArchiveClientProps) {
+export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
   const empty = useMemo(() => entries.length === 0, [entries.length]);
   function previewContent(content: string) {
     const compact = content.replace(/\s+/g, " ").trim();
@@ -51,14 +45,14 @@ export function ArchiveClient({ entries }: ArchiveClientProps) {
               <Link key={entry.id} href={`/journal/${entry.id}`} className="bw-card bw-cardLink">
                 <div className="bw-cardMeta">
                   <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
-                  <div className="bw-ui bw-cardDate">{formatNice(entry.createdAt)}</div>
+                  <div className="bw-ui bw-cardDate">{formatDate(entry.createdAt, timeZone)}</div>
                 </div>
                 <div className="bw-writing bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             ) : (
               <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-card bw-cardLink">
                 <div className="bw-cardMeta">
-                  <div className="bw-ui bw-cardDate">{formatNice(entry.createdAt)}</div>
+                  <div className="bw-ui bw-cardDate">{formatDate(entry.createdAt, timeZone)}</div>
                   {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
                 </div>
                 <div className="bw-writing bw-cardPrompt">&quot;{entry.promptText}&quot;</div>

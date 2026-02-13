@@ -4,12 +4,14 @@ import { ArchiveClient, type ArchiveEntry } from "@/components/archive-client";
 import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getRequestTimeZone } from "@/lib/request-timezone";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArchivePage() {
   const session = await auth();
   const userId = session?.user?.id;
+  const timeZone = await getRequestTimeZone();
 
   if (!userId) {
     return (
@@ -62,7 +64,7 @@ export default async function ArchivePage() {
       <AppHeader active="archive" />
 
       <main className="bw-archiveWrap">
-        <ArchiveClient entries={serializedEntries} />
+        <ArchiveClient entries={serializedEntries} timeZone={timeZone} />
       </main>
     </div>
   );

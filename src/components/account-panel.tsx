@@ -3,10 +3,13 @@
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 
+import { formatDate } from "@/lib/time";
+
 type AccountPanelProps = {
   createdAt: string;
   email: string;
   emailVerified: boolean;
+  timeZone: string;
 };
 
 type DeleteAccountResponse = {
@@ -16,14 +19,6 @@ type DeleteAccountResponse = {
 
 const DELETE_CONFIRMATION_TEXT = "DELETE MY DATA";
 
-function formatCreatedDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  }).toLowerCase();
-}
-
 function maskEmail(email: string): string {
   const [localPart, domainPart] = email.split("@");
   if (!localPart || !domainPart) return email;
@@ -31,7 +26,7 @@ function maskEmail(email: string): string {
   return `${localPart.slice(0, 1)}${stars}@${domainPart}`;
 }
 
-export function AccountPanel({ createdAt, email, emailVerified }: AccountPanelProps) {
+export function AccountPanel({ createdAt, email, emailVerified, timeZone }: AccountPanelProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deletePending, setDeletePending] = useState(false);
@@ -83,7 +78,7 @@ export function AccountPanel({ createdAt, email, emailVerified }: AccountPanelPr
       <div className="bw-accountMeta">
         <div className="bw-accountRow">
           <span className="bw-date">created</span>
-          <span className="bw-accountValue">{formatCreatedDate(createdAt)}</span>
+          <span className="bw-accountValue">{formatDate(createdAt, timeZone)}</span>
         </div>
         <div className="bw-accountRow">
           <span className="bw-date">email</span>

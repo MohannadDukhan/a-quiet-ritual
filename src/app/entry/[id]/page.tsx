@@ -9,22 +9,15 @@ import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
+import { getRequestTimeZone } from "@/lib/request-timezone";
+import { formatDateTime } from "@/lib/time";
 
 type PromptEntryDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-function formatEntryDate(date: Date): string {
-  return date.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 export default async function PromptEntryDetailPage({ params }: PromptEntryDetailPageProps) {
+  const timeZone = await getRequestTimeZone();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
@@ -88,7 +81,7 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
       <main className="bw-journalWrap">
         <div className="bw-card">
           <div className="bw-cardMeta">
-            <div className="bw-ui bw-cardDate">{formatEntryDate(entry.createdAt).toLowerCase()}</div>
+            <div className="bw-ui bw-cardDate">{formatDateTime(entry.createdAt, timeZone)}</div>
             {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
           </div>
           <div className="bw-writing bw-cardPrompt">&quot;{promptText}&quot;</div>
@@ -101,6 +94,7 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
             initialReplies={replies}
             signInNextPath={`/entry/${entry.id}`}
             canReply={canReply}
+            timeZone={timeZone}
           />
         )}
 

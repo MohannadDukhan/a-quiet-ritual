@@ -8,23 +8,17 @@ import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
+import { getRequestTimeZone } from "@/lib/request-timezone";
+import { formatDateTime } from "@/lib/time";
 
 type CollectiveEntryDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-function formatCollectiveTime(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date).toLowerCase();
-}
-
 export const dynamic = "force-dynamic";
 
 export default async function CollectiveEntryDetailPage({ params }: CollectiveEntryDetailPageProps) {
+  const timeZone = await getRequestTimeZone();
   const { id } = await params;
   const todaysPrompt = await getTodaysPrompt();
 
@@ -68,7 +62,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
       <main className="bw-journalWrap">
         <div className="bw-card">
           <div className="bw-cardMeta">
-            <div className="bw-ui bw-cardDate">{formatCollectiveTime(entry.createdAt)}</div>
+            <div className="bw-ui bw-cardDate">{formatDateTime(entry.createdAt, timeZone)}</div>
             <span className="bw-ui bw-collectiveBadge">anonymous</span>
           </div>
           <div className="bw-writing bw-cardText">{entry.content}</div>
@@ -79,6 +73,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
           initialReplies={serializedReplies}
           signInNextPath={`/collective/${entry.id}`}
           canReply
+          timeZone={timeZone}
         />
 
         <div className="bw-row">

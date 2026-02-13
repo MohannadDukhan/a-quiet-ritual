@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { FormEvent, useMemo, useState } from "react";
 
+import { formatDateTime } from "@/lib/time";
+
 export type CollectiveReplyItem = {
   id: string;
   content: string;
@@ -15,6 +17,7 @@ type CollectiveRepliesPanelProps = {
   initialReplies: CollectiveReplyItem[];
   signInNextPath: string;
   canReply: boolean;
+  timeZone: string;
 };
 
 type ReplyApiResponse = {
@@ -24,20 +27,12 @@ type ReplyApiResponse = {
 
 const MAX_REPLY_LENGTH = 1000;
 
-function formatCollectiveTime(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(iso)).toLowerCase();
-}
-
 export function CollectiveRepliesPanel({
   entryId,
   initialReplies,
   signInNextPath,
   canReply,
+  timeZone,
 }: CollectiveRepliesPanelProps) {
   const { status } = useSession();
   const [replies, setReplies] = useState(initialReplies);
@@ -108,7 +103,7 @@ export function CollectiveRepliesPanel({
               <div className="bw-ui bw-replyMeta">
                 <span>anonymous</span>
                 <span className="bw-fragDot">-</span>
-                <span>{formatCollectiveTime(reply.createdAt)}</span>
+                <span>{formatDateTime(reply.createdAt, timeZone)}</span>
               </div>
               <div className="bw-writing bw-replyText">{reply.content}</div>
             </div>

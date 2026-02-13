@@ -2,10 +2,12 @@ import { AppHeader } from "@/components/layout/app-header";
 import { CollectiveFeed, type CollectiveFeedEntry } from "@/components/collective-feed";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
+import { getRequestTimeZone } from "@/lib/request-timezone";
 
 export const dynamic = "force-dynamic";
 
 export default async function CollectivePage() {
+  const timeZone = await getRequestTimeZone();
   const todaysPrompt = await getTodaysPrompt();
   const entries = await prisma.entry.findMany({
     where: {
@@ -45,7 +47,7 @@ export default async function CollectivePage() {
         {entries.length === 0 ? (
           <div className="bw-empty">no shared entries yet.</div>
         ) : (
-          <CollectiveFeed entries={serializedEntries} />
+          <CollectiveFeed entries={serializedEntries} timeZone={timeZone} />
         )}
       </main>
     </div>

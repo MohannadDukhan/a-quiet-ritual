@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { formatDateTime } from "@/lib/time";
+
 export type CollectiveFeedEntry = {
   id: string;
   content: string;
@@ -8,18 +10,10 @@ export type CollectiveFeedEntry = {
 
 type CollectiveFeedProps = {
   entries: CollectiveFeedEntry[];
+  timeZone: string;
 };
 
 const CARD_PREVIEW_LENGTH = 560;
-
-function formatCollectiveTime(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(iso)).toLowerCase();
-}
 
 function previewContent(content: string): string {
   const compact = content.replace(/\s+/g, " ").trim();
@@ -29,13 +23,13 @@ function previewContent(content: string): string {
   return `${compact.slice(0, CARD_PREVIEW_LENGTH).trimEnd()}...`;
 }
 
-export function CollectiveFeed({ entries }: CollectiveFeedProps) {
+export function CollectiveFeed({ entries, timeZone }: CollectiveFeedProps) {
   return (
     <div className="bw-feed">
       {entries.map((entry) => (
         <Link key={entry.id} href={`/collective/${entry.id}`} className="bw-fragment bw-fragmentLink">
           <div className="bw-ui bw-fragMeta">
-            <span>{formatCollectiveTime(entry.createdAt)}</span>
+            <span>{formatDateTime(entry.createdAt, timeZone)}</span>
             <span className="bw-fragDot">-</span>
             <span>anonymous</span>
           </div>
