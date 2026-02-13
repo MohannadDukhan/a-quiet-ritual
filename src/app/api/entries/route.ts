@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getTodaysPrompt } from "@/lib/prompt-service";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp, isSameOrigin } from "@/lib/security";
 
@@ -133,6 +134,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Prompt not found." }, { status: 400 });
   }
 
+  const todaysPrompt = await getTodaysPrompt();
+  const promptTextSnapshot =
+    prompt.id === todaysPrompt.id
+      ? todaysPrompt.text
+      : prompt.text;
+
   if (publishPublic) {
     if (!PUBLIC_ARCHIVE_ENABLED) {
       return NextResponse.json({ error: "Public archive posting is unavailable." }, { status: 403 });
@@ -180,7 +187,7 @@ export async function POST(request: NextRequest) {
         userId: publicUserId,
         type: "PROMPT",
         promptId: prompt.id,
-        promptTextSnapshot: prompt.text,
+        promptTextSnapshot,
         content: storedContent,
       },
       select: {
@@ -257,7 +264,7 @@ export async function POST(request: NextRequest) {
       userId,
       type: "PROMPT",
       promptId: prompt.id,
-      promptTextSnapshot: prompt.text,
+      promptTextSnapshot,
       content: parsed.data.content,
       isCollective: shareOnCollective,
       collectivePublishedAt: shareOnCollective ? new Date() : null,

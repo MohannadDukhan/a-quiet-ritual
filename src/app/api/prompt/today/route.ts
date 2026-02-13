@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { getTodaysPrompt } from "@/lib/prompt-service";
-import { formatDateId } from "@/lib/prompts";
+import { formatDateIdInEastern, getTodaysPrompt } from "@/lib/prompt-service";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const prompt = await getTodaysPrompt();
-    const dateId = formatDateId();
+    const dateId = formatDateIdInEastern();
 
     return NextResponse.json({
       prompt: {

@@ -4,6 +4,7 @@ import { AdminModerationPanel } from "@/components/admin-moderation-panel";
 import { AppHeader } from "@/components/layout/app-header";
 import { requireAdminUser } from "@/lib/admin-auth";
 import { getAdminModerationTodayData } from "@/lib/admin-moderation";
+import { getUpcomingResolvedPromptDays } from "@/lib/prompt-service";
 import { getRequestTimeZone } from "@/lib/request-timezone";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +15,10 @@ export default async function AdminPage() {
     notFound();
   }
 
-  const [timeZone, moderationData] = await Promise.all([
+  const [timeZone, moderationData, promptDays] = await Promise.all([
     getRequestTimeZone(),
     getAdminModerationTodayData(),
+    getUpcomingResolvedPromptDays(),
   ]);
 
   return (
@@ -24,7 +26,7 @@ export default async function AdminPage() {
       <AppHeader />
 
       <main className="bw-journalWrap">
-        <AdminModerationPanel initialData={moderationData} timeZone={timeZone} />
+        <AdminModerationPanel initialData={moderationData} initialPromptDays={promptDays} timeZone={timeZone} />
       </main>
     </div>
   );

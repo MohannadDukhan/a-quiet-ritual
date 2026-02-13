@@ -27,6 +27,7 @@ model Prompt {
   text      String   @unique
   createdAt DateTime @default(now())
   entries   Entry[]
+  schedules PromptSchedule[]
 }
 
 enum EntryType {
@@ -130,6 +131,18 @@ model PasswordResetToken {
 
   @@unique([identifier, tokenHash])
   @@index([identifier, expires])
+}
+
+model PromptSchedule {
+  id         String   @id @default(cuid())
+  date       String   @unique
+  promptText String
+  promptId   String?  @db.Uuid
+  prompt     Prompt?  @relation(fields: [promptId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
 }
 
 model RateLimitBucket {

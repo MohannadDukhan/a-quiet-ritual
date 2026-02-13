@@ -5,9 +5,11 @@ import { useMemo, useState } from "react";
 
 import { formatDateTime } from "@/lib/time";
 import type { AdminModerationTodayData } from "@/lib/admin-moderation";
+import type { ResolvedPromptDay } from "@/lib/prompt-service";
 
 type AdminModerationPanelProps = {
   initialData: AdminModerationTodayData;
+  initialPromptDays: ResolvedPromptDay[];
   timeZone: string;
 };
 
@@ -30,8 +32,24 @@ async function parseApiError(response: Response): Promise<string> {
   return data?.error || "request failed.";
 }
 
-export function AdminModerationPanel({ initialData, timeZone }: AdminModerationPanelProps) {
+function formatPromptDateLabel(dateId: string): string {
+  const date = new Date(`${dateId}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return dateId;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+    .format(date)
+    .toLowerCase();
+}
+
+export function AdminModerationPanel({ initialData, initialPromptDays, timeZone }: AdminModerationPanelProps) {
   const [data, setData] = useState(initialData);
+  const [promptDays, setPromptDays] = useState(initialPromptDays);
+  const [editingPromptDate, setEditingPromptDate] = useState<string | null>(null);
+  const [promptDraft, setPromptDraft] = useState("");
   const [expandedEntries, setExpandedEntries] = useState<Record<string, boolean>>({});
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +70,31 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
     }
     const nextData = (await response.json()) as AdminModerationTodayData;
     setData(nextData);
+  }
+
+  async function refreshPromptDays() {
+    const response = await fetch("/api/admin/prompts/upcoming", {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiError(response));
+    }
+    const payload = (await response.json().catch(() => null)) as { days?: ResolvedPromptDay[] } | null;
+    if (!payload?.days) {
+      throw new Error("request failed.");
+    }
+    setPromptDays(payload.days);
+    const firstDay = payload.days[0];
+    if (firstDay) {
+      setData((prev) => ({
+        ...prev,
+        prompt: {
+          ...prev.prompt,
+          text: firstDay.promptText,
+        },
+      }));
+    }
   }
 
   async function runAction(actionKey: string, request: () => Promise<void>, successNotice: string) {
@@ -80,6 +123,38 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
     if (!response.ok) {
       throw new Error(await parseApiError(response));
     }
+  }
+
+  async function savePrompt(date: string, promptText: string) {
+    const response = await fetch("/api/admin/prompts/upsert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, promptText }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiError(response));
+    }
+
+    const payload = (await response.json().catch(() => null)) as { day?: ResolvedPromptDay } | null;
+    if (!payload?.day) {
+      throw new Error("request failed.");
+    }
+    const updatedDay = payload.day;
+
+    setPromptDays((prev) => prev.map((day) => (day.date === updatedDay.date ? updatedDay : day)));
+    setData((prev) => {
+      const todayDate = promptDays[0]?.date;
+      if (!todayDate || updatedDay.date !== todayDate) {
+        return prev;
+      }
+      return {
+        ...prev,
+        prompt: {
+          ...prev.prompt,
+          text: updatedDay.promptText,
+        },
+      };
+    });
   }
 
   async function handleRemoveEntry(entryId: string) {
@@ -166,6 +241,67 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
       ...prev,
       [entryId]: !prev[entryId],
     }));
+  }
+
+  function beginEditPrompt(day: ResolvedPromptDay) {
+    setEditingPromptDate(day.date);
+    setPromptDraft(day.promptText);
+    setError(null);
+    setNotice(null);
+  }
+
+  function cancelEditPrompt() {
+    setEditingPromptDate(null);
+    setPromptDraft("");
+    setError(null);
+  }
+
+  async function handleSavePrompt(date: string) {
+    const trimmed = promptDraft.trim();
+    if (!trimmed) {
+      setError("prompt text cannot be empty.");
+      return;
+    }
+
+    setPendingAction(`save-prompt:${date}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await savePrompt(date, trimmed);
+      setEditingPromptDate(null);
+      setPromptDraft("");
+      setNotice("prompt updated.");
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "request failed.";
+      setError(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleResetPrompt(date: string) {
+    if (!window.confirm("reset this date to the default prompt rotation?")) {
+      return;
+    }
+
+    setPendingAction(`reset-prompt:${date}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await savePrompt(date, "");
+      if (editingPromptDate === date) {
+        setEditingPromptDate(null);
+        setPromptDraft("");
+      }
+      setNotice("prompt reset to default.");
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "request failed.";
+      setError(message);
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   return (
@@ -300,6 +436,108 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
             })}
           </div>
         )}
+      </section>
+
+      <section className="bw-card">
+        <div className="bw-row" style={{ marginBottom: 12 }}>
+          <div className="bw-ui bw-date">prompts (today + next 7)</div>
+          <button
+            className="bw-btnGhost"
+            type="button"
+            disabled={pendingAction !== null}
+            onClick={() => {
+              void runAction(
+                "refresh-prompts",
+                async () => {
+                  await refreshPromptDays();
+                },
+                "prompts refreshed.",
+              );
+            }}
+          >
+            refresh
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gap: 10 }}>
+          {promptDays.map((day, index) => {
+            const isEditing = editingPromptDate === day.date;
+            const isSaving = pendingAction === `save-prompt:${day.date}` || pendingAction === `reset-prompt:${day.date}`;
+            return (
+              <div key={day.date} className="bw-fragment">
+                <div className="bw-ui bw-fragMeta">
+                  <span>{formatPromptDateLabel(day.date)}</span>
+                  {index === 0 && <span className="bw-collectiveBadge">today</span>}
+                  {day.overridden && <span className="bw-collectiveBadge">overridden</span>}
+                </div>
+
+                {isEditing ? (
+                  <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
+                    <textarea
+                      className="bw-writing bw-replyInput"
+                      value={promptDraft}
+                      onChange={(event) => setPromptDraft(event.target.value)}
+                      maxLength={1000}
+                    />
+                    <div className="bw-row" style={{ justifyContent: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        className="bw-btn"
+                        type="button"
+                        disabled={pendingAction !== null}
+                        onClick={() => {
+                          void handleSavePrompt(day.date);
+                        }}
+                      >
+                        {isSaving ? "saving..." : "save"}
+                      </button>
+                      <button className="bw-btnGhost" type="button" disabled={pendingAction !== null} onClick={cancelEditPrompt}>
+                        cancel
+                      </button>
+                      {day.overridden && (
+                        <button
+                          className="bw-btnGhost"
+                          type="button"
+                          disabled={pendingAction !== null}
+                          onClick={() => {
+                            void handleResetPrompt(day.date);
+                          }}
+                        >
+                          reset to default
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bw-writing bw-fragText">{day.promptText}</div>
+                    <div className="bw-row" style={{ marginTop: 8, justifyContent: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        className="bw-btnGhost"
+                        type="button"
+                        disabled={pendingAction !== null}
+                        onClick={() => beginEditPrompt(day)}
+                      >
+                        edit
+                      </button>
+                      {day.overridden && (
+                        <button
+                          className="bw-btnGhost"
+                          type="button"
+                          disabled={pendingAction !== null}
+                          onClick={() => {
+                            void handleResetPrompt(day.date);
+                          }}
+                        >
+                          reset to default
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       <section className="bw-card">
