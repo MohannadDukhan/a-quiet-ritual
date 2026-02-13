@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
       data: {
         isCollective: false,
         collectivePublishedAt: null,
+        collectiveRemovedAt: new Date(),
+        collectiveRemovedReason: "removed by admin",
       },
     }),
   ]);

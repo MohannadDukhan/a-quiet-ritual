@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/layout/app-header";
 import { CollectiveFeed, type CollectiveFeedEntry } from "@/components/collective-feed";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 import { getRequestTimeZone } from "@/lib/request-timezone";
@@ -7,6 +8,8 @@ import { getRequestTimeZone } from "@/lib/request-timezone";
 export const dynamic = "force-dynamic";
 
 export default async function CollectivePage() {
+  const session = await auth();
+  const canModerate = session?.user?.role === "ADMIN";
   const timeZone = await getRequestTimeZone();
   const todaysPrompt = await getTodaysPrompt();
   const entries = await prisma.entry.findMany({
@@ -44,11 +47,7 @@ export default async function CollectivePage() {
           </p>
         </section>
 
-        {entries.length === 0 ? (
-          <div className="bw-empty">no shared entries yet.</div>
-        ) : (
-          <CollectiveFeed entries={serializedEntries} timeZone={timeZone} />
-        )}
+        <CollectiveFeed entries={serializedEntries} timeZone={timeZone} canModerate={canModerate} />
       </main>
     </div>
   );

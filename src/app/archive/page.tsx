@@ -44,6 +44,8 @@ export default async function ArchivePage() {
         },
       },
       isCollective: true,
+      collectiveRemovedAt: true,
+      collectiveRemovedReason: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -55,6 +57,8 @@ export default async function ArchivePage() {
     content: entry.content,
     promptText: entry.promptTextSnapshot || entry.prompt?.text || "",
     isCollective: entry.isCollective,
+    collectiveRemovedAt: entry.collectiveRemovedAt?.toISOString() || null,
+    collectiveRemovedReason: entry.collectiveRemovedReason,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   }));

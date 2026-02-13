@@ -55,11 +55,30 @@ function resolveConfiguredOrigin(): string | null {
   return normalizeOrigin(process.env.NEXTAUTH_URL) || normalizeOrigin(process.env.AUTH_URL);
 }
 
+function resolveOrigins(request: NextRequest): {
+  hostOrigin: string | null;
+  expectedOrigin: string | null;
+} {
+  const hostOrigin = normalizeOrigin(resolveRequestHostOrigin(request));
+  const expectedOrigin = resolveConfiguredOrigin() || hostOrigin;
+  return { hostOrigin, expectedOrigin };
+}
+
+function matchesExpectedOrHost(
+  candidateOrigin: string | null,
+  hostOrigin: string | null,
+  expectedOrigin: string | null,
+): boolean {
+  if (!candidateOrigin || !hostOrigin || !expectedOrigin) {
+    return false;
+  }
+  return candidateOrigin === expectedOrigin || candidateOrigin === hostOrigin;
+}
+
 export function isSameOrigin(request: NextRequest): boolean {
   const receivedRaw = request.headers.get("origin");
   const receivedOrigin = normalizeOrigin(receivedRaw);
-  const hostOrigin = normalizeOrigin(resolveRequestHostOrigin(request));
-  const expectedOrigin = resolveConfiguredOrigin() || hostOrigin;
+  const { hostOrigin, expectedOrigin } = resolveOrigins(request);
 
   if (!receivedOrigin || !hostOrigin || !expectedOrigin) {
     console.warn(
@@ -68,11 +87,48 @@ export function isSameOrigin(request: NextRequest): boolean {
     return false;
   }
 
-  if (receivedOrigin === expectedOrigin) return true;
-  if (receivedOrigin === hostOrigin) return true;
+  if (matchesExpectedOrHost(receivedOrigin, hostOrigin, expectedOrigin)) return true;
 
   console.warn(
     `[security][origin-block] origin=${receivedOrigin} host=${hostOrigin} expected=${expectedOrigin}`,
+  );
+  return false;
+}
+
+export function isSameOriginReadRequest(request: NextRequest): boolean {
+  const { hostOrigin, expectedOrigin } = resolveOrigins(request);
+  if (!hostOrigin || !expectedOrigin) {
+    console.warn(
+      `[security][origin-read-block] host=${hostOrigin ?? "unknown"} expected=${expectedOrigin ?? "unknown"}`,
+    );
+    return false;
+  }
+
+  const originRaw = request.headers.get("origin");
+  const origin = normalizeOrigin(originRaw);
+  if (origin) {
+    if (matchesExpectedOrHost(origin, hostOrigin, expectedOrigin)) {
+      return true;
+    }
+    console.warn(
+      `[security][origin-read-block] origin=${origin} host=${hostOrigin} expected=${expectedOrigin}`,
+    );
+    return false;
+  }
+
+  const refererRaw = request.headers.get("referer");
+  const refererOrigin = normalizeOrigin(refererRaw);
+  if (refererOrigin && matchesExpectedOrHost(refererOrigin, hostOrigin, expectedOrigin)) {
+    return true;
+  }
+
+  const secFetchSite = request.headers.get("sec-fetch-site")?.trim().toLowerCase();
+  if ((secFetchSite === "same-origin" || secFetchSite === "same-site") && hostOrigin === expectedOrigin) {
+    return true;
+  }
+
+  console.warn(
+    `[security][origin-read-block] origin=missing referer=${refererRaw ?? "missing"} host=${hostOrigin} expected=${expectedOrigin} sec-fetch-site=${secFetchSite ?? "missing"}`,
   );
   return false;
 }

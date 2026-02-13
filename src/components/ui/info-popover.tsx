@@ -5,9 +5,10 @@ import { ReactNode, useEffect, useId, useRef, useState } from "react";
 type InfoPopoverProps = {
   title: string;
   children: ReactNode;
+  triggerAriaLabel?: string;
 };
 
-export function InfoPopover({ title, children }: InfoPopoverProps) {
+export function InfoPopover({ title, children, triggerAriaLabel = "open info" }: InfoPopoverProps) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -44,10 +45,14 @@ export function InfoPopover({ title, children }: InfoPopoverProps) {
         ref={triggerRef}
         type="button"
         className="bw-infoTrigger"
-        aria-label="what is the collective?"
+        aria-label={triggerAriaLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen(true)}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(true);
+        }}
       >
         ?
       </button>

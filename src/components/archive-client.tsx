@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { InfoPopover } from "@/components/ui/info-popover";
 import { formatDate } from "@/lib/time";
 
 export type ArchiveEntry = {
@@ -11,6 +12,8 @@ export type ArchiveEntry = {
   content: string;
   promptText: string;
   isCollective: boolean;
+  collectiveRemovedAt: string | null;
+  collectiveRemovedReason: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -54,6 +57,18 @@ export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
                 <div className="bw-cardMeta">
                   <div className="bw-ui bw-cardDate">{formatDate(entry.createdAt, timeZone)}</div>
                   {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
+                  {entry.collectiveRemovedAt && (
+                    <span className="bw-ui bw-removedBadge">
+                      removed from collective
+                      <InfoPopover
+                        title="removed from collective"
+                        triggerAriaLabel="why was this removed?"
+                      >
+                        admins removed this from the collective because it didn&apos;t fit the community rules. it
+                        still remains in your private archive.
+                      </InfoPopover>
+                    </span>
+                  )}
                 </div>
                 <div className="bw-writing bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
                 <div className="bw-writing bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>

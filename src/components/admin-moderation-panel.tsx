@@ -87,13 +87,25 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
       return;
     }
 
-    await runAction(
-      `remove-entry:${entryId}`,
-      async () => {
-        await postJson("/api/admin/moderation/entry/remove", { entryId });
-      },
-      "entry removed from collective.",
-    );
+    const previousData = data;
+    setPendingAction(`remove-entry:${entryId}`);
+    setError(null);
+    setNotice(null);
+    setData((prev) => ({
+      ...prev,
+      entries: prev.entries.filter((entry) => entry.id !== entryId),
+    }));
+
+    try {
+      await postJson("/api/admin/moderation/entry/remove", { entryId });
+      setNotice("entry removed from collective.");
+    } catch (requestError) {
+      setData(previousData);
+      const message = requestError instanceof Error ? requestError.message : "request failed.";
+      setError(message);
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   async function handleRemoveReply(replyId: string) {
@@ -101,13 +113,28 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
       return;
     }
 
-    await runAction(
-      `remove-reply:${replyId}`,
-      async () => {
-        await postJson("/api/admin/moderation/reply/remove", { replyId });
-      },
-      "reply removed.",
-    );
+    const previousData = data;
+    setPendingAction(`remove-reply:${replyId}`);
+    setError(null);
+    setNotice(null);
+    setData((prev) => ({
+      ...prev,
+      entries: prev.entries.map((entry) => ({
+        ...entry,
+        replies: entry.replies.filter((reply) => reply.id !== replyId),
+      })),
+    }));
+
+    try {
+      await postJson("/api/admin/moderation/reply/remove", { replyId });
+      setNotice("reply removed.");
+    } catch (requestError) {
+      setData(previousData);
+      const message = requestError instanceof Error ? requestError.message : "request failed.";
+      setError(message);
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   async function handleBanUser(userId: string, email: string | null) {
@@ -203,7 +230,7 @@ export function AdminModerationPanel({ initialData, timeZone }: AdminModerationP
                       {authorBanned ? "unban user" : "ban user"}
                     </button>
                     <button
-                      className="bw-btn"
+                      className="bw-btnDanger"
                       type="button"
                       disabled={pendingAction !== null}
                       onClick={() => {

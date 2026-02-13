@@ -6,6 +6,7 @@ import {
 } from "@/components/collective-replies-panel";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { InfoPopover } from "@/components/ui/info-popover";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
@@ -37,6 +38,7 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
       content: true,
       promptTextSnapshot: true,
       isCollective: true,
+      collectiveRemovedAt: true,
       createdAt: true,
       prompt: {
         select: {
@@ -83,6 +85,18 @@ export default async function PromptEntryDetailPage({ params }: PromptEntryDetai
           <div className="bw-cardMeta">
             <div className="bw-ui bw-cardDate">{formatDateTime(entry.createdAt, timeZone)}</div>
             {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
+            {entry.collectiveRemovedAt && (
+              <span className="bw-ui bw-removedBadge">
+                removed from collective
+                <InfoPopover
+                  title="removed from collective"
+                  triggerAriaLabel="why was this removed?"
+                >
+                  admins removed this from the collective because it didn&apos;t fit the community rules. it still
+                  remains in your private archive.
+                </InfoPopover>
+              </span>
+            )}
           </div>
           <div className="bw-writing bw-cardPrompt">&quot;{promptText}&quot;</div>
           <div className="bw-writing bw-cardText">{entry.content}</div>

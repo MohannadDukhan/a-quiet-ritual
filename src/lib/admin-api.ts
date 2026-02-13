@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUserRecord } from "@/lib/admin-auth";
 import { consumeRateLimit } from "@/lib/rate-limit";
-import { getClientIp, isSameOrigin } from "@/lib/security";
+import { getClientIp, isSameOrigin, isSameOriginReadRequest } from "@/lib/security";
 
 type RequireAdminApiRequestInput = {
   request: NextRequest;
@@ -30,7 +30,9 @@ export async function requireAdminApiRequest({
   limit = DEFAULT_LIMIT,
   windowMs = DEFAULT_WINDOW_MS,
 }: RequireAdminApiRequestInput): Promise<AdminApiGuardResult> {
-  if (!isSameOrigin(request)) {
+  const method = request.method.toUpperCase();
+  const originAllowed = method === "GET" ? isSameOriginReadRequest(request) : isSameOrigin(request);
+  if (!originAllowed) {
     return {
       ok: false,
       response: NextResponse.json({ error: "Invalid origin" }, { status: 403 }),

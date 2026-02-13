@@ -4,8 +4,10 @@ import {
   CollectiveRepliesPanel,
   type CollectiveReplyItem,
 } from "@/components/collective-replies-panel";
+import { CollectiveDetailAdminControls } from "@/components/collective-detail-admin-controls";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 import { getRequestTimeZone } from "@/lib/request-timezone";
@@ -18,6 +20,8 @@ type CollectiveEntryDetailPageProps = {
 export const dynamic = "force-dynamic";
 
 export default async function CollectiveEntryDetailPage({ params }: CollectiveEntryDetailPageProps) {
+  const session = await auth();
+  const canModerate = session?.user?.role === "ADMIN";
   const timeZone = await getRequestTimeZone();
   const { id } = await params;
   const todaysPrompt = await getTodaysPrompt();
@@ -66,6 +70,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
             <span className="bw-ui bw-collectiveBadge">anonymous</span>
           </div>
           <div className="bw-writing bw-cardText">{entry.content}</div>
+          {canModerate && <CollectiveDetailAdminControls entryId={entry.id} />}
         </div>
 
         <CollectiveRepliesPanel
