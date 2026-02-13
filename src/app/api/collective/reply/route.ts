@@ -31,6 +31,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      collectiveBanned: true,
+    },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (user.collectiveBanned) {
+    return NextResponse.json(
+      { error: "you can't post to the collective right now." },
+      { status: 403 },
+    );
+  }
+
   const json = await request.json().catch(() => null);
   const parsed = createCollectiveReplySchema.safeParse(json);
   if (!parsed.success) {

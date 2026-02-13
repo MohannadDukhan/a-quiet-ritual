@@ -19,7 +19,7 @@ function getMenuItemClassName(isActive: boolean): string {
 
 export function BwMenu({ active }: BwMenuProps) {
   const pathname = usePathname();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -89,9 +89,16 @@ export function BwMenu({ active }: BwMenuProps) {
             about
           </Link>
           {status === "authenticated" ? (
-            <Link className="bw-ui bw-navText bw-navDropdownItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
-              my account
-            </Link>
+            <>
+              {session?.user?.role === "ADMIN" && (
+                <Link className="bw-ui bw-navText bw-navDropdownItem" href="/admin" role="menuitem" onClick={() => setOpen(false)}>
+                  admin
+                </Link>
+              )}
+              <Link className="bw-ui bw-navText bw-navDropdownItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
+                my account
+              </Link>
+            </>
           ) : (
             <Link className="bw-ui bw-navText bw-navDropdownItem" href={signInHref} role="menuitem" onClick={() => setOpen(false)}>
               sign in

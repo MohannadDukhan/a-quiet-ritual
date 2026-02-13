@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
+import { ensurePrimaryAdminRoleByUserId } from "@/lib/admin-role";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -118,12 +119,24 @@ export const authOptions: ExtendedAuthOptions = {
     async jwt({ token, user }) {
       if (user?.id) {
         token.sub = user.id;
+        const role = await ensurePrimaryAdminRoleByUserId(user.id);
+        if (role) {
+          token.role = role;
+        }
+      } else if (token.sub) {
+        const role = await ensurePrimaryAdminRoleByUserId(token.sub);
+        if (role) {
+          token.role = role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
+        if (token.role === "ADMIN" || token.role === "USER") {
+          session.user.role = token.role;
+        }
       }
       return session;
     },

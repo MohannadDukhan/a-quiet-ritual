@@ -12,6 +12,8 @@ model User {
   email         String    @unique
   passwordHash  String?
   emailVerified DateTime?
+  role          UserRole  @default(USER)
+  collectiveBanned Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
@@ -30,6 +32,11 @@ model Prompt {
 enum EntryType {
   PROMPT
   JOURNAL
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 model Entry {

@@ -10,6 +10,7 @@ import {
   sendEmailVerificationEmail,
   TransactionalEmailError,
 } from "@/lib/auth-email";
+import { roleForEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
 import { getClientIp } from "@/lib/security";
@@ -244,6 +245,7 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         passwordHash,
+        role: roleForEmail(email),
       },
       select: { id: true },
     });
