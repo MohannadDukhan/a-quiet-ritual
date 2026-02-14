@@ -127,9 +127,11 @@ export const authOptions: ExtendedAuthOptions = {
       if (sessionUser) {
         token.role = sessionUser.role;
         token.username = sessionUser.username;
-        token.picture = sessionUser.image;
         token.email = sessionUser.email;
       }
+
+      // Ensure legacy large avatar payloads are never persisted in JWT cookies.
+      delete (token as { picture?: unknown }).picture;
       return token;
     },
     async session({ session, token }) {
@@ -140,9 +142,6 @@ export const authOptions: ExtendedAuthOptions = {
         }
         if (typeof token.username === "string" || token.username === null) {
           session.user.username = token.username ?? null;
-        }
-        if (typeof token.picture === "string" || token.picture === null) {
-          session.user.image = token.picture ?? null;
         }
         if (typeof token.email === "string") {
           session.user.email = token.email;

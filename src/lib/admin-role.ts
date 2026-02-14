@@ -21,7 +21,6 @@ export type PrimaryAdminSessionUser = {
   email: string;
   role: UserRole;
   username: string | null;
-  image: string | null;
 };
 
 export async function ensurePrimaryAdminUserByUserId(userId: string): Promise<PrimaryAdminSessionUser | null> {
@@ -32,7 +31,6 @@ export async function ensurePrimaryAdminUserByUserId(userId: string): Promise<Pr
       email: true,
       role: true,
       username: true,
-      image: true,
     },
   });
 

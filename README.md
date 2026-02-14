@@ -71,6 +71,13 @@ npm run dev
 - No server logging of journal content.
 - Secrets are environment variables only.
 
+## Troubleshooting
+
+- `HTTP 431 Request Header Fields Too Large` after avatar/profile updates:
+  - cause: old oversized auth cookies from previously storing large session payloads.
+  - fix: clear site cookies for this app domain, then sign in again.
+  - prevention: session cookies now only store minimal fields (`id`, `email`, `role`, `username`) and never avatar data.
+
 ## Deployment checklist (Vercel + managed Postgres)
 
 1. Provision managed Postgres and set `DATABASE_URL`.
