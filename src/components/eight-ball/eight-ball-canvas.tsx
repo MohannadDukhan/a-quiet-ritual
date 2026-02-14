@@ -13,7 +13,7 @@ import {
   useRef,
 } from "react";
 
-const DEFAULT_TRANSITION_MS = 3500;
+const DEFAULT_TRANSITION_MS = 2400;
 const REDUCED_TRANSITION_MS = 150;
 // Cap DPR for stable performance on high-density screens while keeping the ball sharp.
 const MAX_DPR = 1.8;
@@ -64,27 +64,6 @@ function easeOutCubic(value: number): number {
 function easeInOutCubic(value: number): number {
   const t = clamp(value, 0, 1);
   return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2;
-}
-
-function drawRoundedRect(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-) {
-  context.beginPath();
-  context.moveTo(x + radius, y);
-  context.lineTo(x + width - radius, y);
-  context.quadraticCurveTo(x + width, y, x + width, y + radius);
-  context.lineTo(x + width, y + height - radius);
-  context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  context.lineTo(x + radius, y + height);
-  context.quadraticCurveTo(x, y + height, x, y + height - radius);
-  context.lineTo(x, y + radius);
-  context.quadraticCurveTo(x, y, x + radius, y);
-  context.closePath();
 }
 
 function wrapPromptText(context: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -141,28 +120,43 @@ function drawPromptWindowTexture(canvas: HTMLCanvasElement, promptText: string) 
     return;
   }
 
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  const inset = 122;
-  const width = canvas.width - inset * 2;
-  const height = canvas.height - inset * 2;
+  const center = canvas.width / 2;
+  const radius = canvas.width * 0.33;
 
-  drawRoundedRect(context, inset, inset, width, height, 112);
-  context.fillStyle = "rgba(20, 20, 23, 0.93)";
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  context.beginPath();
+  context.arc(center, center, radius + 20, 0, Math.PI * 2);
+  const glowGradient = context.createRadialGradient(center, center, radius * 0.45, center, center, radius + 20);
+  glowGradient.addColorStop(0, "rgba(255, 255, 255, 0.07)");
+  glowGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+  context.fillStyle = glowGradient;
   context.fill();
-  context.strokeStyle = "rgba(255, 255, 255, 0.1)";
-  context.lineWidth = 8;
+
+  context.beginPath();
+  context.arc(center, center, radius, 0, Math.PI * 2);
+  const fillGradient = context.createRadialGradient(center, center - radius * 0.3, radius * 0.2, center, center, radius);
+  fillGradient.addColorStop(0, "rgba(35, 35, 38, 0.96)");
+  fillGradient.addColorStop(1, "rgba(14, 14, 16, 0.96)");
+  context.fillStyle = fillGradient;
+  context.fill();
+
+  context.beginPath();
+  context.arc(center, center, radius, 0, Math.PI * 2);
+  context.lineWidth = 7;
+  context.strokeStyle = "rgba(255, 255, 255, 0.12)";
   context.stroke();
 
-  context.fillStyle = "rgba(242, 242, 242, 0.9)";
+  context.fillStyle = "rgba(243, 243, 243, 0.92)";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = "500 66px 'Helvetica Neue', Arial, sans-serif";
+  context.font = "500 62px 'Helvetica Neue', Arial, sans-serif";
 
-  const lines = wrapPromptText(context, promptText, width - 142);
-  const lineHeight = 86;
-  const startY = canvas.height / 2 - ((lines.length - 1) * lineHeight) / 2;
+  const lines = wrapPromptText(context, promptText, radius * 1.58);
+  const lineHeight = 80;
+  const startY = center - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line, index) => {
-    context.fillText(line, canvas.width / 2, startY + index * lineHeight);
+    context.fillText(line, center, startY + index * lineHeight);
   });
 }
 
@@ -281,32 +275,32 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
       renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.06;
+      renderer.toneMappingExposure = 0.98;
 
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-      camera.position.set(0, 0, 5.2);
+      const camera = new THREE.PerspectiveCamera(34, 1, 0.01, 60);
+      camera.position.set(0, 0, 5.05);
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.34);
-      const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.28);
+      const keyLight = new THREE.DirectionalLight(0xffffff, 0.92);
       keyLight.position.set(2.2, 2.5, 4.8);
-      const fillLight = new THREE.DirectionalLight(0xcfd5ff, 0.38);
+      const fillLight = new THREE.DirectionalLight(0xcfd5ff, 0.26);
       fillLight.position.set(-2.6, -1.1, 1.6);
-      const rimLight = new THREE.DirectionalLight(0xffffff, 0.58);
+      const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
       rimLight.position.set(-1.2, 3.2, -2.2);
       scene.add(ambientLight, keyLight, fillLight, rimLight);
 
       const root = new THREE.Group();
       scene.add(root);
 
-      const sphereGeometry = new THREE.SphereGeometry(1, 128, 128);
+      const sphereGeometry = new THREE.SphereGeometry(1.14, 128, 128);
       const sphereMaterial = new THREE.MeshPhysicalMaterial({
         color: 0x121212,
-        roughness: 0.11,
-        metalness: 0.18,
-        clearcoat: 1,
-        clearcoatRoughness: 0.045,
-        envMapIntensity: 1.28,
+        roughness: 0.17,
+        metalness: 0.12,
+        clearcoat: 0.82,
+        clearcoatRoughness: 0.1,
+        envMapIntensity: 0.92,
       });
       const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
       root.add(sphereMesh);
@@ -342,7 +336,7 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
         sphereMesh,
         new THREE.Vector3(0, 0, 1.015),
         new THREE.Euler(0, 0, 0),
-        new THREE.Vector3(1.02, 1.02, 0.4),
+        new THREE.Vector3(0.86, 0.86, 0.32),
       );
       const promptDecalMaterial = new THREE.MeshStandardMaterial({
         map: promptTexture,
@@ -447,7 +441,7 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
               targetScaleY = 1 - 0.1 * anticipation;
               targetScaleZ = 1 + 0.06 * anticipation;
             } else {
-              const jumpHeight = Math.sin(flight * Math.PI) * 0.62;
+              const jumpHeight = Math.sin(flight * Math.PI) * 0.42;
               const stretch = Math.sin(flight * Math.PI) * 0.06;
               const landingSettle =
                 settleProgress > 0
@@ -476,13 +470,13 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
           targetRotationY = 0;
           targetRotationZ = 0;
         } else {
-          const idleRotationX = Math.sin(state.elapsed * 0.24) * 0.02;
-          const idleRotationY = state.elapsed * 0.11;
-          const idleRotationZ = Math.sin(state.elapsed * 0.18) * 0.008;
+          const idleRotationX = Math.sin(state.elapsed * 0.19) * 0.016;
+          const idleRotationY = Math.sin(state.elapsed * 0.16) * 0.72;
+          const idleRotationZ = Math.sin(state.elapsed * 0.14) * 0.006;
           targetRotationX = idleRotationX + pointerX;
-          targetRotationY = idleRotationY + pointerY;
+          targetRotationY = idleRotationY + pointerY * 0.9;
           targetRotationZ = idleRotationZ;
-          targetOffsetY = Math.sin(state.elapsed * 0.31) * 0.012;
+          targetOffsetY = Math.sin(state.elapsed * 0.25) * 0.008;
         }
 
         const rotationDamp = state.transition.active ? 12 : 8;
@@ -496,9 +490,9 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
         root.scale.y = THREE.MathUtils.damp(root.scale.y, targetScaleY, movementDamp, delta);
         root.scale.z = THREE.MathUtils.damp(root.scale.z, targetScaleZ, movementDamp, delta);
 
-        const idlePulse = revealedRef.current ? 0 : Math.sin(state.elapsed * 0.3) * 0.035;
-        sphereMaterial.envMapIntensity = 1.22 + idlePulse;
-        keyLight.intensity = 1.1 + (revealedRef.current ? 0 : Math.sin(state.elapsed * 0.28) * 0.06);
+        const idlePulse = revealedRef.current ? 0 : Math.sin(state.elapsed * 0.26) * 0.02;
+        sphereMaterial.envMapIntensity = 0.88 + idlePulse;
+        keyLight.intensity = 0.9 + (revealedRef.current ? 0 : Math.sin(state.elapsed * 0.24) * 0.045);
 
         renderer.render(scene, camera);
         rafId = window.requestAnimationFrame(animate);

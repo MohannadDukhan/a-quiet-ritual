@@ -22,8 +22,8 @@ type PromptPayload = {
 };
 
 const DRAFT_KEY = "bw_entry_draft";
-const IDLE_SIZE = 360;
-const REVEALED_SIZE = 300;
+const IDLE_SIZE = 430;
+const REVEALED_SIZE = 360;
 const INSIDE_PROMPT_MAX = 64;
 const PREMIUM_TRANSITION_MS = 2400;
 const REDUCED_TRANSITION_MS = 150;

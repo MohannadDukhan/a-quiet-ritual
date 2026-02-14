@@ -397,7 +397,7 @@ body {
 /* after reveal: smaller + higher + still floating but calmer */
 .bw-revealed .bw-float {
   transform: translateY(-44px);
-  animation: bwFloatAfter 6.6s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes bwFloatAfter {
@@ -419,9 +419,10 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: visible;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   display: grid;
   place-items: center;
@@ -453,10 +454,13 @@ body {
 }
 
 .bw-threeBallCanvas {
-  width: 100%;
-  height: 100%;
+  width: 170%;
+  height: 170%;
+  position: absolute;
+  left: -35%;
+  top: -35%;
   display: block;
-  border-radius: inherit;
+  pointer-events: none;
 }
 
 .bw-threeBallButton .eightball__window {
@@ -3050,7 +3054,7 @@ body.bw-light .bw-input {
 
   .bw-revealed .bw-float {
     transform: translateY(-14px);
-    animation: bwFloatAfterMobile 6.8s ease-in-out infinite;
+    animation: none;
   }
 
   .bw-revealed .bw-ball {
