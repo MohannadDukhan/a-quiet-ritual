@@ -44,13 +44,15 @@ export default async function CollectivePage() {
       <main className="bw-page">
         <section className="bw-section">
           <h1 className="bw-accountTitle">collective</h1>
-          <p className="bw-ui bw-journalSub">this is the collective. you&apos;re reading today&apos;s public prompt entries.</p>
-          <p className="bw-ui bw-journalSub">
+          <p className="bw-collectiveIntro">this is the collective. you&apos;re reading today&apos;s public prompt entries.</p>
+          <p className="bw-collectiveIntro">
             this is a respectful space. hate, threats, or harassment can&apos;t be shared.
           </p>
+          <div className="bw-block">
+            <div className="bw-ui bw-collectiveEyebrow">today&apos;s prompt</div>
+            <h2 className="bw-writing bw-collectivePrompt">{todaysPrompt.text}</h2>
+          </div>
           <hr className="bw-divider" />
-          <div className="bw-ui bw-collectiveEyebrow">today&apos;s prompt</div>
-          <h2 className="bw-writing bw-collectivePrompt">today&apos;s prompt: {todaysPrompt.text}</h2>
         </section>
 
         <CollectiveFeed entries={serializedEntries} timeZone={timeZone} canModerate={canModerate} />

@@ -100,7 +100,7 @@ export function CollectiveRepliesPanel({
       ) : (
         <div className="bw-lineSection bw-rowList">
           {replies.map((reply) => (
-            <div key={reply.id} className="bw-rowItem">
+            <div key={reply.id} className="bw-rowItem bw-rowHover">
               <div className="bw-rowMeta">
                 <div className="bw-rowMetaLeft">
                   <span>anonymous</span>

@@ -102,7 +102,7 @@ export function CollectiveFeed({ entries, timeZone, canModerate }: CollectiveFee
       ) : (
         <div className="bw-lineSection bw-rowList">
           {items.map((entry) => (
-            <div key={entry.id} className="bw-rowItem">
+            <div key={entry.id} className="bw-rowItem bw-rowHover">
               <div className="bw-rowMeta">
                 <div className="bw-rowMetaLeft">
                   <span>{formatDateTime(entry.createdAt, timeZone)}</span>
@@ -117,7 +117,7 @@ export function CollectiveFeed({ entries, timeZone, canModerate }: CollectiveFee
                 </div>
               </div>
 
-              <Link href={`/collective/${entry.id}`} className="bw-rowLinkBlock bw-rowHover">
+              <Link href={`/collective/${entry.id}`} className="bw-rowLinkBlock">
                 <div className="bw-writing bw-rowBody">{previewContent(entry.content)}</div>
                 <div className="bw-rowSubtle">click to view replies or reply</div>
               </Link>

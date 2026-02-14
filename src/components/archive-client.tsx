@@ -35,7 +35,7 @@ export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
     <>
       <section className="bw-section">
         <h1 className="bw-accountTitle">private archive</h1>
-        <p className="bw-ui bw-journalSub">your private writing history lives here. only you can see this archive.</p>
+        <p className="bw-pageLead">your private writing history lives here. only you can see this archive.</p>
         <hr className="bw-divider" />
       </section>
 
@@ -57,7 +57,7 @@ export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
             ) : (
               <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-rowItem bw-rowHover">
                 <div className="bw-rowMeta">
-                  <div className="bw-rowMetaLeft">
+                  <div className="bw-rowMetaLeft bw-badgeGroup">
                     <span>{formatDate(entry.createdAt, timeZone)}</span>
                     {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
                     {entry.collectiveRemovedAt && (

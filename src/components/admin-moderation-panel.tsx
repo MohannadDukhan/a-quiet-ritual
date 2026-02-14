@@ -307,7 +307,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
   return (
     <div className="bw-section">
       <section className="bw-section">
-        <div className="bw-row" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+        <div className="bw-sectionHeader">
           <h1 className="bw-accountTitle" style={{ marginBottom: 0 }}>
             admin
           </h1>
@@ -315,13 +315,14 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
             user roles
           </Link>
         </div>
+        <p className="bw-pageLead">moderate today&apos;s collective and manage prompts.</p>
         <div className="bw-ui bw-date">today&apos;s prompt: {data.prompt.text}</div>
       </section>
 
       <hr className="bw-divider" />
 
       <section className="bw-section">
-        <div className="bw-row">
+        <div className="bw-sectionHeader">
           <div className="bw-ui bw-date">today&apos;s collective moderation</div>
           <button
             className="bw-btnGhost"
@@ -340,6 +341,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
             refresh
           </button>
         </div>
+        <hr className="bw-divider" />
 
         {data.entries.length === 0 ? (
           <div className="bw-hint">no collective entries for today.</div>
@@ -351,7 +353,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
               const repliesLabel = showReplies ? "hide replies" : `show replies (${entry.replies.length})`;
 
               return (
-                <div key={entry.id} className="bw-rowItem">
+                <div key={entry.id} className="bw-rowItem bw-rowHover">
                   <div className="bw-rowMeta">
                     <div className="bw-rowMetaLeft">
                       <span>{formatDateTime(entry.createdAt, timeZone)}</span>
@@ -404,7 +406,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                         const replyUserId = reply.userId;
                         const replyUserBanned = replyUserId ? bannedUserIds.has(replyUserId) : false;
                         return (
-                          <div key={reply.id} className="bw-rowNestedItem">
+                          <div key={reply.id} className="bw-rowNestedItem bw-rowHover">
                             <div className="bw-rowMeta">
                               <div className="bw-rowMetaLeft">
                                 <span>{formatDateTime(reply.createdAt, timeZone)}</span>
@@ -451,10 +453,10 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
         )}
       </section>
 
-      <hr className="bw-divider" />
+      <hr className="bw-divider bw-dividerMajor" />
 
       <section className="bw-section">
-        <div className="bw-row">
+        <div className="bw-sectionHeader">
           <div className="bw-ui bw-date">prompts (today + next 7)</div>
           <button
             className="bw-btnGhost"
@@ -473,13 +475,14 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
             refresh
           </button>
         </div>
+        <hr className="bw-divider" />
 
-        <div className="bw-lineSection bw-rowList">
+        <div className="bw-lineSection bw-rowList bw-rowListLoose">
           {promptDays.map((day, index) => {
             const isEditing = editingPromptDate === day.date;
             const isSaving = pendingAction === `save-prompt:${day.date}` || pendingAction === `reset-prompt:${day.date}`;
             return (
-              <div key={day.date} className="bw-rowItem">
+              <div key={day.date} className="bw-rowItem bw-rowHover">
                 <div className="bw-rowMeta">
                   <div className="bw-rowMetaLeft">
                     <span>{formatPromptDateLabel(day.date)}</span>
@@ -491,7 +494,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                 {isEditing ? (
                   <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
                     <textarea
-                      className="bw-writing bw-replyInput"
+                      className="bw-writing bw-replyInput bw-adminPromptInput"
                       value={promptDraft}
                       onChange={(event) => setPromptDraft(event.target.value)}
                       maxLength={1000}
@@ -560,14 +563,17 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
       <hr className="bw-divider" />
 
       <section className="bw-section">
-        <div className="bw-ui bw-date">banned users</div>
+        <div className="bw-sectionHeader">
+          <div className="bw-ui bw-date">banned users</div>
+        </div>
+        <hr className="bw-divider" />
         {data.bannedUsers.length === 0 ? (
           <div className="bw-hint">no banned users.</div>
         ) : (
           <div className="bw-lineSection bw-rowList">
             {data.bannedUsers.map((user) => (
-              <div key={user.id} className="bw-rowItem">
-                <div className="bw-accountRow">
+              <div key={user.id} className="bw-rowItem bw-rowHover">
+                <div className="bw-accountRow bw-adminBannedRow">
                   <span className="bw-accountValue">{user.email}</span>
                   <button
                     className="bw-btnGhost"

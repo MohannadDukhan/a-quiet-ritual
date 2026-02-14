@@ -1172,9 +1172,9 @@ body {
 }
 
 .bw-cardPrompt {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 18px;
-  line-height: 1.76;
+  line-height: 1.82;
   color: rgba(255, 255, 255, 0.72);
   font-style: italic;
 }
@@ -1188,7 +1188,7 @@ body {
 }
 
 .bw-cardPreview {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.76);
 }
 
 .bw-aboutWrap {
@@ -1486,24 +1486,42 @@ body {
   margin: 0 auto;
   padding: 92px 18px 34px;
   display: grid;
-  gap: 18px;
+  gap: 28px;
 }
 
 .bw-section {
   display: grid;
-  gap: 10px;
+  gap: 16px;
+}
+
+.bw-sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bw-sectionBody {
+  display: grid;
+  gap: 14px;
 }
 
 .bw-divider {
   width: 100%;
   border: 0;
-  border-top: 1px solid var(--line);
-  margin: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  margin: 18px 0;
+}
+
+.bw-dividerMajor {
+  margin: 32px 0;
+  border-top-color: rgba(255, 255, 255, 0.2);
 }
 
 .bw-lineSection {
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .bw-rowList {
@@ -1515,8 +1533,13 @@ body {
   display: block;
   color: inherit;
   text-decoration: none;
-  padding: 13px 2px;
-  border-top: 1px solid var(--line);
+  padding: 16px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bw-rowListLoose .bw-rowItem {
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 .bw-rowItem:first-child {
@@ -1528,19 +1551,19 @@ body {
 }
 
 .bw-rowHover:hover {
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.032);
 }
 
 .bw-rowHover:focus-visible {
   outline: none;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.058);
 }
 
 .bw-rowLinkBlock {
   display: block;
   text-decoration: none;
   color: inherit;
-  margin: 8px -2px 0;
+  margin: 10px -2px 0;
   padding: 8px 2px 0;
 }
 
@@ -1550,9 +1573,9 @@ body {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 11.5px;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.46);
+  color: rgba(255, 255, 255, 0.52);
   font-family: var(--bw-body-font);
   text-transform: lowercase;
 }
@@ -1560,43 +1583,46 @@ body {
 .bw-rowMetaLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .bw-rowBody {
-  margin-top: 7px;
+  margin-top: 8px;
   font-size: 16px;
-  line-height: 1.72;
+  line-height: 1.78;
   color: rgba(255, 255, 255, 0.8);
 }
 
 .bw-rowSubtle {
-  margin-top: 7px;
-  font-size: 11px;
+  margin-top: 11px;
+  font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: lowercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.36);
   font-family: var(--bw-body-font);
 }
 
 .bw-rowActions {
-  margin-top: 9px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 11px;
   flex-wrap: wrap;
 }
 
 .bw-rowNestedList {
-  margin-top: 10px;
-  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  margin-left: 14px;
+  padding-left: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .bw-rowNestedItem {
-  padding: 10px 2px;
-  border-top: 1px solid var(--line);
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .bw-rowNestedItem:first-child {
@@ -1609,6 +1635,37 @@ body {
   font-size: 17px;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.86);
+}
+
+.bw-pageLead {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.66;
+  letter-spacing: 0.055em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.56);
+  font-family: var(--bw-body-font);
+}
+
+.bw-block {
+  display: grid;
+  gap: 8px;
+}
+
+.bw-badgeGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.bw-adminPromptInput {
+  min-height: 126px;
+  padding: 12px 14px;
+}
+
+.bw-adminBannedRow {
+  align-items: center;
 }
 
 /* motion accessibility */
@@ -1859,20 +1916,29 @@ body {
 }
 
 .bw-collectiveEyebrow {
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: lowercase;
-  color: rgba(255, 255, 255, 0.44);
+  color: rgba(255, 255, 255, 0.56);
 }
 
 .bw-collectivePrompt {
   margin: 0;
-  font-size: clamp(24px, 4vw, 38px);
-  line-height: 1.35;
+  font-size: clamp(22px, 3.3vw, 31px);
+  line-height: 1.46;
   letter-spacing: 0.01em;
   text-transform: lowercase;
   color: rgba(255, 255, 255, 0.9);
   text-wrap: balance;
+}
+
+.bw-collectiveIntro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.72;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .bw-collectiveNotice {
@@ -2542,16 +2608,21 @@ body.bw-light .bw-lineSection,
 body.bw-light .bw-rowItem,
 body.bw-light .bw-rowNestedList,
 body.bw-light .bw-rowNestedItem {
-  border-color: rgba(20, 20, 20, 0.12);
+  border-color: rgba(20, 20, 20, 0.16);
+}
+
+body.bw-light .bw-dividerMajor {
+  border-top-color: rgba(20, 20, 20, 0.22);
 }
 
 body.bw-light .bw-rowHover:hover,
 body.bw-light .bw-rowHover:focus-visible {
-  background: rgba(20, 20, 20, 0.03);
+  background: rgba(20, 20, 20, 0.04);
 }
 
 body.bw-light .bw-rowMeta,
-body.bw-light .bw-rowSubtle {
+body.bw-light .bw-rowSubtle,
+body.bw-light .bw-pageLead {
   color: rgba(18, 18, 18, 0.54);
 }
 
@@ -2561,6 +2632,10 @@ body.bw-light .bw-rowBody {
 
 body.bw-light .bw-entryContent {
   color: rgba(18, 18, 18, 0.82);
+}
+
+body.bw-light .bw-collectiveIntro {
+  color: rgba(18, 18, 18, 0.62);
 }
 
 body.bw-light .bw-ball {
@@ -2601,7 +2676,21 @@ body.bw-light .bw-input {
 
   .bw-page {
     padding: 86px 14px 24px;
-    gap: 14px;
+    gap: 20px;
+  }
+
+  .bw-section {
+    gap: 12px;
+  }
+
+  .bw-rowItem {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .bw-rowListLoose .bw-rowItem {
+    padding-top: 16px;
+    padding-bottom: 16px;
   }
 
   .bw-top {
