@@ -2,18 +2,29 @@ import { UserRole } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 
-export const PRIMARY_ADMIN_EMAIL = "dukhanmohannad@gmail.com";
+const DEFAULT_OWNER_EMAIL = "dukhamohannad@gmail.com";
 
 function normalizeEmail(email: string | null | undefined): string {
   return (email || "").trim().toLowerCase();
 }
 
+export const OWNER_EMAIL = normalizeEmail(process.env.OWNER_EMAIL || DEFAULT_OWNER_EMAIL);
+export const PRIMARY_ADMIN_EMAIL = OWNER_EMAIL;
+
+export function isOwnerEmail(email: string | null | undefined): boolean {
+  return OWNER_EMAIL.length > 0 && normalizeEmail(email) === OWNER_EMAIL;
+}
+
+export function isOwnerSession(session: { user?: { email?: string | null } } | null | undefined): boolean {
+  return isOwnerEmail(session?.user?.email);
+}
+
 export function isPrimaryAdminEmail(email: string | null | undefined): boolean {
-  return normalizeEmail(email) === PRIMARY_ADMIN_EMAIL;
+  return isOwnerEmail(email);
 }
 
 export function roleForEmail(email: string | null | undefined): UserRole {
-  return isPrimaryAdminEmail(email) ? "ADMIN" : "USER";
+  return isOwnerEmail(email) ? "ADMIN" : "USER";
 }
 
 export type PrimaryAdminSessionUser = {
@@ -38,7 +49,7 @@ export async function ensurePrimaryAdminUserByUserId(userId: string): Promise<Pr
     return null;
   }
 
-  if (isPrimaryAdminEmail(user.email) && user.role !== "ADMIN") {
+  if (isOwnerEmail(user.email) && user.role !== "ADMIN") {
     await prisma.user.update({
       where: { id: user.id },
       data: { role: "ADMIN" },

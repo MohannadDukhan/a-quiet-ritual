@@ -6,7 +6,8 @@ export type AdminModerationReply = {
   content: string;
   createdAt: string;
   userId: string | null;
-  userEmail: string | null;
+  userUsername: string | null;
+  userImage: string | null;
 };
 
 export type AdminModerationEntry = {
@@ -14,13 +15,15 @@ export type AdminModerationEntry = {
   content: string;
   createdAt: string;
   userId: string;
-  userEmail: string;
+  userUsername: string | null;
+  userImage: string | null;
   replies: AdminModerationReply[];
 };
 
 export type AdminBannedUser = {
   id: string;
-  email: string;
+  username: string | null;
+  image: string | null;
 };
 
 export type AdminModerationTodayData = {
@@ -49,7 +52,8 @@ export async function getAdminModerationTodayData(): Promise<AdminModerationToda
       userId: true,
       user: {
         select: {
-          email: true,
+          username: true,
+          image: true,
         },
       },
       collectiveReplies: {
@@ -61,7 +65,8 @@ export async function getAdminModerationTodayData(): Promise<AdminModerationToda
           userId: true,
           user: {
             select: {
-              email: true,
+              username: true,
+              image: true,
             },
           },
         },
@@ -71,10 +76,11 @@ export async function getAdminModerationTodayData(): Promise<AdminModerationToda
 
   const bannedUsers = await prisma.user.findMany({
     where: { collectiveBanned: true },
-    orderBy: { email: "asc" },
+    orderBy: { username: "asc" },
     select: {
       id: true,
-      email: true,
+      username: true,
+      image: true,
     },
   });
 
@@ -88,13 +94,15 @@ export async function getAdminModerationTodayData(): Promise<AdminModerationToda
       content: entry.content,
       createdAt: entry.createdAt.toISOString(),
       userId: entry.userId,
-      userEmail: entry.user.email,
+      userUsername: entry.user.username,
+      userImage: entry.user.image,
       replies: entry.collectiveReplies.map((reply) => ({
         id: reply.id,
         content: reply.content,
         createdAt: reply.createdAt.toISOString(),
         userId: reply.userId,
-        userEmail: reply.user?.email || null,
+        userUsername: reply.user?.username || null,
+        userImage: reply.user?.image || null,
       })),
     })),
     bannedUsers,

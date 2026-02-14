@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { requireAdminApiRequest } from "@/lib/admin-api";
+import { requireOwnerAdminApiRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -12,7 +12,7 @@ const grantAdminSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdminApiRequest({
+  const guard = await requireOwnerAdminApiRequest({
     request,
     action: "roles",
   });

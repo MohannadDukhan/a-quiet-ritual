@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
-import { isPrimaryAdminEmail } from "@/lib/admin-role";
+import { isOwnerEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
 
 export type SessionUserRecord = {
@@ -32,7 +32,7 @@ export async function getSessionUserRecord(): Promise<SessionUserRecord | null> 
     return null;
   }
 
-  if (isPrimaryAdminEmail(user.email) && user.role !== "ADMIN") {
+  if (isOwnerEmail(user.email) && user.role !== "ADMIN") {
     await prisma.user.update({
       where: { id: user.id },
       data: { role: "ADMIN" },
@@ -49,6 +49,14 @@ export async function getSessionUserRecord(): Promise<SessionUserRecord | null> 
 export async function requireAdminUser(): Promise<SessionUserRecord | null> {
   const user = await getSessionUserRecord();
   if (!user || user.role !== "ADMIN") {
+    return null;
+  }
+  return user;
+}
+
+export async function requireOwnerAdminUser(): Promise<SessionUserRecord | null> {
+  const user = await requireAdminUser();
+  if (!user || !isOwnerEmail(user.email)) {
     return null;
   }
   return user;

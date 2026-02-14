@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { requireAdminApiRequest } from "@/lib/admin-api";
+import { requireOwnerAdminApiRequest } from "@/lib/admin-api";
 import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ function normalizeEmail(value: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdminApiRequest({
+  const guard = await requireOwnerAdminApiRequest({
     request,
     action: "roles",
   });
@@ -31,15 +31,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = normalizeEmail(parsed.data.email);
-  const actingUser = await prisma.user.findUnique({
-    where: { id: guard.adminUserId },
-    select: { email: true },
-  });
-  if (!actingUser) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
-  if (normalizeEmail(actingUser.email) === email) {
+  if (normalizeEmail(guard.adminUserEmail) === email) {
     return NextResponse.json({ error: "cannot revoke your own admin role" }, { status: 400 });
   }
 

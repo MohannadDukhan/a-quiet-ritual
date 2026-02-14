@@ -33,6 +33,7 @@ Example:
 
 ```bash
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB?sslmode=require"
+OWNER_EMAIL="dukhamohannad@gmail.com"
 ```
 
 3. Run migrations and seed prompts:
@@ -84,6 +85,7 @@ npm run dev
 2. Set auth/email env vars in Vercel:
    - `AUTH_SECRET`
    - `AUTH_URL` (or `NEXTAUTH_URL`)
+   - `OWNER_EMAIL` (owner-only access for admin role management)
    - `EMAIL_FROM`
    - `RESEND_API_KEY`
 3. Run migrations in deploy pipeline:

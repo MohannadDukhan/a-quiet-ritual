@@ -76,7 +76,7 @@ export function ResetPasswordForm({ email, token }: ResetPasswordFormProps) {
       <main className="bw-stage">
         <div className="bw-panel show" style={{ width: "min(560px, 94vw)" }}>
           <div className="bw-prompt" style={{ fontStyle: "normal" }}>
-            choose a new password for {email}.
+            choose a new password.
           </div>
 
           <form onSubmit={handleSubmit} className="bw-panel show" style={{ gap: 10 }}>

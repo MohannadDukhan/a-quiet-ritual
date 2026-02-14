@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 
 import { AdminUserRolesPanel } from "@/components/admin-user-roles-panel";
 import { AppHeader } from "@/components/layout/app-header";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireOwnerAdminUser } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
-  const adminUser = await requireAdminUser();
+  const adminUser = await requireOwnerAdminUser();
   if (!adminUser) {
     notFound();
   }

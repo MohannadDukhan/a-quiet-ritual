@@ -11,6 +11,7 @@ type AdminModerationPanelProps = {
   initialData: AdminModerationTodayData;
   initialPromptDays: ResolvedPromptDay[];
   timeZone: string;
+  canManageRoles: boolean;
 };
 
 type ApiResponse = {
@@ -45,7 +46,15 @@ function formatPromptDateLabel(dateId: string): string {
     .toLowerCase();
 }
 
-export function AdminModerationPanel({ initialData, initialPromptDays, timeZone }: AdminModerationPanelProps) {
+function formatHandle(username: string): string {
+  return `@${username.trim().toLowerCase()}`;
+}
+
+function formatUserLabel(username: string | null): string {
+  return username ? formatHandle(username) : "deleted user";
+}
+
+export function AdminModerationPanel({ initialData, initialPromptDays, timeZone, canManageRoles }: AdminModerationPanelProps) {
   const [data, setData] = useState(initialData);
   const [promptDays, setPromptDays] = useState(initialPromptDays);
   const [editingPromptDate, setEditingPromptDate] = useState<string | null>(null);
@@ -212,8 +221,9 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
     }
   }
 
-  async function handleBanUser(userId: string, email: string | null) {
-    if (!window.confirm(`ban ${email || "this user"} from collective posting?`)) {
+  async function handleBanUser(userId: string, username: string | null) {
+    const userLabel = formatUserLabel(username);
+    if (!window.confirm(`ban ${userLabel} from collective posting?`)) {
       return;
     }
 
@@ -226,13 +236,14 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
     );
   }
 
-  async function handleUnbanUser(userId: string, email: string | null) {
+  async function handleUnbanUser(userId: string, username: string | null) {
+    const userLabel = formatUserLabel(username);
     await runAction(
       `unban-user:${userId}`,
       async () => {
         await postJson("/api/admin/moderation/user/unban", { userId });
       },
-      `${email || "user"} unbanned.`,
+      `${userLabel} unbanned.`,
     );
   }
 
@@ -311,9 +322,11 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
           <h1 className="bw-accountTitle" style={{ marginBottom: 0 }}>
             admin
           </h1>
-          <Link className="bw-btnGhost" href="/admin/users">
-            user roles
-          </Link>
+          {canManageRoles && (
+            <Link className="bw-btnGhost" href="/admin/users">
+              user roles
+            </Link>
+          )}
         </div>
         <p className="bw-pageLead">moderate today&apos;s collective and manage prompts.</p>
         <div className="bw-ui bw-date">today&apos;s prompt: {data.prompt.text}</div>
@@ -358,7 +371,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                     <div className="bw-rowMetaLeft">
                       <span>{formatDateTime(entry.createdAt, timeZone)}</span>
                       <span className="bw-fragDot">-</span>
-                      <span>{entry.userEmail}</span>
+                      <span>{formatUserLabel(entry.userUsername)}</span>
                     </div>
                   </div>
                   <div className="bw-writing bw-rowBody">{previewText(entry.content)}</div>
@@ -372,8 +385,8 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                       disabled={pendingAction !== null}
                       onClick={() => {
                         void (authorBanned
-                          ? handleUnbanUser(entry.userId, entry.userEmail)
-                          : handleBanUser(entry.userId, entry.userEmail));
+                          ? handleUnbanUser(entry.userId, entry.userUsername)
+                          : handleBanUser(entry.userId, entry.userUsername));
                       }}
                     >
                       {authorBanned ? "unban user" : "ban user"}
@@ -411,7 +424,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                               <div className="bw-rowMetaLeft">
                                 <span>{formatDateTime(reply.createdAt, timeZone)}</span>
                                 <span className="bw-fragDot">-</span>
-                                <span>{reply.userEmail || "deleted user"}</span>
+                                <span>{formatUserLabel(reply.userUsername)}</span>
                               </div>
                             </div>
                             <div className="bw-writing bw-rowBody">{previewText(reply.content)}</div>
@@ -423,8 +436,8 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                                   disabled={pendingAction !== null}
                                   onClick={() => {
                                     void (replyUserBanned
-                                      ? handleUnbanUser(replyUserId, reply.userEmail)
-                                      : handleBanUser(replyUserId, reply.userEmail));
+                                      ? handleUnbanUser(replyUserId, reply.userUsername)
+                                      : handleBanUser(replyUserId, reply.userUsername));
                                   }}
                                 >
                                   {replyUserBanned ? "unban user" : "ban user"}
@@ -574,13 +587,13 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
             {data.bannedUsers.map((user) => (
               <div key={user.id} className="bw-rowItem bw-rowHover">
                 <div className="bw-accountRow bw-adminBannedRow">
-                  <span className="bw-accountValue">{user.email}</span>
+                  <span className="bw-accountValue">{formatUserLabel(user.username)}</span>
                   <button
                     className="bw-btnGhost"
                     type="button"
                     disabled={pendingAction !== null}
                     onClick={() => {
-                      void handleUnbanUser(user.id, user.email);
+                      void handleUnbanUser(user.id, user.username);
                     }}
                   >
                     unban

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUserRecord } from "@/lib/admin-auth";
+import { isOwnerEmail } from "@/lib/admin-role";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp, isSameOrigin, isSameOriginReadRequest } from "@/lib/security";
 
@@ -12,7 +13,7 @@ type RequireAdminApiRequestInput = {
 };
 
 type AdminApiGuardResult =
-  | { ok: true; adminUserId: string }
+  | { ok: true; adminUserId: string; adminUserEmail: string }
   | { ok: false; response: NextResponse };
 
 const DEFAULT_LIMIT = 60;
@@ -87,5 +88,24 @@ export async function requireAdminApiRequest({
   return {
     ok: true,
     adminUserId: sessionUser.id,
+    adminUserEmail: sessionUser.email,
   };
+}
+
+export async function requireOwnerAdminApiRequest(
+  input: RequireAdminApiRequestInput,
+): Promise<AdminApiGuardResult> {
+  const guard = await requireAdminApiRequest(input);
+  if (!guard.ok) {
+    return guard;
+  }
+
+  if (!isOwnerEmail(guard.adminUserEmail)) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Not found." }, { status: 404 }),
+    };
+  }
+
+  return guard;
 }
