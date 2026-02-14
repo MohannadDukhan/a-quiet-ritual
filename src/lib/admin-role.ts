@@ -2,17 +2,29 @@ import { UserRole } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 
-const DEFAULT_OWNER_EMAIL = "dukhamohannad@gmail.com";
-
-function normalizeEmail(email: string | null | undefined): string {
+export function normalizeEmail(email: string | null | undefined): string {
   return (email || "").trim().toLowerCase();
 }
 
-export const OWNER_EMAIL = normalizeEmail(process.env.OWNER_EMAIL || DEFAULT_OWNER_EMAIL);
+export function getConfiguredOwnerEmail(): string {
+  return (process.env.OWNER_EMAIL ?? "").trim().toLowerCase();
+}
+
+export const OWNER_EMAIL = getConfiguredOwnerEmail();
 export const PRIMARY_ADMIN_EMAIL = OWNER_EMAIL;
 
-export function isOwnerEmail(email: string | null | undefined): boolean {
-  return OWNER_EMAIL.length > 0 && normalizeEmail(email) === OWNER_EMAIL;
+export function getOwnerConfigurationState() {
+  const owner = getConfiguredOwnerEmail();
+  return {
+    ownerConfigured: owner.length > 0,
+    ownerLen: owner.length,
+  };
+}
+
+export function isOwnerEmail(inputEmail: string | null | undefined): boolean {
+  const owner = getConfiguredOwnerEmail();
+  const email = normalizeEmail(inputEmail);
+  return owner.length > 0 && email === owner;
 }
 
 export function isOwnerSession(session: { user?: { email?: string | null } } | null | undefined): boolean {
