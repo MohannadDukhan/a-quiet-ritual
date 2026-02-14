@@ -25,7 +25,7 @@ const DRAFT_KEY = "bw_entry_draft";
 const IDLE_SIZE = 360;
 const REVEALED_SIZE = 300;
 const INSIDE_PROMPT_MAX = 64;
-const PREMIUM_TRANSITION_MS = 3500;
+const PREMIUM_TRANSITION_MS = 2400;
 const REDUCED_TRANSITION_MS = 150;
 
 function fallbackDateId() {
@@ -175,9 +175,8 @@ export default function HomePage() {
 
   const revealPromptFlow = useCallback(() => {
     setRevealed(true);
-    void loadPrompt();
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [loadPrompt]);
+  }, []);
 
   async function handleBallClick() {
     if (isTransitioning) return;
@@ -190,6 +189,7 @@ export default function HomePage() {
 
     try {
       const duration = prefersReducedMotion ? REDUCED_TRANSITION_MS : PREMIUM_TRANSITION_MS;
+      const promptRequest = loadPrompt();
       if (ballRef.current) {
         await ballRef.current.playTransition({
           reducedMotion: prefersReducedMotion,
@@ -201,8 +201,8 @@ export default function HomePage() {
         });
       }
 
-      router.push("/#compose");
       revealPromptFlow();
+      void promptRequest;
     } finally {
       setIsTransitioning(false);
     }
@@ -292,14 +292,12 @@ export default function HomePage() {
                 style={ballStyle}
                 ariaLabel={revealed ? "reset the 8-ball prompt" : "tap the 8-ball"}
                 disabled={isTransitioning}
+                revealed={revealed}
+                promptText={insidePromptText}
                 onPress={() => {
                   void handleBallClick();
                 }}
-              >
-                <div className={`eightball__window ${revealed ? "show" : ""}`}>
-                  <div className="bw-writing eightball__windowText">{insidePromptText}</div>
-                </div>
-              </EightBallCanvas>
+              />
             </div>
           </div>
 
