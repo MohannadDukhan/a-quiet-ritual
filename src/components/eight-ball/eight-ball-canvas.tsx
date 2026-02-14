@@ -17,8 +17,7 @@ const DEFAULT_TRANSITION_MS = 2400;
 const REDUCED_TRANSITION_MS = 150;
 // Cap DPR for stable performance on high-density screens while keeping the ball sharp.
 const MAX_DPR = 1.8;
-const PROMPT_CANVAS_BASE_SIZE = 2048;
-const PROMPT_CANVAS_MAX_SIZE = 3072;
+const PROMPT_CANVAS_SIZE = 4096;
 
 type TransitionState = {
   active: boolean;
@@ -110,12 +109,8 @@ function wrapPromptText(context: CanvasRenderingContext2D, text: string, maxWidt
 
 function createPromptWindowTextureCanvas(): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  const dpr = typeof window === "undefined"
-    ? 1
-    : Math.min(Math.max(window.devicePixelRatio || 1, 1), 1.5);
-  const textureSize = Math.min(PROMPT_CANVAS_MAX_SIZE, Math.round(PROMPT_CANVAS_BASE_SIZE * dpr));
-  canvas.width = textureSize;
-  canvas.height = textureSize;
+  canvas.width = PROMPT_CANVAS_SIZE;
+  canvas.height = PROMPT_CANVAS_SIZE;
   return canvas;
 }
 
@@ -167,15 +162,15 @@ function drawPromptWindowTexture(canvas: HTMLCanvasElement, promptText: string) 
   context.fillStyle = "#111111";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  const fontSize = Math.max(66, Math.round(canvas.width * 0.058));
-  context.font = `600 ${fontSize}px system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
+  const fontSize = Math.max(110, Math.round(canvas.width * 0.073));
+  context.font = `700 ${fontSize}px system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 
-  const lines = wrapPromptText(context, promptText, radius * 1.5);
-  const lineHeight = Math.round(fontSize * 1.2);
+  const lines = wrapPromptText(context, promptText, radius * 1.42);
+  const lineHeight = Math.round(fontSize * 1.3);
   const startY = center - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line, index) => {
-    context.shadowColor = "rgba(255, 255, 255, 0.1)";
-    context.shadowBlur = Math.round(canvas.width * 0.0032);
+    context.shadowColor = "rgba(0, 0, 0, 0.16)";
+    context.shadowBlur = Math.round(canvas.width * 0.0024);
     context.fillText(line, center, startY + index * lineHeight);
   });
   context.shadowBlur = 0;
@@ -351,31 +346,25 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
       drawPromptWindowTexture(promptCanvas, promptTextRef.current);
       const promptTexture = new THREE.CanvasTexture(promptCanvas);
       promptTexture.colorSpace = THREE.SRGBColorSpace;
-      promptTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      promptTexture.minFilter = THREE.LinearFilter;
       promptTexture.magFilter = THREE.LinearFilter;
       promptTexture.generateMipmaps = true;
       promptTexture.needsUpdate = true;
+      promptTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
-      const promptDecalGeometry = new DecalGeometry(
-        sphereMesh,
-        new THREE.Vector3(0, 0, 1.015),
-        new THREE.Euler(0, 0, 0),
-        new THREE.Vector3(0.96, 0.96, 0.34),
-      );
-      const promptDecalMaterial = new THREE.MeshStandardMaterial({
+      const promptOverlayGeometry = new THREE.CircleGeometry(0.54, 128);
+      const promptOverlayMaterial = new THREE.MeshBasicMaterial({
         map: promptTexture,
         transparent: true,
         depthTest: true,
         depthWrite: false,
-        polygonOffset: true,
-        polygonOffsetFactor: -5,
-        roughness: 0.62,
-        metalness: 0.05,
+        toneMapped: false,
         opacity: 0,
       });
-      const promptDecalMesh = new THREE.Mesh(promptDecalGeometry, promptDecalMaterial);
-      promptDecalMesh.visible = false;
-      root.add(promptDecalMesh);
+      const promptOverlayMesh = new THREE.Mesh(promptOverlayGeometry, promptOverlayMaterial);
+      promptOverlayMesh.position.set(0, 0, 1.004);
+      promptOverlayMesh.visible = false;
+      root.add(promptOverlayMesh);
 
       promptCanvasRef.current = promptCanvas;
       promptTextureRef.current = promptTexture;
@@ -424,9 +413,9 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
 
         state.revealMix = THREE.MathUtils.damp(state.revealMix, revealedRef.current ? 1 : 0, 8.5, delta);
         decalMaterial.opacity = clamp(1 - state.revealMix, 0, 1);
-        promptDecalMaterial.opacity = clamp(state.revealMix, 0, 1);
+        promptOverlayMaterial.opacity = clamp(state.revealMix, 0, 1);
         decalMesh.visible = decalMaterial.opacity > 0.015;
-        promptDecalMesh.visible = promptDecalMaterial.opacity > 0.015;
+        promptOverlayMesh.visible = promptOverlayMaterial.opacity > 0.015;
 
         const pointerX = state.pointerY * 0.2;
         const pointerY = state.pointerX * 0.24;
@@ -490,6 +479,8 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
             resolver?.();
           }
         } else if (revealedRef.current) {
+          state.pointerTargetX = 0;
+          state.pointerTargetY = 0;
           targetRotationX = 0;
           targetRotationY = 0;
           targetRotationZ = 0;
@@ -532,10 +523,10 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
 
         // Explicitly dispose WebGL resources to prevent leaks during route transitions/remounts.
         decalGeometry.dispose();
-        promptDecalGeometry.dispose();
+        promptOverlayGeometry.dispose();
         sphereGeometry.dispose();
         decalMaterial.dispose();
-        promptDecalMaterial.dispose();
+        promptOverlayMaterial.dispose();
         sphereMaterial.dispose();
         decalTexture.dispose();
         promptTexture.dispose();
