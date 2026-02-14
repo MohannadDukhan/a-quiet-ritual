@@ -1298,6 +1298,171 @@ body {
   text-transform: lowercase;
 }
 
+.bw-profileWrap {
+  display: grid;
+  gap: 18px;
+}
+
+.bw-profileHeader {
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  padding: 12px 0 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.bw-profileHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.bw-profileAvatarWrap {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+}
+
+.bw-profileAvatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bw-profileAvatarFallback {
+  display: grid;
+  place-items: center;
+}
+
+.bw-profileAvatarBtn {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(5, 5, 5, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bw-profileAvatarBtn:hover {
+  background: rgba(10, 10, 10, 0.98);
+}
+
+.bw-profileAvatarBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.bw-profileFileInput {
+  display: none;
+}
+
+.bw-profileIdentity {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.bw-profileIdentityTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bw-profileName {
+  margin: 0;
+  font-size: clamp(28px, 4.4vw, 42px);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  text-transform: lowercase;
+}
+
+.bw-profileEditArea {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.bw-profileFeedSection {
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  padding: 12px 0;
+}
+
+.bw-profileFeedRow {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 12px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 160ms ease;
+}
+
+.bw-profileFeedRow:first-of-type {
+  border-top: 0;
+}
+
+.bw-profileFeedRow:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.bw-profileFeedRow:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bw-profileFeedMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.46);
+  font-family: var(--bw-body-font);
+}
+
+.bw-profileFeedBadge {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.bw-profileFeedText {
+  margin-top: 6px;
+  font-size: 16px;
+  line-height: 1.72;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bw-profileFeedHint {
+  padding: 10px 0 2px;
+}
+
+.bw-profileAccountCard {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
 /* motion accessibility */
 @media (prefers-reduced-motion: reduce) {
   .bw-float,
@@ -2163,6 +2328,58 @@ body.bw-light .bw-accountDangerText {
   color: rgba(18, 18, 18, 0.64);
 }
 
+body.bw-light .bw-profileHeader,
+body.bw-light .bw-profileFeedSection {
+  border-color: rgba(20, 20, 20, 0.16);
+}
+
+body.bw-light .bw-profileAvatar {
+  border-color: rgba(20, 20, 20, 0.18);
+  background: rgba(20, 20, 20, 0.04);
+}
+
+body.bw-light .bw-profileAvatarBtn {
+  border-color: rgba(20, 20, 20, 0.22);
+  background: rgba(249, 249, 247, 0.92);
+  color: rgba(18, 18, 18, 0.86);
+}
+
+body.bw-light .bw-profileAvatarBtn:hover {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+body.bw-light .bw-profileName {
+  color: rgba(18, 18, 18, 0.9);
+}
+
+body.bw-light .bw-profileFeedRow {
+  border-color: rgba(20, 20, 20, 0.12);
+}
+
+body.bw-light .bw-profileFeedRow:hover,
+body.bw-light .bw-profileFeedRow:focus-visible {
+  background: rgba(20, 20, 20, 0.03);
+}
+
+body.bw-light .bw-profileFeedMeta {
+  color: rgba(18, 18, 18, 0.54);
+}
+
+body.bw-light .bw-profileFeedBadge {
+  background: rgba(20, 20, 20, 0.03);
+  border-color: rgba(20, 20, 20, 0.15);
+  color: rgba(18, 18, 18, 0.58);
+}
+
+body.bw-light .bw-profileFeedText {
+  color: rgba(18, 18, 18, 0.78);
+}
+
+body.bw-light .bw-profileAccountCard {
+  background: rgba(255, 255, 255, 0.64);
+  border-color: rgba(20, 20, 20, 0.12);
+}
+
 body.bw-light .bw-ball {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.05),
@@ -2272,6 +2489,24 @@ body.bw-light .bw-input {
   .bw-row {
     flex-wrap: wrap;
     align-items: flex-start;
+  }
+
+  .bw-profileHeaderRow {
+    gap: 12px;
+  }
+
+  .bw-profileAvatarWrap {
+    width: 74px;
+    height: 74px;
+  }
+
+  .bw-profileAvatarBtn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .bw-profileName {
+    font-size: clamp(24px, 8.8vw, 34px);
   }
 
 }

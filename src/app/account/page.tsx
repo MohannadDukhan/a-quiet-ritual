@@ -4,6 +4,7 @@ import { AccountPanel } from "@/components/account-panel";
 import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getProfileSharedEntriesPage } from "@/lib/profile-shared-entries";
 import { getRequestTimeZone } from "@/lib/request-timezone";
 
 export const dynamic = "force-dynamic";
@@ -55,19 +56,9 @@ export default async function AccountPage() {
     );
   }
 
-  const sharedEntries = await prisma.entry.findMany({
-    where: {
-      userId,
-      type: "PROMPT",
-      isCollective: true,
-      collectiveRemovedAt: null,
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      content: true,
-      createdAt: true,
-    },
+  const sharedEntriesPage = await getProfileSharedEntriesPage({
+    userId,
+    limit: 10,
   });
 
   return (
@@ -81,11 +72,8 @@ export default async function AccountPage() {
           emailVerified={Boolean(user.emailVerified)}
           initialUsername={user.username || "anonymous"}
           initialImage={user.image}
-          sharedEntries={sharedEntries.map((entry) => ({
-            id: entry.id,
-            content: entry.content,
-            createdAt: entry.createdAt.toISOString(),
-          }))}
+          initialSharedEntries={sharedEntriesPage.items}
+          initialSharedEntriesNextCursor={sharedEntriesPage.nextCursor}
           timeZone={timeZone}
         />
       </main>

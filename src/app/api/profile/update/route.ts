@@ -10,18 +10,51 @@ import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
 const updateProfileSchema = z.object({
   username: z.string().optional(),
-  image: z.string().optional(),
+  imageDataUrl: z.string().nullable().optional(),
 });
 
 export const runtime = "nodejs";
 
-function isValidImageUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
+const AVATAR_MAX_BYTES = 250 * 1024;
+const IMAGE_DATA_URL_MAX_LENGTH = 500_000;
+const IMAGE_DATA_URL_PATTERN = /^data:image\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/;
+
+function parseImageDataUrl(value: string): { mime: string; base64: string } | null {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > IMAGE_DATA_URL_MAX_LENGTH) {
+    return null;
   }
+
+  const match = IMAGE_DATA_URL_PATTERN.exec(trimmed);
+  if (!match) {
+    return null;
+  }
+
+  const mime = match[1]?.toLowerCase() || "";
+  const base64 = match[2] || "";
+  if (!mime || !base64) {
+    return null;
+  }
+
+  return { mime, base64 };
+}
+
+function validateImageDataUrl(value: string): string | null {
+  const parsed = parseImageDataUrl(value);
+  if (!parsed) {
+    return "avatar image must be a valid data:image payload.";
+  }
+
+  const bytes = Buffer.from(parsed.base64, "base64");
+  if (bytes.length === 0) {
+    return "avatar image payload is empty.";
+  }
+
+  if (bytes.length > AVATAR_MAX_BYTES) {
+    return "avatar image must be under 250kb.";
+  }
+
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -74,7 +107,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid profile payload." }, { status: 400 });
   }
 
-  if (parsed.data.username === undefined && parsed.data.image === undefined) {
+  if (parsed.data.username === undefined && parsed.data.imageDataUrl === undefined) {
     return NextResponse.json({ error: "nothing to update." }, { status: 400 });
   }
 
@@ -122,14 +155,16 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (parsed.data.image !== undefined) {
-    const normalizedImage = parsed.data.image.trim();
-    if (!normalizedImage) {
+  if (parsed.data.imageDataUrl !== undefined) {
+    const imageDataUrl = parsed.data.imageDataUrl;
+    if (imageDataUrl === null) {
       updateData.image = null;
-    } else if (!isValidImageUrl(normalizedImage)) {
-      return NextResponse.json({ error: "image must be a valid http/https url." }, { status: 400 });
     } else {
-      updateData.image = normalizedImage;
+      const imageError = validateImageDataUrl(imageDataUrl);
+      if (imageError) {
+        return NextResponse.json({ error: imageError }, { status: 400 });
+      }
+      updateData.image = imageDataUrl.trim();
     }
   }
 

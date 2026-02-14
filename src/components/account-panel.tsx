@@ -1,17 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 
-import { formatDate, formatDateTime } from "@/lib/time";
+import { ProfileSharedEntriesFeed } from "@/components/profile-shared-entries-feed";
+import { formatDate } from "@/lib/time";
+import type { ProfileSharedEntryItem } from "@/lib/profile-shared-entries";
 import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
-
-type SharedProfileEntry = {
-  id: string;
-  content: string;
-  createdAt: string;
-};
 
 type AccountPanelProps = {
   createdAt: string;
@@ -20,7 +15,8 @@ type AccountPanelProps = {
   timeZone: string;
   initialUsername: string;
   initialImage: string | null;
-  sharedEntries: SharedProfileEntry[];
+  initialSharedEntries: ProfileSharedEntryItem[];
+  initialSharedEntriesNextCursor: string | null;
 };
 
 type DeleteAccountResponse = {
@@ -40,14 +36,122 @@ type UpdateProfileResponse = {
 type UsernameAvailabilityState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
 const DELETE_CONFIRMATION_TEXT = "DELETE MY DATA";
-const PREVIEW_LENGTH = 140;
+const AVATAR_DIMENSION = 320;
+const AVATAR_TARGET_BYTES = 150 * 1024;
+const AVATAR_MAX_BYTES = 250 * 1024;
 
-function previewText(value: string, maxLength: number = PREVIEW_LENGTH): string {
-  const compact = value.replace(/\s+/g, " ").trim();
-  if (compact.length <= maxLength) {
-    return compact;
+function formatMemberSince(createdAt: string, timeZone: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) {
+    return "";
   }
-  return `${compact.slice(0, maxLength).trimEnd()}...`;
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    year: "numeric",
+    timeZone,
+  })
+    .format(date)
+    .toLowerCase();
+}
+
+function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("could not read image file."));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("could not process image."));
+        return;
+      }
+      resolve(result);
+    };
+    reader.onerror = () => reject(new Error("could not process image."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function buildAvatarDataUrl(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("select an image file.");
+  }
+
+  const image = await loadImageFromFile(file);
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+  if (!width || !height) {
+    throw new Error("could not read image size.");
+  }
+
+  const square = Math.min(width, height);
+  const sx = Math.floor((width - square) / 2);
+  const sy = Math.floor((height - square) / 2);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = AVATAR_DIMENSION;
+  canvas.height = AVATAR_DIMENSION;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("could not prepare image.");
+  }
+
+  context.drawImage(image, sx, sy, square, square, 0, 0, AVATAR_DIMENSION, AVATAR_DIMENSION);
+
+  const encoders: Array<{ type: string; qualities: number[] }> = [
+    { type: "image/webp", qualities: [0.9, 0.82, 0.74, 0.66, 0.58, 0.5] },
+    { type: "image/jpeg", qualities: [0.88, 0.8, 0.72, 0.64, 0.56, 0.48] },
+  ];
+
+  let smallestBlob: Blob | null = null;
+  for (const encoder of encoders) {
+    for (const quality of encoder.qualities) {
+      const blob = await canvasToBlob(canvas, encoder.type, quality);
+      if (!blob) {
+        continue;
+      }
+
+      if (!smallestBlob || blob.size < smallestBlob.size) {
+        smallestBlob = blob;
+      }
+
+      if (blob.size <= AVATAR_TARGET_BYTES) {
+        return blobToDataUrl(blob);
+      }
+    }
+  }
+
+  if (!smallestBlob) {
+    throw new Error("could not process image.");
+  }
+  if (smallestBlob.size > AVATAR_MAX_BYTES) {
+    throw new Error("avatar image must be 250kb or less.");
+  }
+
+  return blobToDataUrl(smallestBlob);
 }
 
 export function AccountPanel({
@@ -57,14 +161,15 @@ export function AccountPanel({
   timeZone,
   initialUsername,
   initialImage,
-  sharedEntries,
+  initialSharedEntries,
+  initialSharedEntriesNextCursor,
 }: AccountPanelProps) {
   const [username, setUsername] = useState(initialUsername);
   const [image, setImage] = useState(initialImage);
   const [editOpen, setEditOpen] = useState(false);
   const [usernameDraft, setUsernameDraft] = useState(initialUsername);
-  const [imageDraft, setImageDraft] = useState(initialImage ?? "");
   const [savePending, setSavePending] = useState(false);
+  const [avatarUploadPending, setAvatarUploadPending] = useState(false);
   const [profileNotice, setProfileNotice] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<UsernameAvailabilityState>("idle");
@@ -77,7 +182,9 @@ export function AccountPanel({
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [signOutPending, setSignOutPending] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const normalizedDraftUsername = useMemo(() => normalizeUsername(usernameDraft), [usernameDraft]);
+  const memberSince = useMemo(() => formatMemberSince(createdAt, timeZone), [createdAt, timeZone]);
   const avatarSeed = username || "anonymous";
   const avatarLabel = avatarSeed.slice(0, 1).toUpperCase();
 
@@ -206,7 +313,6 @@ export function AccountPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: normalizedDraftUsername,
-          image: imageDraft,
         }),
       });
       const data = (await response.json().catch(() => null)) as UpdateProfileResponse | null;
@@ -216,11 +322,8 @@ export function AccountPanel({
       }
 
       const nextUsername = data.user.username;
-      const nextImage = data.user.image ?? null;
       setUsername(nextUsername);
-      setImage(nextImage);
       setUsernameDraft(nextUsername);
-      setImageDraft(nextImage || "");
       setEditOpen(false);
       setUsernameStatus("idle");
       setUsernameHint(null);
@@ -232,66 +335,110 @@ export function AccountPanel({
     }
   }
 
+  async function handleAvatarFileSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    setAvatarUploadPending(true);
+    setProfileError(null);
+    setProfileNotice(null);
+
+    try {
+      const imageDataUrl = await buildAvatarDataUrl(file);
+      const response = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl }),
+      });
+      const data = (await response.json().catch(() => null)) as UpdateProfileResponse | null;
+      if (!response.ok || !data?.ok) {
+        setProfileError(data?.error || "could not update avatar.");
+        return;
+      }
+
+      setImage(data?.user?.image ?? imageDataUrl);
+      setProfileNotice("avatar updated.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "could not update avatar.";
+      setProfileError(message);
+    } finally {
+      setAvatarUploadPending(false);
+    }
+  }
+
   function resetProfileEdit() {
     setEditOpen(false);
     setUsernameDraft(username);
-    setImageDraft(image || "");
     setUsernameStatus("idle");
     setUsernameHint(null);
     setProfileError(null);
   }
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      <section className="bw-card bw-accountCard">
-        <div className="bw-row" style={{ alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <div
-              aria-hidden="true"
-              style={{
-                width: 68,
-                height: 68,
-                borderRadius: "999px",
-                border: "1px solid var(--bw-line)",
-                backgroundColor: "var(--bw-panel)",
-                backgroundImage: image ? `url("${image}")` : undefined,
-                backgroundPosition: "center",
-                backgroundSize: "cover",
-                display: "grid",
-                placeItems: "center",
-                overflow: "hidden",
-                flexShrink: 0,
-              }}
-            >
-              {!image && <span className="bw-ui bw-date">{avatarLabel}</span>}
-            </div>
-            <div style={{ display: "grid", gap: 4 }}>
-              <h1 className="bw-accountTitle" style={{ marginBottom: 0 }}>
-                @{username}
-              </h1>
-              <div className="bw-ui bw-date">a quiet personal profile</div>
-            </div>
+    <div className="bw-profileWrap">
+      <section className="bw-profileHeader" aria-label="profile header">
+        <div className="bw-profileHeaderRow">
+          <div className="bw-profileAvatarWrap">
+            {image ? (
+              // Data URLs are stored in User.image, so plain img avoids next/image remote constraints.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className="bw-profileAvatar" src={image} alt={`${username} avatar`} />
+            ) : (
+              <div className="bw-profileAvatar bw-profileAvatarFallback">
+                <span className="bw-ui bw-date">{avatarLabel}</span>
+              </div>
+            )}
+            {editOpen && (
+              <button
+                className="bw-profileAvatarBtn"
+                type="button"
+                disabled={avatarUploadPending}
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="upload avatar image"
+                title="change avatar"
+              >
+                {avatarUploadPending ? "..." : "+"}
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              className="bw-profileFileInput"
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarFileSelected}
+            />
           </div>
-          <button
-            className="bw-btnGhost"
-            type="button"
-            disabled={savePending || signOutPending || deletePending}
-            onClick={() => {
-              if (editOpen) {
-                resetProfileEdit();
-                return;
-              }
-              setEditOpen(true);
-              setProfileError(null);
-              setProfileNotice(null);
-            }}
-          >
-            {editOpen ? "close edit" : "edit profile"}
-          </button>
+
+          <div className="bw-profileIdentity">
+            <div className="bw-profileIdentityTop">
+              <h1 className="bw-profileName">@{username}</h1>
+              <button
+                className="bw-btnGhost"
+                type="button"
+                disabled={savePending || signOutPending || deletePending || avatarUploadPending}
+                onClick={() => {
+                  if (editOpen) {
+                    resetProfileEdit();
+                    return;
+                  }
+                  setEditOpen(true);
+                  setProfileError(null);
+                  setProfileNotice(null);
+                }}
+              >
+                {editOpen ? "close edit" : "edit profile"}
+              </button>
+            </div>
+            <div className="bw-ui bw-date">a quiet personal profile</div>
+            {memberSince && <div className="bw-ui bw-date">member since {memberSince}</div>}
+          </div>
         </div>
 
         {editOpen && (
-          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+          <div className="bw-profileEditArea">
             <input
               className="bw-input"
               type="text"
@@ -301,52 +448,34 @@ export function AccountPanel({
               onChange={(event) => setUsernameDraft(event.target.value.toLowerCase())}
             />
             {usernameHint && <div className="bw-hint">{usernameHint}</div>}
-            <input
-              className="bw-input"
-              type="url"
-              autoComplete="url"
-              placeholder="profile image url (https://...)"
-              value={imageDraft}
-              onChange={(event) => setImageDraft(event.target.value)}
-            />
             <div className="bw-row" style={{ justifyContent: "flex-start", gap: 8, flexWrap: "wrap" }}>
-              <button className="bw-btnGhost" type="button" disabled={savePending} onClick={() => void handleSaveProfile()}>
+              <button className="bw-btnGhost" type="button" disabled={savePending || avatarUploadPending} onClick={() => void handleSaveProfile()}>
                 {savePending ? "saving..." : "save profile"}
               </button>
-              <button className="bw-btnGhost" type="button" disabled={savePending} onClick={resetProfileEdit}>
+              <button className="bw-btnGhost" type="button" disabled={savePending || avatarUploadPending} onClick={resetProfileEdit}>
                 cancel
               </button>
             </div>
           </div>
         )}
 
-        {profileNotice && <div className="bw-hint" style={{ marginTop: 12 }}>{profileNotice}</div>}
-        {profileError && <div className="bw-hint" style={{ marginTop: 12 }}>{profileError}</div>}
+        {profileNotice && <div className="bw-hint" style={{ marginTop: 10 }}>{profileNotice}</div>}
+        {profileError && <div className="bw-hint" style={{ marginTop: 10 }}>{profileError}</div>}
       </section>
 
-      <section className="bw-card">
-        <div className="bw-ui bw-date" style={{ marginBottom: 12 }}>
+      <section className="bw-profileFeedSection" aria-label="shared entries">
+        <div className="bw-ui bw-date" style={{ marginBottom: 10 }}>
           shared entries
         </div>
-        {sharedEntries.length === 0 ? (
-          <div className="bw-hint">no shared entries yet.</div>
-        ) : (
-          <div style={{ display: "grid", gap: 12 }}>
-            {sharedEntries.map((entry) => (
-              <Link key={entry.id} href={`/collective/${entry.id}`} className="bw-card bw-cardLink">
-                <div className="bw-cardMeta">
-                  <div className="bw-ui bw-cardDate">{formatDateTime(entry.createdAt, timeZone)}</div>
-                  <span className="bw-ui bw-collectiveBadge">shared</span>
-                </div>
-                <div className="bw-writing bw-cardText bw-cardPreview">{previewText(entry.content)}</div>
-              </Link>
-            ))}
-          </div>
-        )}
+        <ProfileSharedEntriesFeed
+          initialItems={initialSharedEntries}
+          initialNextCursor={initialSharedEntriesNextCursor}
+          timeZone={timeZone}
+        />
       </section>
 
-      <section className="bw-card bw-accountCard">
-        <h2 className="bw-accountTitle" style={{ marginBottom: 12 }}>
+      <section className="bw-card bw-accountCard bw-profileAccountCard">
+        <h2 className="bw-accountTitle" style={{ marginBottom: 10 }}>
           account
         </h2>
 
