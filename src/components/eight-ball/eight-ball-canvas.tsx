@@ -17,7 +17,7 @@ const DEFAULT_TRANSITION_MS = 2400;
 const REDUCED_TRANSITION_MS = 150;
 // Cap DPR for stable performance on high-density screens while keeping the ball sharp.
 const MAX_DPR = 1.8;
-const PROMPT_CANVAS_SIZE = 1024;
+const PROMPT_CANVAS_SIZE = 1536;
 
 type TransitionState = {
   active: boolean;
@@ -121,39 +121,39 @@ function drawPromptWindowTexture(canvas: HTMLCanvasElement, promptText: string) 
   }
 
   const center = canvas.width / 2;
-  const radius = canvas.width * 0.33;
+  const radius = canvas.width * 0.39;
 
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   context.beginPath();
-  context.arc(center, center, radius + 20, 0, Math.PI * 2);
-  const glowGradient = context.createRadialGradient(center, center, radius * 0.45, center, center, radius + 20);
-  glowGradient.addColorStop(0, "rgba(255, 255, 255, 0.07)");
+  context.arc(center, center, radius + 30, 0, Math.PI * 2);
+  const glowGradient = context.createRadialGradient(center, center, radius * 0.45, center, center, radius + 30);
+  glowGradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
   glowGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
   context.fillStyle = glowGradient;
   context.fill();
 
   context.beginPath();
   context.arc(center, center, radius, 0, Math.PI * 2);
-  const fillGradient = context.createRadialGradient(center, center - radius * 0.3, radius * 0.2, center, center, radius);
-  fillGradient.addColorStop(0, "rgba(35, 35, 38, 0.96)");
-  fillGradient.addColorStop(1, "rgba(14, 14, 16, 0.96)");
+  const fillGradient = context.createRadialGradient(center, center - radius * 0.35, radius * 0.2, center, center, radius);
+  fillGradient.addColorStop(0, "rgba(255, 255, 255, 0.98)");
+  fillGradient.addColorStop(1, "rgba(236, 236, 236, 0.98)");
   context.fillStyle = fillGradient;
   context.fill();
 
   context.beginPath();
   context.arc(center, center, radius, 0, Math.PI * 2);
-  context.lineWidth = 7;
-  context.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  context.lineWidth = 10;
+  context.strokeStyle = "rgba(18, 18, 20, 0.25)";
   context.stroke();
 
-  context.fillStyle = "rgba(243, 243, 243, 0.92)";
+  context.fillStyle = "rgba(14, 14, 16, 0.94)";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = "500 62px 'Helvetica Neue', Arial, sans-serif";
+  context.font = "500 80px system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
-  const lines = wrapPromptText(context, promptText, radius * 1.58);
-  const lineHeight = 80;
+  const lines = wrapPromptText(context, promptText, radius * 1.6);
+  const lineHeight = 102;
   const startY = center - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line, index) => {
     context.fillText(line, center, startY + index * lineHeight);
@@ -278,8 +278,8 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
       renderer.toneMappingExposure = 0.98;
 
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(34, 1, 0.01, 60);
-      camera.position.set(0, 0, 5.05);
+      const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 70);
+      camera.position.set(0, 0, 5.28);
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.28);
       const keyLight = new THREE.DirectionalLight(0xffffff, 0.92);
@@ -293,14 +293,14 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
       const root = new THREE.Group();
       scene.add(root);
 
-      const sphereGeometry = new THREE.SphereGeometry(1.14, 128, 128);
+      const sphereGeometry = new THREE.SphereGeometry(1.08, 128, 128);
       const sphereMaterial = new THREE.MeshPhysicalMaterial({
         color: 0x121212,
-        roughness: 0.17,
+        roughness: 0.21,
         metalness: 0.12,
-        clearcoat: 0.82,
-        clearcoatRoughness: 0.1,
-        envMapIntensity: 0.92,
+        clearcoat: 0.74,
+        clearcoatRoughness: 0.14,
+        envMapIntensity: 0.8,
       });
       const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
       root.add(sphereMesh);
@@ -490,8 +490,8 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
         root.scale.y = THREE.MathUtils.damp(root.scale.y, targetScaleY, movementDamp, delta);
         root.scale.z = THREE.MathUtils.damp(root.scale.z, targetScaleZ, movementDamp, delta);
 
-        const idlePulse = revealedRef.current ? 0 : Math.sin(state.elapsed * 0.26) * 0.02;
-        sphereMaterial.envMapIntensity = 0.88 + idlePulse;
+        const idlePulse = revealedRef.current ? 0 : Math.sin(state.elapsed * 0.26) * 0.015;
+        sphereMaterial.envMapIntensity = 0.78 + idlePulse;
         keyLight.intensity = 0.9 + (revealedRef.current ? 0 : Math.sin(state.elapsed * 0.24) * 0.045);
 
         renderer.render(scene, camera);
