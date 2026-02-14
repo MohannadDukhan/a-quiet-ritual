@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import type { CSSProperties, PointerEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useEightBallTransition } from "@/components/eight-ball-transition-provider";
+import {
+  EightBallCanvas,
+  type EightBallCanvasHandle,
+} from "@/components/eight-ball/eight-ball-canvas";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwModal } from "@/components/ui/bw-modal";
 import { InfoPopover } from "@/components/ui/info-popover";
@@ -23,7 +25,8 @@ const DRAFT_KEY = "bw_entry_draft";
 const IDLE_SIZE = 360;
 const REVEALED_SIZE = 300;
 const INSIDE_PROMPT_MAX = 64;
-const BALL_MAX_TILT_DEGREES = 8;
+const PREMIUM_TRANSITION_MS = 3500;
+const REDUCED_TRANSITION_MS = 150;
 
 function fallbackDateId() {
   const d = new Date();
@@ -36,9 +39,10 @@ function fallbackDateId() {
 export default function HomePage() {
   const router = useRouter();
   const { status } = useSession();
-  const { isTransitioning, startEightBallTransition } = useEightBallTransition();
 
   const [revealed, setRevealed] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [promptState, setPromptState] = useState<PromptPayload | null>(null);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [promptLoading, setPromptLoading] = useState(false);
@@ -52,8 +56,8 @@ export default function HomePage() {
   const [showSavedModal, setShowSavedModal] = useState(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const ballRef = useRef<EightBallCanvasHandle | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
   const promptText = promptState?.prompt.text ?? "";
@@ -99,6 +103,22 @@ export default function HomePage() {
       document.body.classList.remove("bw-light");
     };
   }, [revealed]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => {
+      setPrefersReducedMotion(mediaQuery.matches);
+    };
+
+    sync();
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", sync);
+      return () => mediaQuery.removeEventListener("change", sync);
+    }
+
+    mediaQuery.addListener(sync);
+    return () => mediaQuery.removeListener(sync);
+  }, []);
 
   useEffect(() => {
     const audio = new Audio("/sounds/ball-click.wav");
@@ -147,7 +167,6 @@ export default function HomePage() {
   }, []);
 
   function resetReveal() {
-    setTilt({ x: 0, y: 0 });
     setRevealed(false);
     setSaved(false);
     setNeedsSignIn(false);
@@ -155,38 +174,38 @@ export default function HomePage() {
   }
 
   const revealPromptFlow = useCallback(() => {
-    setTilt({ x: 0, y: 0 });
     setRevealed(true);
     void loadPrompt();
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [loadPrompt]);
 
-  function handleBallClick() {
+  async function handleBallClick() {
     if (isTransitioning) return;
     if (revealed) {
       resetReveal();
       return;
     }
     playBallClickSound();
-    setTilt({ x: 0, y: 0 });
-    startEightBallTransition({ targetHref: "/#compose", onComplete: revealPromptFlow });
-  }
+    setIsTransitioning(true);
 
-  function handleBallPointerMove(event: PointerEvent<HTMLButtonElement>) {
-    if (isTransitioning || event.pointerType === "touch") {
-      return;
+    try {
+      const duration = prefersReducedMotion ? REDUCED_TRANSITION_MS : PREMIUM_TRANSITION_MS;
+      if (ballRef.current) {
+        await ballRef.current.playTransition({
+          reducedMotion: prefersReducedMotion,
+          durationMs: duration,
+        });
+      } else {
+        await new Promise((resolve) => {
+          window.setTimeout(resolve, duration);
+        });
+      }
+
+      router.push("/#compose");
+      revealPromptFlow();
+    } finally {
+      setIsTransitioning(false);
     }
-
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const offsetX = (event.clientX - bounds.left) / bounds.width;
-    const offsetY = (event.clientY - bounds.top) / bounds.height;
-    const rotateY = (offsetX - 0.5) * (BALL_MAX_TILT_DEGREES * 2);
-    const rotateX = (0.5 - offsetY) * (BALL_MAX_TILT_DEGREES * 2);
-    setTilt({ x: rotateX, y: rotateY });
-  }
-
-  function handleBallPointerLeave() {
-    setTilt({ x: 0, y: 0 });
   }
 
   async function handleSave() {
@@ -254,16 +273,9 @@ export default function HomePage() {
 
   const rootClass = ["bw-bg", revealed ? "bw-revealed" : ""].filter(Boolean).join(" ");
   const dateLabel = promptState?.dateId ?? fallbackDateId();
-  const ballStyle: CSSProperties & Record<
-    "--bw-tilt-x" | "--bw-tilt-y" | "--bw-gloss-shift-x" | "--bw-gloss-shift-y",
-    string
-  > = {
+  const ballStyle = {
     width: `min(${ballSize}px, 82vw)`,
     height: `min(${ballSize}px, 82vw)`,
-    "--bw-tilt-x": `${tilt.x.toFixed(2)}deg`,
-    "--bw-tilt-y": `${tilt.y.toFixed(2)}deg`,
-    "--bw-gloss-shift-x": `${(tilt.y * 1.1).toFixed(2)}px`,
-    "--bw-gloss-shift-y": `${(-tilt.x * 1.1).toFixed(2)}px`,
   };
 
   return (
@@ -274,27 +286,20 @@ export default function HomePage() {
         <div className="bw-orbWrap">
           <div className="bw-float">
             <div className="bw-parallax">
-              <button
-                type="button"
-                className={`bw-ball ${isTransitioning ? "bw-ball-launching" : ""}`}
-                onClick={handleBallClick}
-                onPointerMove={handleBallPointerMove}
-                onPointerLeave={handleBallPointerLeave}
-                onBlur={handleBallPointerLeave}
+              <EightBallCanvas
+                ref={ballRef}
+                className={isTransitioning ? "is-transitioning" : ""}
                 style={ballStyle}
-                aria-label={revealed ? "reset the 8-ball prompt" : "tap the 8-ball"}
+                ariaLabel={revealed ? "reset the 8-ball prompt" : "tap the 8-ball"}
                 disabled={isTransitioning}
+                onPress={() => {
+                  void handleBallClick();
+                }}
               >
-                <span className="bw-ballSpecular" aria-hidden="true" />
-                <span className="bw-ballStreak" aria-hidden="true" />
-                <span className="bw-ballRimLight" aria-hidden="true" />
-                <div className={`bw-eight ${revealed ? "is-hidden" : ""}`}>
-                  <span>8</span>
-                </div>
                 <div className={`eightball__window ${revealed ? "show" : ""}`}>
                   <div className="bw-writing eightball__windowText">{insidePromptText}</div>
                 </div>
-              </button>
+              </EightBallCanvas>
             </div>
           </div>
 
