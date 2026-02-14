@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import type { AnimationEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useEightBallTransition } from "@/components/eight-ball-transition-provider";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwModal } from "@/components/ui/bw-modal";
 import { InfoPopover } from "@/components/ui/info-popover";
@@ -22,31 +23,7 @@ const DRAFT_KEY = "bw_entry_draft";
 const IDLE_SIZE = 360;
 const REVEALED_SIZE = 300;
 const INSIDE_PROMPT_MAX = 64;
-const BALL_ANIMATION_CLASSES = [
-  "bw-anim-shake",
-  "bw-anim-spin",
-  "bw-anim-flip",
-  "bw-anim-wobble",
-  "bw-anim-tilt-return",
-  "bw-anim-float-settle",
-  "bw-anim-pulse",
-  "bw-anim-orbit",
-  "bw-anim-rattle",
-  "bw-anim-roll",
-] as const;
-const REDUCED_BALL_ANIMATION_CLASS = "bw-anim-reduced" as const;
-
-type BallAnimationClass = (typeof BALL_ANIMATION_CLASSES)[number] | typeof REDUCED_BALL_ANIMATION_CLASS;
-
-function pickRandomBallAnimation(previous: BallAnimationClass | null): BallAnimationClass {
-  if (BALL_ANIMATION_CLASSES.length <= 1) return BALL_ANIMATION_CLASSES[0];
-  let next = BALL_ANIMATION_CLASSES[Math.floor(Math.random() * BALL_ANIMATION_CLASSES.length)];
-  if (next === previous) {
-    const index = BALL_ANIMATION_CLASSES.indexOf(next);
-    next = BALL_ANIMATION_CLASSES[(index + 1) % BALL_ANIMATION_CLASSES.length];
-  }
-  return next;
-}
+const BALL_MAX_TILT_DEGREES = 8;
 
 function fallbackDateId() {
   const d = new Date();
@@ -59,11 +36,9 @@ function fallbackDateId() {
 export default function HomePage() {
   const router = useRouter();
   const { status } = useSession();
+  const { isTransitioning, startEightBallTransition } = useEightBallTransition();
 
   const [revealed, setRevealed] = useState(false);
-  const [isBallAnimating, setIsBallAnimating] = useState(false);
-  const [activeBallAnimation, setActiveBallAnimation] = useState<BallAnimationClass | null>(null);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [promptState, setPromptState] = useState<PromptPayload | null>(null);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [promptLoading, setPromptLoading] = useState(false);
@@ -77,9 +52,8 @@ export default function HomePage() {
   const [showSavedModal, setShowSavedModal] = useState(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const isAnimatingRef = useRef(false);
-  const lastAnimationRef = useRef<BallAnimationClass | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
   const promptText = promptState?.prompt.text ?? "";
@@ -127,31 +101,6 @@ export default function HomePage() {
   }, [revealed]);
 
   useEffect(() => {
-    const onMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth) * 2 - 1;
-      const y = (event.clientY / window.innerHeight) * 2 - 1;
-      document.documentElement.style.setProperty("--px", String(x));
-      document.documentElement.style.setProperty("--py", String(y));
-    };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, []);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setPrefersReducedMotion(mediaQuery.matches);
-    sync();
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", sync);
-      return () => mediaQuery.removeEventListener("change", sync);
-    }
-
-    mediaQuery.addListener(sync);
-    return () => mediaQuery.removeListener(sync);
-  }, []);
-
-  useEffect(() => {
     const audio = new Audio("/sounds/ball-click.wav");
     audio.preload = "auto";
     audio.volume = 0.34;
@@ -176,7 +125,7 @@ export default function HomePage() {
     });
   }
 
-  async function loadPrompt() {
+  const loadPrompt = useCallback(async () => {
     setPromptLoading(true);
     setPromptError(null);
 
@@ -195,53 +144,49 @@ export default function HomePage() {
     } finally {
       setPromptLoading(false);
     }
-  }
+  }, []);
 
   function resetReveal() {
-    isAnimatingRef.current = false;
-    setIsBallAnimating(false);
-    setActiveBallAnimation(null);
+    setTilt({ x: 0, y: 0 });
     setRevealed(false);
     setSaved(false);
     setNeedsSignIn(false);
     setSaveError(null);
   }
 
-  function revealPromptFlow() {
-    isAnimatingRef.current = false;
-    setIsBallAnimating(false);
-    setActiveBallAnimation(null);
+  const revealPromptFlow = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
     setRevealed(true);
     void loadPrompt();
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  }, [loadPrompt]);
 
   function handleBallClick() {
-    if (isAnimatingRef.current) return;
-    playBallClickSound();
+    if (isTransitioning) return;
     if (revealed) {
       resetReveal();
       return;
     }
+    playBallClickSound();
+    setTilt({ x: 0, y: 0 });
+    startEightBallTransition({ targetHref: "/#compose", onComplete: revealPromptFlow });
+  }
 
-    if (prefersReducedMotion) {
-      isAnimatingRef.current = true;
-      setIsBallAnimating(true);
-      setActiveBallAnimation(REDUCED_BALL_ANIMATION_CLASS);
+  function handleBallPointerMove(event: PointerEvent<HTMLButtonElement>) {
+    if (isTransitioning || event.pointerType === "touch") {
       return;
     }
 
-    const selectedAnimation = pickRandomBallAnimation(lastAnimationRef.current);
-    lastAnimationRef.current = selectedAnimation;
-    isAnimatingRef.current = true;
-    setIsBallAnimating(true);
-    setActiveBallAnimation(selectedAnimation);
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const offsetX = (event.clientX - bounds.left) / bounds.width;
+    const offsetY = (event.clientY - bounds.top) / bounds.height;
+    const rotateY = (offsetX - 0.5) * (BALL_MAX_TILT_DEGREES * 2);
+    const rotateX = (0.5 - offsetY) * (BALL_MAX_TILT_DEGREES * 2);
+    setTilt({ x: rotateX, y: rotateY });
   }
 
-  function handleBallAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
-    if (event.currentTarget !== event.target) return;
-    if (!isAnimatingRef.current) return;
-    revealPromptFlow();
+  function handleBallPointerLeave() {
+    setTilt({ x: 0, y: 0 });
   }
 
   async function handleSave() {
@@ -309,6 +254,17 @@ export default function HomePage() {
 
   const rootClass = ["bw-bg", revealed ? "bw-revealed" : ""].filter(Boolean).join(" ");
   const dateLabel = promptState?.dateId ?? fallbackDateId();
+  const ballStyle: CSSProperties & Record<
+    "--bw-tilt-x" | "--bw-tilt-y" | "--bw-gloss-shift-x" | "--bw-gloss-shift-y",
+    string
+  > = {
+    width: `min(${ballSize}px, 82vw)`,
+    height: `min(${ballSize}px, 82vw)`,
+    "--bw-tilt-x": `${tilt.x.toFixed(2)}deg`,
+    "--bw-tilt-y": `${tilt.y.toFixed(2)}deg`,
+    "--bw-gloss-shift-x": `${(tilt.y * 1.1).toFixed(2)}px`,
+    "--bw-gloss-shift-y": `${(-tilt.x * 1.1).toFixed(2)}px`,
+  };
 
   return (
     <div className={rootClass}>
@@ -318,27 +274,31 @@ export default function HomePage() {
         <div className="bw-orbWrap">
           <div className="bw-float">
             <div className="bw-parallax">
-              <div
-                className={`bw-ball ${activeBallAnimation ?? ""} ${isBallAnimating ? "bw-ball-impact" : ""}`}
+              <button
+                type="button"
+                className={`bw-ball ${isTransitioning ? "bw-ball-launching" : ""}`}
                 onClick={handleBallClick}
-                onAnimationEnd={handleBallAnimationEnd}
-                style={{
-                  width: `min(${ballSize}px, 82vw)`,
-                  height: `min(${ballSize}px, 82vw)`,
-                }}
-                aria-label="tap the 8-ball"
+                onPointerMove={handleBallPointerMove}
+                onPointerLeave={handleBallPointerLeave}
+                onBlur={handleBallPointerLeave}
+                style={ballStyle}
+                aria-label={revealed ? "reset the 8-ball prompt" : "tap the 8-ball"}
+                disabled={isTransitioning}
               >
+                <span className="bw-ballSpecular" aria-hidden="true" />
+                <span className="bw-ballStreak" aria-hidden="true" />
+                <span className="bw-ballRimLight" aria-hidden="true" />
                 <div className={`bw-eight ${revealed ? "is-hidden" : ""}`}>
                   <span>8</span>
                 </div>
                 <div className={`eightball__window ${revealed ? "show" : ""}`}>
                   <div className="bw-writing eightball__windowText">{insidePromptText}</div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
 
-          {!revealed && <div className="bw-ui bw-hint">{isBallAnimating ? "..." : "tap the 8-ball"}</div>}
+          {!revealed && <div className="bw-ui bw-hint">{isTransitioning ? "..." : "tap the 8-ball"}</div>}
           {revealed && <div className="bw-ui bw-hint">tap again to reset</div>}
 
           <div ref={panelRef} className={`bw-panel ${revealed ? "show" : ""}`}>
