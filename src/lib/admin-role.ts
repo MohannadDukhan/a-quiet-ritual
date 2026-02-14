@@ -16,13 +16,23 @@ export function roleForEmail(email: string | null | undefined): UserRole {
   return isPrimaryAdminEmail(email) ? "ADMIN" : "USER";
 }
 
-export async function ensurePrimaryAdminRoleByUserId(userId: string): Promise<UserRole | null> {
+export type PrimaryAdminSessionUser = {
+  id: string;
+  email: string;
+  role: UserRole;
+  username: string | null;
+  image: string | null;
+};
+
+export async function ensurePrimaryAdminUserByUserId(userId: string): Promise<PrimaryAdminSessionUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
       email: true,
       role: true,
+      username: true,
+      image: true,
     },
   });
 
@@ -35,8 +45,16 @@ export async function ensurePrimaryAdminRoleByUserId(userId: string): Promise<Us
       where: { id: user.id },
       data: { role: "ADMIN" },
     });
-    return "ADMIN";
+    return {
+      ...user,
+      role: "ADMIN",
+    };
   }
 
-  return user.role;
+  return user;
+}
+
+export async function ensurePrimaryAdminRoleByUserId(userId: string): Promise<UserRole | null> {
+  const user = await ensurePrimaryAdminUserByUserId(userId);
+  return user?.role ?? null;
 }

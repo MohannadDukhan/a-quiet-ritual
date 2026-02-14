@@ -23,7 +23,7 @@ export default async function AccountPage() {
             <Link className="bw-link" href="/sign-in?next=/account">
               sign in
             </Link>{" "}
-            to view your account.
+            to view your profile.
           </div>
         </main>
       </div>
@@ -36,6 +36,8 @@ export default async function AccountPage() {
       email: true,
       emailVerified: true,
       createdAt: true,
+      username: true,
+      image: true,
     },
   });
 
@@ -46,12 +48,27 @@ export default async function AccountPage() {
 
         <main className="bw-journalWrap">
           <div className="bw-hint" style={{ marginTop: 46 }}>
-            account unavailable right now.
+            profile unavailable right now.
           </div>
         </main>
       </div>
     );
   }
+
+  const sharedEntries = await prisma.entry.findMany({
+    where: {
+      userId,
+      type: "PROMPT",
+      isCollective: true,
+      collectiveRemovedAt: null,
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+    },
+  });
 
   return (
     <div className="bw-bg">
@@ -62,6 +79,13 @@ export default async function AccountPage() {
           createdAt={user.createdAt.toISOString()}
           email={user.email}
           emailVerified={Boolean(user.emailVerified)}
+          initialUsername={user.username || "anonymous"}
+          initialImage={user.image}
+          sharedEntries={sharedEntries.map((entry) => ({
+            id: entry.id,
+            content: entry.content,
+            createdAt: entry.createdAt.toISOString(),
+          }))}
           timeZone={timeZone}
         />
       </main>

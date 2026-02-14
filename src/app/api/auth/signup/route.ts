@@ -14,10 +14,12 @@ import { roleForEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
 import { getClientIp } from "@/lib/security";
+import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
 const signupSchema = z
   .object({
     email: z.string().trim().email(),
+    username: z.string().trim(),
     password: z.string().min(10).max(128),
     confirmPassword: z.string().min(10).max(128),
   })
@@ -175,8 +177,22 @@ async function cleanupFailedNewSignup(email: string, userId: string, tokenHash: 
   }
 }
 
+function isUniqueConstraintErrorForField(error: unknown, field: string): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+    return false;
+  }
+
+  const target = error.meta?.target;
+  if (Array.isArray(target)) {
+    return target.some((item) => String(item).toLowerCase().includes(field.toLowerCase()));
+  }
+
+  return String(target ?? "").toLowerCase().includes(field.toLowerCase());
+}
+
 export async function POST(request: NextRequest) {
   let normalizedEmailForCatch: string | null = null;
+  let normalizedUsernameForCatch: string | null = null;
 
   try {
     const originError = assertSameOrigin(request);
@@ -212,7 +228,14 @@ export async function POST(request: NextRequest) {
     }
 
     const email = parsed.data.email.toLowerCase();
+    const username = normalizeUsername(parsed.data.username);
+    const usernameValidationError = validateNormalizedUsername(username);
+    if (usernameValidationError) {
+      return errorResponse(400, "INVALID_INPUT", usernameValidationError);
+    }
+
     normalizedEmailForCatch = email;
+    normalizedUsernameForCatch = username;
     const emailLimit = consumeMemoryRateLimit({
       namespace: "signup-email-ip",
       key: `${email}:${ip}`,
@@ -239,11 +262,21 @@ export async function POST(request: NextRequest) {
       return resendVerificationForUnverifiedUser(email);
     }
 
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    if (existingUsername) {
+      return errorResponse(409, "USERNAME_TAKEN", "username is taken");
+    }
+
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
     const createdUser = await prisma.user.create({
       data: {
         email,
+        username,
+        displayName: username,
         passwordHash,
         role: roleForEmail(email),
       },
@@ -271,12 +304,22 @@ export async function POST(request: NextRequest) {
       throw error;
     }
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (isUniqueConstraintErrorForField(error, "username")) {
+      return errorResponse(409, "USERNAME_TAKEN", "username is taken");
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       try {
         if (!normalizedEmailForCatch) {
+          if (normalizedUsernameForCatch) {
+            const racedUsername = await prisma.user.findUnique({
+              where: { username: normalizedUsernameForCatch },
+              select: { id: true },
+            });
+            if (racedUsername) {
+              return errorResponse(409, "USERNAME_TAKEN", "username is taken");
+            }
+          }
           return errorResponse(409, "ACCOUNT_EXISTS", "account already exists");
         }
 
@@ -294,15 +337,22 @@ export async function POST(request: NextRequest) {
         if (racedUser) {
           return resendVerificationForUnverifiedUser(racedUser.email);
         }
+
+        if (normalizedUsernameForCatch) {
+          const racedUsername = await prisma.user.findUnique({
+            where: { username: normalizedUsernameForCatch },
+            select: { id: true },
+          });
+          if (racedUsername) {
+            return errorResponse(409, "USERNAME_TAKEN", "username is taken");
+          }
+        }
       } catch {
         // Fall through to generic error response.
       }
     }
 
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return errorResponse(409, "ACCOUNT_EXISTS", "account already exists");
     }
 

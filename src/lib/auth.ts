@@ -4,9 +4,9 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
-import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
-import { ensurePrimaryAdminRoleByUserId } from "@/lib/admin-role";
+import { ensurePrimaryAdminUserByUserId } from "@/lib/admin-role";
+import { prisma } from "@/lib/db";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -117,17 +117,18 @@ export const authOptions: ExtendedAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user?.id) {
-        token.sub = user.id;
-        const role = await ensurePrimaryAdminRoleByUserId(user.id);
-        if (role) {
-          token.role = role;
-        }
-      } else if (token.sub) {
-        const role = await ensurePrimaryAdminRoleByUserId(token.sub);
-        if (role) {
-          token.role = role;
-        }
+      const userId = user?.id || token.sub;
+      if (!userId) {
+        return token;
+      }
+
+      token.sub = userId;
+      const sessionUser = await ensurePrimaryAdminUserByUserId(userId);
+      if (sessionUser) {
+        token.role = sessionUser.role;
+        token.username = sessionUser.username;
+        token.picture = sessionUser.image;
+        token.email = sessionUser.email;
       }
       return token;
     },
@@ -136,6 +137,15 @@ export const authOptions: ExtendedAuthOptions = {
         session.user.id = token.sub;
         if (token.role === "ADMIN" || token.role === "USER") {
           session.user.role = token.role;
+        }
+        if (typeof token.username === "string" || token.username === null) {
+          session.user.username = token.username ?? null;
+        }
+        if (typeof token.picture === "string" || token.picture === null) {
+          session.user.image = token.picture ?? null;
+        }
+        if (typeof token.email === "string") {
+          session.user.email = token.email;
         }
       }
       return session;

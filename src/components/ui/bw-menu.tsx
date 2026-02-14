@@ -96,7 +96,7 @@ export function BwMenu({ active }: BwMenuProps) {
                 </Link>
               )}
               <Link className="bw-ui bw-navText bw-navDropdownItem" href="/account" role="menuitem" onClick={() => setOpen(false)}>
-                my account
+                my profile
               </Link>
             </>
           ) : (
