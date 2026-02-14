@@ -305,9 +305,9 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
   }
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      <div className="bw-card">
-        <div className="bw-row" style={{ marginBottom: 12, justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+    <div className="bw-section">
+      <section className="bw-section">
+        <div className="bw-row" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           <h1 className="bw-accountTitle" style={{ marginBottom: 0 }}>
             admin
           </h1>
@@ -316,11 +316,13 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
           </Link>
         </div>
         <div className="bw-ui bw-date">today&apos;s prompt: {data.prompt.text}</div>
-      </div>
+      </section>
 
-      <section className="bw-card">
-        <div className="bw-row" style={{ marginBottom: 12 }}>
-          <div className="bw-ui bw-date">today&apos;s collective</div>
+      <hr className="bw-divider" />
+
+      <section className="bw-section">
+        <div className="bw-row">
+          <div className="bw-ui bw-date">today&apos;s collective moderation</div>
           <button
             className="bw-btnGhost"
             type="button"
@@ -342,21 +344,23 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
         {data.entries.length === 0 ? (
           <div className="bw-hint">no collective entries for today.</div>
         ) : (
-          <div style={{ display: "grid", gap: 12 }}>
+          <div className="bw-lineSection bw-rowList">
             {data.entries.map((entry) => {
               const authorBanned = bannedUserIds.has(entry.userId);
               const showReplies = Boolean(expandedEntries[entry.id]);
               const repliesLabel = showReplies ? "hide replies" : `show replies (${entry.replies.length})`;
 
               return (
-                <div key={entry.id} className="bw-fragment">
-                  <div className="bw-ui bw-fragMeta">
-                    <span>{formatDateTime(entry.createdAt, timeZone)}</span>
-                    <span className="bw-fragDot">-</span>
-                    <span>{entry.userEmail}</span>
+                <div key={entry.id} className="bw-rowItem">
+                  <div className="bw-rowMeta">
+                    <div className="bw-rowMetaLeft">
+                      <span>{formatDateTime(entry.createdAt, timeZone)}</span>
+                      <span className="bw-fragDot">-</span>
+                      <span>{entry.userEmail}</span>
+                    </div>
                   </div>
-                  <div className="bw-writing bw-fragText">{previewText(entry.content)}</div>
-                  <div className="bw-row" style={{ marginTop: 8, gap: 8, justifyContent: "flex-start", flexWrap: "wrap" }}>
+                  <div className="bw-writing bw-rowBody">{previewText(entry.content)}</div>
+                  <div className="bw-rowActions">
                     <Link className="bw-btnGhost" href={`/collective/${entry.id}`}>
                       open
                     </Link>
@@ -395,19 +399,21 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                   </div>
 
                   {showReplies && entry.replies.length > 0 && (
-                    <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+                    <div className="bw-rowNestedList">
                       {entry.replies.map((reply) => {
                         const replyUserId = reply.userId;
                         const replyUserBanned = replyUserId ? bannedUserIds.has(replyUserId) : false;
                         return (
-                          <div key={reply.id} className="bw-replyItem">
-                            <div className="bw-ui bw-replyMeta">
-                              <span>{formatDateTime(reply.createdAt, timeZone)}</span>
-                              <span className="bw-fragDot">-</span>
-                              <span>{reply.userEmail || "deleted user"}</span>
+                          <div key={reply.id} className="bw-rowNestedItem">
+                            <div className="bw-rowMeta">
+                              <div className="bw-rowMetaLeft">
+                                <span>{formatDateTime(reply.createdAt, timeZone)}</span>
+                                <span className="bw-fragDot">-</span>
+                                <span>{reply.userEmail || "deleted user"}</span>
+                              </div>
                             </div>
-                            <div className="bw-writing bw-replyText">{previewText(reply.content)}</div>
-                            <div className="bw-row" style={{ marginTop: 8, gap: 8, justifyContent: "flex-start", flexWrap: "wrap" }}>
+                            <div className="bw-writing bw-rowBody">{previewText(reply.content)}</div>
+                            <div className="bw-rowActions">
                               {replyUserId && (
                                 <button
                                   className="bw-btnGhost"
@@ -445,8 +451,10 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
         )}
       </section>
 
-      <section className="bw-card">
-        <div className="bw-row" style={{ marginBottom: 12 }}>
+      <hr className="bw-divider" />
+
+      <section className="bw-section">
+        <div className="bw-row">
           <div className="bw-ui bw-date">prompts (today + next 7)</div>
           <button
             className="bw-btnGhost"
@@ -466,16 +474,18 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
           </button>
         </div>
 
-        <div style={{ display: "grid", gap: 10 }}>
+        <div className="bw-lineSection bw-rowList">
           {promptDays.map((day, index) => {
             const isEditing = editingPromptDate === day.date;
             const isSaving = pendingAction === `save-prompt:${day.date}` || pendingAction === `reset-prompt:${day.date}`;
             return (
-              <div key={day.date} className="bw-fragment">
-                <div className="bw-ui bw-fragMeta">
-                  <span>{formatPromptDateLabel(day.date)}</span>
-                  {index === 0 && <span className="bw-collectiveBadge">today</span>}
-                  {day.overridden && <span className="bw-collectiveBadge">overridden</span>}
+              <div key={day.date} className="bw-rowItem">
+                <div className="bw-rowMeta">
+                  <div className="bw-rowMetaLeft">
+                    <span>{formatPromptDateLabel(day.date)}</span>
+                    {index === 0 && <span className="bw-collectiveBadge">today</span>}
+                    {day.overridden && <span className="bw-collectiveBadge">overridden</span>}
+                  </div>
                 </div>
 
                 {isEditing ? (
@@ -486,7 +496,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                       onChange={(event) => setPromptDraft(event.target.value)}
                       maxLength={1000}
                     />
-                    <div className="bw-row" style={{ justifyContent: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                    <div className="bw-rowActions">
                       <button
                         className="bw-btn"
                         type="button"
@@ -516,8 +526,8 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
                   </div>
                 ) : (
                   <>
-                    <div className="bw-writing bw-fragText">{day.promptText}</div>
-                    <div className="bw-row" style={{ marginTop: 8, justifyContent: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                    <div className="bw-writing bw-rowBody">{day.promptText}</div>
+                    <div className="bw-rowActions">
                       <button
                         className="bw-btnGhost"
                         type="button"
@@ -547,25 +557,29 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
         </div>
       </section>
 
-      <section className="bw-card">
-        <div className="bw-ui bw-date" style={{ marginBottom: 12 }}>banned users</div>
+      <hr className="bw-divider" />
+
+      <section className="bw-section">
+        <div className="bw-ui bw-date">banned users</div>
         {data.bannedUsers.length === 0 ? (
           <div className="bw-hint">no banned users.</div>
         ) : (
-          <div style={{ display: "grid", gap: 10 }}>
+          <div className="bw-lineSection bw-rowList">
             {data.bannedUsers.map((user) => (
-              <div key={user.id} className="bw-accountRow">
-                <span className="bw-accountValue">{user.email}</span>
-                <button
-                  className="bw-btnGhost"
-                  type="button"
-                  disabled={pendingAction !== null}
-                  onClick={() => {
-                    void handleUnbanUser(user.id, user.email);
-                  }}
-                >
-                  unban
-                </button>
+              <div key={user.id} className="bw-rowItem">
+                <div className="bw-accountRow">
+                  <span className="bw-accountValue">{user.email}</span>
+                  <button
+                    className="bw-btnGhost"
+                    type="button"
+                    disabled={pendingAction !== null}
+                    onClick={() => {
+                      void handleUnbanUser(user.id, user.email);
+                    }}
+                  >
+                    unban
+                  </button>
+                </div>
               </div>
             ))}
           </div>

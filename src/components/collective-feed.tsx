@@ -93,49 +93,53 @@ export function CollectiveFeed({ entries, timeZone, canModerate }: CollectiveFee
   }
 
   return (
-    <div className="bw-feed">
+    <section className="bw-section">
       {notice && <div className="bw-hint">{notice}</div>}
       {error && <div className="bw-hint">{error}</div>}
 
       {items.length === 0 ? (
         <div className="bw-empty">no shared entries yet.</div>
       ) : (
-        items.map((entry) => (
-          <div key={entry.id} className="bw-fragment">
-            <div className="bw-ui bw-fragMeta">
-              <span>{formatDateTime(entry.createdAt, timeZone)}</span>
-              <span className="bw-fragDot">-</span>
-              {entry.username ? (
-                <Link className="bw-handleLink" href={`/u/${encodeURIComponent(entry.username)}`}>
-                  {formatHandle(entry.username)}
-                </Link>
-              ) : (
-                <span>anonymous</span>
+        <div className="bw-lineSection bw-rowList">
+          {items.map((entry) => (
+            <div key={entry.id} className="bw-rowItem">
+              <div className="bw-rowMeta">
+                <div className="bw-rowMetaLeft">
+                  <span>{formatDateTime(entry.createdAt, timeZone)}</span>
+                  <span className="bw-fragDot">-</span>
+                  {entry.username ? (
+                    <Link className="bw-handleLink" href={`/u/${encodeURIComponent(entry.username)}`}>
+                      {formatHandle(entry.username)}
+                    </Link>
+                  ) : (
+                    <span>anonymous</span>
+                  )}
+                </div>
+              </div>
+
+              <Link href={`/collective/${entry.id}`} className="bw-rowLinkBlock bw-rowHover">
+                <div className="bw-writing bw-rowBody">{previewContent(entry.content)}</div>
+                <div className="bw-rowSubtle">click to view replies or reply</div>
+              </Link>
+
+              {canModerate && (
+                <div className="bw-rowActions">
+                  <button
+                    className="bw-btnDanger"
+                    type="button"
+                    disabled={pendingEntryId !== null}
+                    onClick={() => {
+                      void handleRemove(entry.id);
+                    }}
+                  >
+                    {pendingEntryId === entry.id ? "removing..." : "admin: delete from collective"}
+                  </button>
+                </div>
               )}
             </div>
-
-            <Link href={`/collective/${entry.id}`} className="bw-fragmentLink" style={{ marginTop: 8 }}>
-              <div className="bw-writing bw-fragText">{previewContent(entry.content)}</div>
-              <div className="bw-ui bw-fragHint">click to view replies or reply</div>
-            </Link>
-
-            {canModerate && (
-              <div className="bw-row" style={{ marginTop: 10, justifyContent: "flex-start" }}>
-                <button
-                  className="bw-btnDanger"
-                  type="button"
-                  disabled={pendingEntryId !== null}
-                  onClick={() => {
-                    void handleRemove(entry.id);
-                  }}
-                >
-                  {pendingEntryId === entry.id ? "removing..." : "admin: delete from collective"}
-                </button>
-              </div>
-            )}
-          </div>
-        ))
+          ))}
+        </div>
       )}
-    </div>
+    </section>
   );
 }

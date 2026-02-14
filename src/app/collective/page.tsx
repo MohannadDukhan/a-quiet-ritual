@@ -41,16 +41,16 @@ export default async function CollectivePage() {
     <div className="bw-bg">
       <AppHeader active="collective" />
 
-      <main className="bw-collectiveWrap">
-        <section className="bw-collectiveHero">
-          <div className="bw-collectiveBadgeRow">
-            <span className="bw-ui bw-navbtn bw-breathe bw-collectivePill">collective</span>
-          </div>
-          <div className="bw-ui bw-collectiveEyebrow">today&rsquo;s prompt</div>
-          <h1 className="bw-writing bw-collectivePrompt">today&rsquo;s prompt: {todaysPrompt.text}</h1>
-          <p className="bw-ui bw-collectiveNotice">
-            this is a respectful space. hate, threats, or harassment can&rsquo;t be shared.
+      <main className="bw-page">
+        <section className="bw-section">
+          <h1 className="bw-accountTitle">collective</h1>
+          <p className="bw-ui bw-journalSub">this is the collective. you&apos;re reading today&apos;s public prompt entries.</p>
+          <p className="bw-ui bw-journalSub">
+            this is a respectful space. hate, threats, or harassment can&apos;t be shared.
           </p>
+          <hr className="bw-divider" />
+          <div className="bw-ui bw-collectiveEyebrow">today&apos;s prompt</div>
+          <h2 className="bw-writing bw-collectivePrompt">today&apos;s prompt: {todaysPrompt.text}</h2>
         </section>
 
         <CollectiveFeed entries={serializedEntries} timeZone={timeZone} canModerate={canModerate} />

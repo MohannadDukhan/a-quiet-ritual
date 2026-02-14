@@ -25,7 +25,7 @@ export default async function AdminPage() {
     <div className="bw-bg">
       <AppHeader />
 
-      <main className="bw-journalWrap">
+      <main className="bw-page">
         <AdminModerationPanel initialData={moderationData} initialPromptDays={promptDays} timeZone={timeZone} />
       </main>
     </div>

@@ -73,21 +73,22 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
     <div className="bw-bg">
       <AppHeader active="collective" />
 
-      <main className="bw-journalWrap">
-        <div className="bw-card">
-          <div className="bw-cardMeta">
-            <div className="bw-ui bw-cardDate">{formatDateTime(entry.createdAt, timeZone)}</div>
+      <main className="bw-page">
+        <section className="bw-section">
+          <div className="bw-rowMeta">
+            <div>{formatDateTime(entry.createdAt, timeZone)}</div>
             {entry.user.username ? (
-              <Link className="bw-ui bw-handleLink bw-collectiveBadge" href={`/u/${encodeURIComponent(entry.user.username)}`}>
+              <Link className="bw-ui bw-handleLink" href={`/u/${encodeURIComponent(entry.user.username)}`}>
                 {formatHandle(entry.user.username)}
               </Link>
             ) : (
-              <span className="bw-ui bw-collectiveBadge">anonymous</span>
+              <span className="bw-ui">anonymous</span>
             )}
           </div>
-          <div className="bw-writing bw-cardText">{entry.content}</div>
+          <hr className="bw-divider" />
+          <div className="bw-writing bw-entryContent">{entry.content}</div>
           {canModerate && <CollectiveDetailAdminControls entryId={entry.id} />}
-        </div>
+        </section>
 
         <CollectiveRepliesPanel
           entryId={entry.id}
@@ -97,7 +98,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
           timeZone={timeZone}
         />
 
-        <div className="bw-row">
+        <div className="bw-row" style={{ marginTop: 4 }}>
           <div className="bw-ui bw-date">today&rsquo;s collective entry</div>
           <BwNavButton href="/collective">
             back to collective

@@ -33,45 +33,49 @@ export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
 
   return (
     <>
-      <div className="bw-row" style={{ marginBottom: 14 }}>
-        <div className="bw-ui bw-date">private archive</div>
-      </div>
+      <section className="bw-section">
+        <h1 className="bw-accountTitle">private archive</h1>
+        <p className="bw-ui bw-journalSub">your private writing history lives here. only you can see this archive.</p>
+        <hr className="bw-divider" />
+      </section>
 
       {empty ? (
         <div className="bw-hint" style={{ marginTop: 10 }}>
           nothing here yet.
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
+        <div className="bw-lineSection bw-rowList">
           {entries.map((entry) => (
             entry.type === "JOURNAL" ? (
-              <Link key={entry.id} href={`/journal/${entry.id}`} className="bw-card bw-cardLink">
-                <div className="bw-cardMeta">
+              <Link key={entry.id} href={`/journal/${entry.id}`} className="bw-rowItem bw-rowHover">
+                <div className="bw-rowMeta">
                   <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
-                  <div className="bw-ui bw-cardDate">{formatDate(entry.createdAt, timeZone)}</div>
+                  <span>{formatDate(entry.createdAt, timeZone)}</span>
                 </div>
-                <div className="bw-writing bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
+                <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             ) : (
-              <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-card bw-cardLink">
-                <div className="bw-cardMeta">
-                  <div className="bw-ui bw-cardDate">{formatDate(entry.createdAt, timeZone)}</div>
-                  {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
-                  {entry.collectiveRemovedAt && (
-                    <span className="bw-ui bw-removedBadge">
-                      removed from collective
-                      <InfoPopover
-                        title="removed from collective"
-                        triggerAriaLabel="why was this removed?"
-                      >
-                        admins removed this from the collective because it didn&apos;t fit the community rules. it
-                        still remains in your private archive.
-                      </InfoPopover>
-                    </span>
-                  )}
+              <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-rowItem bw-rowHover">
+                <div className="bw-rowMeta">
+                  <div className="bw-rowMetaLeft">
+                    <span>{formatDate(entry.createdAt, timeZone)}</span>
+                    {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
+                    {entry.collectiveRemovedAt && (
+                      <span className="bw-ui bw-removedBadge">
+                        removed from collective
+                        <InfoPopover
+                          title="removed from collective"
+                          triggerAriaLabel="why was this removed?"
+                        >
+                          admins removed this from the collective because it didn&apos;t fit the community rules. it
+                          still remains in your private archive.
+                        </InfoPopover>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="bw-writing bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
-                <div className="bw-writing bw-cardText bw-cardPreview">{previewContent(entry.content) || " "}</div>
+                <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             )
           ))}

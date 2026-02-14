@@ -91,21 +91,24 @@ export function CollectiveRepliesPanel({
   }
 
   return (
-    <section className="bw-repliesBlock">
+    <section className="bw-section" aria-label="replies">
       <div className="bw-ui bw-date">replies</div>
+      <hr className="bw-divider" />
 
       {replies.length === 0 ? (
         <div className="bw-ui bw-replyHint">no replies yet.</div>
       ) : (
-        <div className="bw-replyList">
+        <div className="bw-lineSection bw-rowList">
           {replies.map((reply) => (
-            <div key={reply.id} className="bw-replyItem">
-              <div className="bw-ui bw-replyMeta">
-                <span>anonymous</span>
-                <span className="bw-fragDot">-</span>
-                <span>{formatDateTime(reply.createdAt, timeZone)}</span>
+            <div key={reply.id} className="bw-rowItem">
+              <div className="bw-rowMeta">
+                <div className="bw-rowMetaLeft">
+                  <span>anonymous</span>
+                  <span className="bw-fragDot">-</span>
+                  <span>{formatDateTime(reply.createdAt, timeZone)}</span>
+                </div>
               </div>
-              <div className="bw-writing bw-replyText">{reply.content}</div>
+              <div className="bw-writing bw-rowBody">{reply.content}</div>
             </div>
           ))}
         </div>

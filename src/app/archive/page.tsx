@@ -18,7 +18,7 @@ export default async function ArchivePage() {
       <div className="bw-bg">
         <AppHeader active="archive" />
 
-        <main className="bw-archiveWrap">
+        <main className="bw-page">
           <div className="bw-ui bw-hint" style={{ marginTop: 46 }}>
             <Link className="bw-link" href="/sign-in?next=/archive">
               sign in
@@ -67,7 +67,7 @@ export default async function ArchivePage() {
     <div className="bw-bg">
       <AppHeader active="archive" />
 
-      <main className="bw-archiveWrap">
+      <main className="bw-page">
         <ArchiveClient entries={serializedEntries} timeZone={timeZone} />
       </main>
     </div>
