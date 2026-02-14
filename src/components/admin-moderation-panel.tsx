@@ -307,7 +307,14 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <div className="bw-card">
-        <h1 className="bw-accountTitle">admin</h1>
+        <div className="bw-row" style={{ marginBottom: 12, justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <h1 className="bw-accountTitle" style={{ marginBottom: 0 }}>
+            admin
+          </h1>
+          <Link className="bw-btnGhost" href="/admin/users">
+            user roles
+          </Link>
+        </div>
         <div className="bw-ui bw-date">today&apos;s prompt: {data.prompt.text}</div>
       </div>
 
