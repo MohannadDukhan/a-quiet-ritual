@@ -17,7 +17,8 @@ const DEFAULT_TRANSITION_MS = 2400;
 const REDUCED_TRANSITION_MS = 150;
 // Cap DPR for stable performance on high-density screens while keeping the ball sharp.
 const MAX_DPR = 1.8;
-const PROMPT_CANVAS_SIZE = 1536;
+const PROMPT_CANVAS_BASE_SIZE = 2048;
+const PROMPT_CANVAS_MAX_SIZE = 3072;
 
 type TransitionState = {
   active: boolean;
@@ -109,8 +110,12 @@ function wrapPromptText(context: CanvasRenderingContext2D, text: string, maxWidt
 
 function createPromptWindowTextureCanvas(): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  canvas.width = PROMPT_CANVAS_SIZE;
-  canvas.height = PROMPT_CANVAS_SIZE;
+  const dpr = typeof window === "undefined"
+    ? 1
+    : Math.min(Math.max(window.devicePixelRatio || 1, 1), 1.5);
+  const textureSize = Math.min(PROMPT_CANVAS_MAX_SIZE, Math.round(PROMPT_CANVAS_BASE_SIZE * dpr));
+  canvas.width = textureSize;
+  canvas.height = textureSize;
   return canvas;
 }
 
@@ -121,14 +126,21 @@ function drawPromptWindowTexture(canvas: HTMLCanvasElement, promptText: string) 
   }
 
   const center = canvas.width / 2;
-  const radius = canvas.width * 0.39;
+  const radius = canvas.width * 0.44;
 
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   context.beginPath();
-  context.arc(center, center, radius + 30, 0, Math.PI * 2);
-  const glowGradient = context.createRadialGradient(center, center, radius * 0.45, center, center, radius + 30);
-  glowGradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+  context.arc(center, center, radius + canvas.width * 0.018, 0, Math.PI * 2);
+  const glowGradient = context.createRadialGradient(
+    center,
+    center,
+    radius * 0.42,
+    center,
+    center,
+    radius + canvas.width * 0.018,
+  );
+  glowGradient.addColorStop(0, "rgba(255, 255, 255, 0.12)");
   glowGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
   context.fillStyle = glowGradient;
   context.fill();
@@ -138,26 +150,35 @@ function drawPromptWindowTexture(canvas: HTMLCanvasElement, promptText: string) 
   const fillGradient = context.createRadialGradient(center, center - radius * 0.35, radius * 0.2, center, center, radius);
   fillGradient.addColorStop(0, "rgba(255, 255, 255, 0.98)");
   fillGradient.addColorStop(1, "rgba(236, 236, 236, 0.98)");
+  context.shadowColor = "rgba(0, 0, 0, 0.2)";
+  context.shadowBlur = canvas.width * 0.01;
+  context.shadowOffsetY = canvas.width * 0.0025;
   context.fillStyle = fillGradient;
   context.fill();
+  context.shadowBlur = 0;
+  context.shadowOffsetY = 0;
 
   context.beginPath();
   context.arc(center, center, radius, 0, Math.PI * 2);
-  context.lineWidth = 10;
-  context.strokeStyle = "rgba(18, 18, 20, 0.25)";
+  context.lineWidth = Math.max(8, Math.round(canvas.width * 0.0062));
+  context.strokeStyle = "rgba(16, 16, 18, 0.35)";
   context.stroke();
 
-  context.fillStyle = "rgba(14, 14, 16, 0.94)";
+  context.fillStyle = "#111111";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = "500 80px system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const fontSize = Math.max(66, Math.round(canvas.width * 0.058));
+  context.font = `600 ${fontSize}px system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 
-  const lines = wrapPromptText(context, promptText, radius * 1.6);
-  const lineHeight = 102;
+  const lines = wrapPromptText(context, promptText, radius * 1.5);
+  const lineHeight = Math.round(fontSize * 1.2);
   const startY = center - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line, index) => {
+    context.shadowColor = "rgba(255, 255, 255, 0.1)";
+    context.shadowBlur = Math.round(canvas.width * 0.0032);
     context.fillText(line, center, startY + index * lineHeight);
   });
+  context.shadowBlur = 0;
 }
 
 function createEightDecalTexture(): THREE.CanvasTexture {
@@ -293,14 +314,14 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
       const root = new THREE.Group();
       scene.add(root);
 
-      const sphereGeometry = new THREE.SphereGeometry(1.08, 128, 128);
+      const sphereGeometry = new THREE.SphereGeometry(0.97, 128, 128);
       const sphereMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0x121212,
-        roughness: 0.21,
-        metalness: 0.12,
-        clearcoat: 0.74,
-        clearcoatRoughness: 0.14,
-        envMapIntensity: 0.8,
+        color: 0x0d0d10,
+        roughness: 0.25,
+        metalness: 0.1,
+        clearcoat: 0.64,
+        clearcoatRoughness: 0.18,
+        envMapIntensity: 0.62,
       });
       const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
       root.add(sphereMesh);
@@ -330,13 +351,16 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
       drawPromptWindowTexture(promptCanvas, promptTextRef.current);
       const promptTexture = new THREE.CanvasTexture(promptCanvas);
       promptTexture.colorSpace = THREE.SRGBColorSpace;
+      promptTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      promptTexture.magFilter = THREE.LinearFilter;
+      promptTexture.generateMipmaps = true;
       promptTexture.needsUpdate = true;
 
       const promptDecalGeometry = new DecalGeometry(
         sphereMesh,
         new THREE.Vector3(0, 0, 1.015),
         new THREE.Euler(0, 0, 0),
-        new THREE.Vector3(0.86, 0.86, 0.32),
+        new THREE.Vector3(0.96, 0.96, 0.34),
       );
       const promptDecalMaterial = new THREE.MeshStandardMaterial({
         map: promptTexture,
@@ -490,8 +514,8 @@ export const EightBallCanvas = forwardRef<EightBallCanvasHandle, EightBallCanvas
         root.scale.y = THREE.MathUtils.damp(root.scale.y, targetScaleY, movementDamp, delta);
         root.scale.z = THREE.MathUtils.damp(root.scale.z, targetScaleZ, movementDamp, delta);
 
-        const idlePulse = revealedRef.current ? 0 : Math.sin(state.elapsed * 0.26) * 0.015;
-        sphereMaterial.envMapIntensity = 0.78 + idlePulse;
+        const idlePulse = revealedRef.current ? 0 : Math.sin(state.elapsed * 0.26) * 0.012;
+        sphereMaterial.envMapIntensity = 0.58 + idlePulse;
         keyLight.intensity = 0.9 + (revealedRef.current ? 0 : Math.sin(state.elapsed * 0.24) * 0.045);
 
         renderer.render(scene, camera);
