@@ -10,6 +10,7 @@ declare module "next-auth" {
       email?: string | null;
       role?: AppUserRole;
       username?: string | null;
+      isOwner?: boolean;
     };
   }
 }
@@ -18,5 +19,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     role?: AppUserRole;
     username?: string | null;
+    isOwner?: boolean;
   }
 }

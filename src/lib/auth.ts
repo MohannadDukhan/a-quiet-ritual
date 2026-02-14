@@ -5,7 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
-import { ensurePrimaryAdminUserByUserId } from "@/lib/admin-role";
+import { ensurePrimaryAdminUserByUserId, isOwnerEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
 
 const credentialsSchema = z.object({
@@ -117,8 +117,13 @@ export const authOptions: ExtendedAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
+      if (typeof user?.email === "string" && user.email.length > 0) {
+        token.email = user.email.trim().toLowerCase();
+      }
+
       const userId = user?.id || token.sub;
       if (!userId) {
+        token.isOwner = isOwnerEmail(typeof token.email === "string" ? token.email : null);
         return token;
       }
 
@@ -128,6 +133,11 @@ export const authOptions: ExtendedAuthOptions = {
         token.role = sessionUser.role;
         token.username = sessionUser.username;
         token.email = sessionUser.email;
+      }
+
+      token.isOwner = isOwnerEmail(typeof token.email === "string" ? token.email : null);
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[auth][owner]", { userId, isOwner: token.isOwner === true });
       }
 
       // Ensure legacy large avatar payloads are never persisted in JWT cookies.
@@ -146,6 +156,7 @@ export const authOptions: ExtendedAuthOptions = {
         if (typeof token.email === "string") {
           session.user.email = token.email;
         }
+        session.user.isOwner = token.isOwner === true;
       }
       return session;
     },
