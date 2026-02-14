@@ -1075,6 +1075,24 @@ body {
   text-decoration: underline;
 }
 
+.bw-handleLink {
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.bw-handleLink:hover {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bw-handleLink:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 
 /* archive cards (same vibe) */
 .bw-archiveWrap {
@@ -2109,6 +2127,15 @@ body.bw-light .bw-link:hover,
 body.bw-light .bw-miniLink:hover,
 body.bw-light .bw-songLink:hover {
   color: rgba(58, 50, 98, 0.96);
+}
+
+body.bw-light .bw-handleLink {
+  color: rgba(18, 18, 18, 0.72);
+}
+
+body.bw-light .bw-handleLink:hover,
+body.bw-light .bw-handleLink:focus-visible {
+  color: rgba(18, 18, 18, 0.9);
 }
 
 body.bw-light .bw-textarea {

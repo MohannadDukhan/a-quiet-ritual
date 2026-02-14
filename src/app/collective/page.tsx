@@ -23,12 +23,18 @@ export default async function CollectivePage() {
       id: true,
       content: true,
       createdAt: true,
+      user: {
+        select: {
+          username: true,
+        },
+      },
     },
   });
   const serializedEntries: CollectiveFeedEntry[] = entries.map((entry) => ({
     id: entry.id,
     content: entry.content,
     createdAt: entry.createdAt.toISOString(),
+    username: entry.user.username,
   }));
 
   return (

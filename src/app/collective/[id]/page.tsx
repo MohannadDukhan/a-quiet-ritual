@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
@@ -19,6 +20,10 @@ type CollectiveEntryDetailPageProps = {
 
 export const dynamic = "force-dynamic";
 
+function formatHandle(username: string): string {
+  return `@${username.trim().toLowerCase()}`;
+}
+
 export default async function CollectiveEntryDetailPage({ params }: CollectiveEntryDetailPageProps) {
   const session = await auth();
   const canModerate = session?.user?.role === "ADMIN";
@@ -37,6 +42,11 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
       id: true,
       content: true,
       createdAt: true,
+      user: {
+        select: {
+          username: true,
+        },
+      },
     },
   });
 
@@ -67,7 +77,13 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
         <div className="bw-card">
           <div className="bw-cardMeta">
             <div className="bw-ui bw-cardDate">{formatDateTime(entry.createdAt, timeZone)}</div>
-            <span className="bw-ui bw-collectiveBadge">anonymous</span>
+            {entry.user.username ? (
+              <Link className="bw-ui bw-handleLink bw-collectiveBadge" href={`/u/${encodeURIComponent(entry.user.username)}`}>
+                {formatHandle(entry.user.username)}
+              </Link>
+            ) : (
+              <span className="bw-ui bw-collectiveBadge">anonymous</span>
+            )}
           </div>
           <div className="bw-writing bw-cardText">{entry.content}</div>
           {canModerate && <CollectiveDetailAdminControls entryId={entry.id} />}

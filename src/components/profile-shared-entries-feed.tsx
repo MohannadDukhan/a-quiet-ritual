@@ -10,6 +10,7 @@ type ProfileSharedEntriesFeedProps = {
   initialItems: ProfileSharedEntryItem[];
   initialNextCursor: string | null;
   timeZone: string;
+  publicUsername?: string | null;
 };
 
 type SharedEntriesResponse = {
@@ -29,7 +30,24 @@ function previewText(value: string, maxLength: number = PREVIEW_LENGTH): string 
   return `${compact.slice(0, maxLength).trimEnd()}...`;
 }
 
-export function ProfileSharedEntriesFeed({ initialItems, initialNextCursor, timeZone }: ProfileSharedEntriesFeedProps) {
+function getLoadMoreUrl(nextCursor: string, publicUsername?: string | null): string {
+  const params = new URLSearchParams({
+    cursor: nextCursor,
+    limit: String(PAGE_LIMIT),
+  });
+  if (publicUsername) {
+    params.set("username", publicUsername);
+    return `/api/profile/public/shared-entries?${params.toString()}`;
+  }
+  return `/api/profile/shared-entries?${params.toString()}`;
+}
+
+export function ProfileSharedEntriesFeed({
+  initialItems,
+  initialNextCursor,
+  timeZone,
+  publicUsername,
+}: ProfileSharedEntriesFeedProps) {
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -46,13 +64,10 @@ export function ProfileSharedEntriesFeed({ initialItems, initialNextCursor, time
     setLoadingMore(true);
     setLoadError(null);
     try {
-      const response = await fetch(
-        `/api/profile/shared-entries?cursor=${encodeURIComponent(nextCursor)}&limit=${PAGE_LIMIT}`,
-        {
-          method: "GET",
-          cache: "no-store",
-        },
-      );
+      const response = await fetch(getLoadMoreUrl(nextCursor, publicUsername), {
+        method: "GET",
+        cache: "no-store",
+      });
 
       const data = (await response.json().catch(() => null)) as SharedEntriesResponse | null;
       if (!response.ok || !data?.items) {
@@ -70,7 +85,7 @@ export function ProfileSharedEntriesFeed({ initialItems, initialNextCursor, time
     } finally {
       setLoadingMore(false);
     }
-  }, [itemIds, loadingMore, nextCursor]);
+  }, [itemIds, loadingMore, nextCursor, publicUsername]);
 
   useEffect(() => {
     const node = sentinelRef.current;

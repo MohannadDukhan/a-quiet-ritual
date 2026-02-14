@@ -10,6 +10,7 @@ export type CollectiveFeedEntry = {
   id: string;
   content: string;
   createdAt: string;
+  username: string | null;
 };
 
 type CollectiveFeedProps = {
@@ -30,6 +31,10 @@ function previewContent(content: string): string {
     return compact;
   }
   return `${compact.slice(0, CARD_PREVIEW_LENGTH).trimEnd()}...`;
+}
+
+function formatHandle(username: string): string {
+  return `@${username.trim().toLowerCase()}`;
 }
 
 async function parseApiError(response: Response): Promise<string> {
@@ -97,12 +102,19 @@ export function CollectiveFeed({ entries, timeZone, canModerate }: CollectiveFee
       ) : (
         items.map((entry) => (
           <div key={entry.id} className="bw-fragment">
-            <Link href={`/collective/${entry.id}`} className="bw-fragmentLink">
-              <div className="bw-ui bw-fragMeta">
-                <span>{formatDateTime(entry.createdAt, timeZone)}</span>
-                <span className="bw-fragDot">-</span>
+            <div className="bw-ui bw-fragMeta">
+              <span>{formatDateTime(entry.createdAt, timeZone)}</span>
+              <span className="bw-fragDot">-</span>
+              {entry.username ? (
+                <Link className="bw-handleLink" href={`/u/${encodeURIComponent(entry.username)}`}>
+                  {formatHandle(entry.username)}
+                </Link>
+              ) : (
                 <span>anonymous</span>
-              </div>
+              )}
+            </div>
+
+            <Link href={`/collective/${entry.id}`} className="bw-fragmentLink" style={{ marginTop: 8 }}>
               <div className="bw-writing bw-fragText">{previewContent(entry.content)}</div>
               <div className="bw-ui bw-fragHint">click to view replies or reply</div>
             </Link>
