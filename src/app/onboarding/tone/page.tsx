@@ -17,7 +17,7 @@ const TONE_DELAYS_MS = [0, 650, 1350, 1950];
 
 export default function OnboardingTonePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [visibleCount, setVisibleCount] = useState(1);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -28,10 +28,30 @@ export default function OnboardingTonePage() {
       router.replace("/sign-in?next=/onboarding/username");
       return;
     }
-    if (status === "authenticated" && !session?.user?.username) {
-      router.replace("/onboarding/username");
+    if (status !== "authenticated") {
+      return;
     }
-  }, [router, session?.user?.username, status]);
+
+    let cancelled = false;
+    async function ensureUsername() {
+      const response = await fetch("/api/profile/update", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const data = (await response.json().catch(() => null)) as { user?: { username?: string | null } } | null;
+      if (cancelled) {
+        return;
+      }
+      if (!response.ok || !data?.user?.username) {
+        router.replace("/onboarding/username");
+      }
+    }
+
+    void ensureUsername();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, status]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

@@ -85,9 +85,6 @@ export function SignInForm({ nextPath }: SignInFormProps) {
           <h1 className="bw-authTitle">
             sign in
           </h1>
-          <div className="bw-authLead">
-            private account access. no public profiles.
-          </div>
 
           <form onSubmit={handleSubmit} className="bw-panel show bw-authForm" style={{ gap: 10 }}>
             <input
@@ -141,10 +138,6 @@ export function SignInForm({ nextPath }: SignInFormProps) {
             <Link className="bw-authLink" href="/sign-up">
               create account
             </Link>
-          </div>
-
-          <div className="bw-hint">
-            used email links before? choose forgot password to set one now.
           </div>
 
           {error && <div className="bw-hint" role="alert">{error}</div>}

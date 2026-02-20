@@ -10,12 +10,13 @@ type UsernameAvailabilityState = "idle" | "checking" | "available" | "taken" | "
 
 export default function OnboardingUsernamePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [usernameDraft, setUsernameDraft] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<UsernameAvailabilityState>("idle");
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
   const normalizedUsername = useMemo(() => normalizeUsername(usernameDraft), [usernameDraft]);
   const usernameValidationError = useMemo(
@@ -26,13 +27,41 @@ export default function OnboardingUsernamePage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/sign-in?next=/onboarding/username");
+      setCheckingProfile(false);
+      return;
+    }
+    if (status !== "authenticated") {
       return;
     }
 
-    if (status === "authenticated" && session?.user?.username) {
-      router.replace("/onboarding/avatar");
+    let cancelled = false;
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/profile/update", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = (await response.json().catch(() => null)) as { user?: { username?: string | null } } | null;
+        if (cancelled) {
+          return;
+        }
+
+        if (response.ok && data?.user?.username) {
+          router.replace("/onboarding/avatar");
+          return;
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingProfile(false);
+        }
+      }
     }
-  }, [router, session?.user?.username, status]);
+
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, status]);
 
   useEffect(() => {
     if (!normalizedUsername) {
@@ -119,14 +148,20 @@ export default function OnboardingUsernamePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: normalizedUsername }),
       });
-      const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      const data = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; message?: string }
+        | null;
       if (!response.ok || !data?.ok) {
+        if (response.status === 409 || data?.error === "USERNAME_TAKEN") {
+          setError("username is taken.");
+          return;
+        }
         setError(data?.error || "could not save username.");
         return;
       }
 
-      router.push("/onboarding/avatar");
       router.refresh();
+      router.push("/onboarding/avatar");
     } catch {
       setError("could not save username.");
     } finally {
@@ -165,7 +200,7 @@ export default function OnboardingUsernamePage() {
               required
             />
             {usernameHint && <div className="bw-hint">{usernameHint}</div>}
-            <button className="bw-btn" type="submit" disabled={saving}>
+            <button className="bw-btn" type="submit" disabled={saving || checkingProfile}>
               {saving ? "saving..." : "continue"}
             </button>
           </form>

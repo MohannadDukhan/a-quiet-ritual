@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
       if (existing && existing.id !== userId) {
-        return NextResponse.json({ error: "username is taken" }, { status: 409 });
+        return NextResponse.json({ error: "USERNAME_TAKEN", message: "username is taken" }, { status: 409 });
       }
 
       updateData.username = normalizedUsername;
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return NextResponse.json({ error: "username is taken" }, { status: 409 });
+      return NextResponse.json({ error: "USERNAME_TAKEN", message: "username is taken" }, { status: 409 });
     }
     console.error("[profile][update] failed", error);
     return NextResponse.json({ error: "could not update profile." }, { status: 500 });

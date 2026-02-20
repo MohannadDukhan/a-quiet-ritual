@@ -16,7 +16,7 @@ type SettingsResponse = {
 
 export default function OnboardingAnonymousPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [collectiveAnonymous, setCollectiveAnonymous] = useState(false);
@@ -25,18 +25,30 @@ export default function OnboardingAnonymousPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/sign-in?next=/onboarding/username");
-      return;
+      setLoading(false);
     }
-    if (status === "authenticated" && !session?.user?.username) {
-      router.replace("/onboarding/username");
-    }
-  }, [router, session?.user?.username, status]);
+  }, [router, status]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadSettings() {
       try {
+        const profileResponse = await fetch("/api/profile/update", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const profileData = (await profileResponse.json().catch(() => null)) as
+          | { user?: { username?: string | null } }
+          | null;
+        if (!profileResponse.ok || cancelled) {
+          return;
+        }
+        if (!profileData?.user?.username) {
+          router.replace("/onboarding/username");
+          return;
+        }
+
         const response = await fetch("/api/profile/settings", {
           method: "GET",
           cache: "no-store",
@@ -53,14 +65,14 @@ export default function OnboardingAnonymousPage() {
       }
     }
 
-    if (status === "authenticated" && session?.user?.username) {
+    if (status === "authenticated") {
       void loadSettings();
     }
 
     return () => {
       cancelled = true;
     };
-  }, [session?.user?.username, status]);
+  }, [router, status]);
 
   async function saveAndContinue() {
     setSaving(true);

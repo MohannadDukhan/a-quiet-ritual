@@ -18,7 +18,8 @@ type ProfileResponse = {
 
 export default function OnboardingAvatarPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
+  const [username, setUsername] = useState<string>("");
   const [image, setImage] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,10 +33,7 @@ export default function OnboardingAvatarPage() {
       router.replace("/sign-in?next=/onboarding/username");
       return;
     }
-    if (status === "authenticated" && !session?.user?.username) {
-      router.replace("/onboarding/username");
-    }
-  }, [router, session?.user?.username, status]);
+  }, [router, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +48,11 @@ export default function OnboardingAvatarPage() {
         if (!response.ok || cancelled) {
           return;
         }
+        if (!data?.user?.username) {
+          router.replace("/onboarding/username");
+          return;
+        }
+        setUsername(data.user.username);
         setImage(data?.user?.image ?? null);
       } finally {
         if (!cancelled) {
@@ -58,14 +61,14 @@ export default function OnboardingAvatarPage() {
       }
     }
 
-    if (status === "authenticated" && session?.user?.username) {
+    if (status === "authenticated") {
       void loadProfile();
     }
 
     return () => {
       cancelled = true;
     };
-  }, [session?.user?.username, status]);
+  }, [router, status]);
 
   async function handleAvatarFileSelected(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -146,7 +149,7 @@ export default function OnboardingAvatarPage() {
             ) : (
               <div className="bw-profileAvatar bw-profileAvatarFallback">
                 <span className="bw-ui bw-date">
-                  {(session?.user?.username || "a").slice(0, 1).toUpperCase()}
+                  {(username || "a").slice(0, 1).toUpperCase()}
                 </span>
               </div>
             )}

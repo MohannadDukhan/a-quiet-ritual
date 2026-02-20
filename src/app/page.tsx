@@ -61,6 +61,8 @@ export default function HomePage() {
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showSavedModal, setShowSavedModal] = useState(false);
+  const [onboardingRequired, setOnboardingRequired] = useState(false);
+  const [onboardingCheckComplete, setOnboardingCheckComplete] = useState(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const ballRef = useRef<EightBallCanvasHandle | null>(null);
@@ -86,14 +88,58 @@ export default function HomePage() {
     : promptError
       ? "still listening..."
       : ballPrompt || "shake to reveal";
-  const onboardingRequired = status === "authenticated" && !session?.user?.username;
 
   useEffect(() => {
-    if (!onboardingRequired) {
+    let cancelled = false;
+
+    if (status === "loading") {
+      return;
+    }
+    if (status !== "authenticated") {
+      setOnboardingRequired(false);
+      setOnboardingCheckComplete(true);
+      return;
+    }
+
+    async function checkOnboardingState() {
+      try {
+        const response = await fetch("/api/profile/update", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = (await response.json().catch(() => null)) as { user?: { username?: string | null } } | null;
+        if (cancelled) {
+          return;
+        }
+        if (response.ok) {
+          setOnboardingRequired(!data?.user?.username);
+        } else {
+          setOnboardingRequired(!session?.user?.username);
+        }
+      } catch {
+        if (cancelled) {
+          return;
+        }
+        setOnboardingRequired(!session?.user?.username);
+      } finally {
+        if (!cancelled) {
+          setOnboardingCheckComplete(true);
+        }
+      }
+    }
+
+    void checkOnboardingState();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.username, status]);
+
+  useEffect(() => {
+    if (!onboardingCheckComplete || !onboardingRequired) {
       return;
     }
     router.replace(ONBOARDING_USERNAME_PATH);
-  }, [onboardingRequired, router]);
+  }, [onboardingCheckComplete, onboardingRequired, router]);
 
   useEffect(() => {
     try {
@@ -352,7 +398,7 @@ export default function HomePage() {
 
       <main className="bw-stage">
         <div className="bw-orbWrap">
-          {onboardingRequired && (
+          {onboardingCheckComplete && onboardingRequired && (
             <div className="bw-ui bw-hint" role="status">
               redirecting to onboarding...
             </div>

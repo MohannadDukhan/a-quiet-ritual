@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { TermsModal } from "@/components/terms/terms-modal";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
+import { TERMS_VERSION } from "@/content/terms";
 import {
   evaluatePasswordStrength,
   getPasswordValidationError,
@@ -27,10 +28,8 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
-  const [termsReadToEnd, setTermsReadToEnd] = useState(false);
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [deletedNotice, setDeletedNotice] = useState(false);
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
@@ -39,29 +38,30 @@ export default function SignUpPage() {
   const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
   const strengthSegments = PASSWORD_STRENGTH_SEGMENTS[passwordStrength.level];
   const passwordReady = password.length > 0 && !passwordValidationError;
-  const canSubmit = emailIsValid && passwordReady && acceptedTerms && !isPending;
+  const canSubmit = emailIsValid && passwordReady && !isPending;
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setDeletedNotice(params.get("deleted") === "1");
   }, []);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setDone(false);
-
+  function getSignupValidationError() {
     if (!EMAIL_PATTERN.test(normalizedEmail)) {
-      setError("enter a valid email.");
-      return;
+      return "enter a valid email.";
     }
 
     if (passwordValidationError) {
-      setError(passwordValidationError);
-      return;
+      return passwordValidationError;
     }
 
-    if (!acceptedTerms) {
-      setError("you must agree to the terms before creating an account.");
+    return null;
+  }
+
+  async function createAccountAfterTermsAccepted() {
+    setError(null);
+    const validationError = getSignupValidationError();
+    if (validationError) {
+      setTermsModalOpen(false);
+      setError(validationError);
       return;
     }
 
@@ -73,35 +73,55 @@ export default function SignUpPage() {
         body: JSON.stringify({
           email: normalizedEmail,
           password,
-          acceptedTerms,
+          acceptedTerms: true,
+          termsVersion: TERMS_VERSION,
         }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
 
       if (!response.ok) {
         if (response.status === 429 || data?.error === "RATE_LIMITED") {
+          setTermsModalOpen(false);
           setError("too many requests have been sent. try again in a few minutes.");
           return;
         }
         if (data?.code === "TERMS_NOT_ACCEPTED") {
+          setTermsModalOpen(false);
           setError("you must agree to the terms before creating an account.");
           return;
         }
         if (data?.code === "WEAK_PASSWORD" && data.error) {
+          setTermsModalOpen(false);
           setError(data.error);
           return;
         }
+        setTermsModalOpen(false);
         setError(data?.error ?? "could not create account.");
         return;
       }
 
-      setDone(true);
+      setTermsModalOpen(false);
+      setVerificationModalOpen(true);
       setPassword("");
     } catch {
+      setTermsModalOpen(false);
       setError("could not create account.");
     } finally {
       setIsPending(false);
     }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+
+    const validationError = getSignupValidationError();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setTermsModalOpen(true);
   }
 
   return (
@@ -200,49 +220,39 @@ export default function SignUpPage() {
               })}
             </ul>
 
-            <div className="bw-termsAcceptanceRow">
-              <label className="bw-termsCheckboxLabel">
-                <input
-                  type="checkbox"
-                  className="bw-checkbox"
-                  checked={acceptedTerms}
-                  disabled={!termsReadToEnd}
-                  onChange={(event) => {
-                    setAcceptedTerms(event.target.checked);
-                    setError(null);
-                  }}
-                />
-                <span>i agree to the terms</span>
-              </label>
-              <button
-                type="button"
-                className="bw-authLink bw-termsViewButton"
-                onClick={() => setTermsModalOpen(true)}
-              >
-                view terms
-              </button>
-            </div>
-            {!termsReadToEnd && <div className="bw-hint">scroll to the bottom to enable</div>}
-
             <button className="bw-btn" type="submit" disabled={!canSubmit}>
               {isPending ? "creating..." : "create account"}
             </button>
           </form>
 
           {error && <div className="bw-hint" role="alert">{error}</div>}
-          {done && (
-            <div className="bw-hint" role="status">
-              account created. check your email to verify before continuing.
-            </div>
-          )}
         </div>
       </main>
 
       <TermsModal
         open={termsModalOpen}
         onClose={() => setTermsModalOpen(false)}
-        onReadToEnd={() => setTermsReadToEnd(true)}
+        onAgree={() => void createAccountAfterTermsAccepted()}
+        agreeing={isPending}
       />
+
+      {verificationModalOpen && (
+        <div className="bw-uiModalOverlay" onMouseDown={() => setVerificationModalOpen(false)}>
+          <div className="bw-uiModal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+            <h2 className="bw-uiModalTitle">verification email sent</h2>
+            <p className="bw-uiModalBody">check your inbox (and spam folder). it can take a minute.</p>
+            <div className="bw-uiModalActions">
+              <button
+                type="button"
+                className="bw-navbtn bw-navbtn-hover bw-uiModalPrimary"
+                onClick={() => setVerificationModalOpen(false)}
+              >
+                ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { TermsContent } from "@/components/terms/terms-content";
 
 type TermsModalProps = {
   open: boolean;
   onClose: () => void;
-  onReadToEnd?: () => void;
+  onAgree?: () => void;
+  agreeing?: boolean;
 };
 
 const BOTTOM_THRESHOLD_PX = 12;
@@ -17,10 +18,11 @@ function reachedBottom(container: HTMLDivElement) {
   return remaining <= BOTTOM_THRESHOLD_PX;
 }
 
-export function TermsModal({ open, onClose, onReadToEnd }: TermsModalProps) {
+export function TermsModal({ open, onClose, onAgree, agreeing = false }: TermsModalProps) {
   const titleId = useId();
   const descriptionId = useId();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [canAgree, setCanAgree] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +33,9 @@ export function TermsModal({ open, onClose, onReadToEnd }: TermsModalProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        if (!agreeing) {
+          onClose();
+        }
       }
     };
 
@@ -40,19 +44,21 @@ export function TermsModal({ open, onClose, onReadToEnd }: TermsModalProps) {
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [agreeing, open, onClose]);
 
-  useEffect(() => {
-    if (!open || !scrollRef.current || !onReadToEnd) return;
-    if (reachedBottom(scrollRef.current)) {
-      onReadToEnd();
+  const setScrollContainerRef = useCallback((node: HTMLDivElement | null) => {
+    scrollRef.current = node;
+    if (!node) {
+      return;
     }
-  }, [open, onReadToEnd]);
+    node.scrollTop = 0;
+    setCanAgree(reachedBottom(node));
+  }, []);
 
   if (!open) return null;
 
   return (
-    <div className="bw-uiModalOverlay" onMouseDown={onClose}>
+    <div className="bw-uiModalOverlay" onMouseDown={() => !agreeing && onClose()}>
       <div
         className="bw-uiModal bw-termsModal"
         role="dialog"
@@ -61,7 +67,13 @@ export function TermsModal({ open, onClose, onReadToEnd }: TermsModalProps) {
         aria-describedby={descriptionId}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button type="button" className="bw-uiModalX" aria-label="close terms" onClick={onClose}>
+        <button
+          type="button"
+          className="bw-uiModalX"
+          aria-label="close terms"
+          onClick={onClose}
+          disabled={agreeing}
+        >
           x
         </button>
         <h2 id={titleId} className="bw-uiModalTitle bw-termsTitleText">
@@ -72,21 +84,35 @@ export function TermsModal({ open, onClose, onReadToEnd }: TermsModalProps) {
         </p>
 
         <div
-          ref={scrollRef}
+          ref={setScrollContainerRef}
           className="bw-termsModalScroll"
           onScroll={() => {
-            if (!scrollRef.current || !onReadToEnd) return;
+            if (!scrollRef.current) return;
             if (reachedBottom(scrollRef.current)) {
-              onReadToEnd();
+              setCanAgree(true);
             }
           }}
         >
           <TermsContent />
         </div>
 
+        {!canAgree && <div className="bw-hint">scroll to the bottom to enable</div>}
         <div className="bw-uiModalActions">
-          <button type="button" className="bw-navbtn bw-navbtn-hover bw-uiModalSecondary" onClick={onClose}>
-            close
+          <button
+            type="button"
+            className="bw-navbtn bw-navbtn-hover bw-uiModalSecondary"
+            onClick={onClose}
+            disabled={agreeing}
+          >
+            cancel
+          </button>
+          <button
+            type="button"
+            className="bw-navbtn bw-navbtn-hover bw-uiModalPrimary"
+            onClick={onAgree}
+            disabled={!canAgree || agreeing || !onAgree}
+          >
+            {agreeing ? "creating..." : "i agree"}
           </button>
         </div>
       </div>
