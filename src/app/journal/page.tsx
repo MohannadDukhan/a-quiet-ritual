@@ -1,13 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { JournalEditor } from "@/components/journal-editor";
 import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
+import { ONBOARDING_USERNAME_PATH, needsUsernameOnboarding } from "@/lib/onboarding";
 
 export const dynamic = "force-dynamic";
 
 export default async function JournalPage() {
   const session = await auth();
+  if (needsUsernameOnboarding(session)) {
+    redirect(ONBOARDING_USERNAME_PATH);
+  }
   const userId = session?.user?.id;
 
   return (

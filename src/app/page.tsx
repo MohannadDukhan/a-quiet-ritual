@@ -13,6 +13,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { BwModal } from "@/components/ui/bw-modal";
 import { InfoPopover } from "@/components/ui/info-popover";
 import { useCountdownToUtcMidnight } from "@/hooks/use-countdown-to-utc-midnight";
+import { ONBOARDING_USERNAME_PATH } from "@/lib/onboarding";
 
 type PromptPayload = {
   prompt: {
@@ -85,6 +86,14 @@ export default function HomePage() {
     : promptError
       ? "still listening..."
       : ballPrompt || "shake to reveal";
+  const onboardingRequired = status === "authenticated" && !session?.user?.username;
+
+  useEffect(() => {
+    if (!onboardingRequired) {
+      return;
+    }
+    router.replace(ONBOARDING_USERNAME_PATH);
+  }, [onboardingRequired, router]);
 
   useEffect(() => {
     try {
@@ -343,6 +352,11 @@ export default function HomePage() {
 
       <main className="bw-stage">
         <div className="bw-orbWrap">
+          {onboardingRequired && (
+            <div className="bw-ui bw-hint" role="status">
+              redirecting to onboarding...
+            </div>
+          )}
           <div className="bw-float">
             <div className="bw-parallax">
               <EightBallCanvas

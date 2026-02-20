@@ -61,6 +61,31 @@ function validateImageDataUrl(value: string): string | null {
   return null;
 }
 
+export async function GET() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      username: true,
+      image: true,
+      displayName: true,
+    },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "user not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    user,
+  });
+}
+
 export async function POST(request: NextRequest) {
   const session = await auth();
   const userId = session?.user?.id;

@@ -17,20 +17,12 @@ import { rateLimited } from "@/lib/http-errors";
 import { getPasswordValidationError } from "@/lib/password-strength";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
-import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
-const signupSchema = z
-  .object({
-    email: z.string().trim().email(),
-    username: z.string().trim(),
-    password: z.string().max(128),
-    confirmPassword: z.string().max(128),
-    acceptedTerms: z.boolean(),
-  })
-  .refine((value) => value.password === value.confirmPassword, {
-    message: "passwords do not match",
-    path: ["confirmPassword"],
-  });
+const signupSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().max(128),
+  acceptedTerms: z.boolean(),
+});
 
 const VERIFICATION_SENT_MESSAGE = "verification email sent";
 const EMAIL_SERVICE_UNAVAILABLE_MESSAGE =
@@ -193,22 +185,8 @@ async function cleanupFailedNewSignup(email: string, userId: string, tokenHash: 
   }
 }
 
-function isUniqueConstraintErrorForField(error: unknown, field: string): boolean {
-  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
-    return false;
-  }
-
-  const target = error.meta?.target;
-  if (Array.isArray(target)) {
-    return target.some((item) => String(item).toLowerCase().includes(field.toLowerCase()));
-  }
-
-  return String(target ?? "").toLowerCase().includes(field.toLowerCase());
-}
-
 export async function POST(request: NextRequest) {
   let normalizedEmailForCatch: string | null = null;
-  let normalizedUsernameForCatch: string | null = null;
 
   try {
     const originError = assertSameOrigin(request);
@@ -230,10 +208,6 @@ export async function POST(request: NextRequest) {
     const json = await request.json().catch(() => null);
     const parsed = signupSchema.safeParse(json);
     if (!parsed.success) {
-      const firstIssue = parsed.error.issues[0];
-      if (firstIssue?.message === "passwords do not match") {
-        return errorResponse(400, "INVALID_INPUT", "passwords do not match.");
-      }
       return errorResponse(400, "INVALID_INPUT", "Invalid signup input.");
     }
     if (!parsed.data.acceptedTerms) {
@@ -256,14 +230,7 @@ export async function POST(request: NextRequest) {
     }
 
     const email = parsed.data.email.toLowerCase();
-    const username = normalizeUsername(parsed.data.username);
-    const usernameValidationError = validateNormalizedUsername(username);
-    if (usernameValidationError) {
-      return errorResponse(400, "INVALID_INPUT", usernameValidationError);
-    }
-
     normalizedEmailForCatch = email;
-    normalizedUsernameForCatch = username;
     const emailLimit = await consumeRateLimit({
       key: `signup-email-ip:${email}:${ip}`,
       limit: 4,
@@ -290,21 +257,12 @@ export async function POST(request: NextRequest) {
       return resendVerificationForUnverifiedUser(email);
     }
 
-    const existingUsername = await prisma.user.findUnique({
-      where: { username },
-      select: { id: true },
-    });
-    if (existingUsername) {
-      return errorResponse(409, "USERNAME_TAKEN", "username is taken");
-    }
-
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
     const createdUser = await prisma.user.create({
       data: {
         email,
-        username,
-        displayName: username,
+        username: null,
         passwordHash,
         role: roleForEmail(email),
         termsAcceptedAt: new Date(),
@@ -334,22 +292,9 @@ export async function POST(request: NextRequest) {
       throw error;
     }
   } catch (error) {
-    if (isUniqueConstraintErrorForField(error, "username")) {
-      return errorResponse(409, "USERNAME_TAKEN", "username is taken");
-    }
-
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       try {
         if (!normalizedEmailForCatch) {
-          if (normalizedUsernameForCatch) {
-            const racedUsername = await prisma.user.findUnique({
-              where: { username: normalizedUsernameForCatch },
-              select: { id: true },
-            });
-            if (racedUsername) {
-              return errorResponse(409, "USERNAME_TAKEN", "username is taken");
-            }
-          }
           return errorResponse(409, "ACCOUNT_EXISTS", "account already exists");
         }
 
@@ -366,16 +311,6 @@ export async function POST(request: NextRequest) {
         }
         if (racedUser) {
           return resendVerificationForUnverifiedUser(racedUser.email);
-        }
-
-        if (normalizedUsernameForCatch) {
-          const racedUsername = await prisma.user.findUnique({
-            where: { username: normalizedUsernameForCatch },
-            select: { id: true },
-          });
-          if (racedUsername) {
-            return errorResponse(409, "USERNAME_TAKEN", "username is taken");
-          }
         }
       } catch {
         // Fall through to generic error response.

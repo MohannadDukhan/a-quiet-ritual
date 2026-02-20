@@ -46,7 +46,7 @@ type UpdateProfileSettingsResponse = {
 
 type UsernameAvailabilityState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
-const DELETE_CONFIRMATION_TEXT = "DELETE MY DATA";
+const DELETE_CONFIRMATION_TEXT = "delete my data";
 
 function formatMemberSince(createdAt: string, timeZone: string): string {
   const date = new Date(createdAt);
@@ -96,7 +96,6 @@ export function AccountPanel({
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deletePending, setDeletePending] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [signOutPending, setSignOutPending] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -176,7 +175,7 @@ export function AccountPanel({
 
   async function handleDeleteAccount() {
     if (deleteConfirmation !== DELETE_CONFIRMATION_TEXT) {
-      setDeleteError("type DELETE MY DATA to confirm.");
+      setDeleteError("type delete my data to confirm.");
       return;
     }
 
@@ -196,9 +195,8 @@ export function AccountPanel({
         return;
       }
 
-      setDeleteSuccess(true);
-      setDeleteOpen(false);
-      await signOut({ redirect: false });
+      await signOut({ callbackUrl: "/sign-up?deleted=1" });
+      return;
     } catch {
       setDeleteError("could not delete account right now.");
     } finally {
@@ -490,16 +488,16 @@ export function AccountPanel({
               setDeleteOpen((value) => !value);
               setDeleteError(null);
             }}
-            disabled={deletePending || signOutPending || deleteSuccess}
+            disabled={deletePending || signOutPending}
           >
             delete account
           </button>
         </div>
 
-        {deleteOpen && !deleteSuccess && (
+        {deleteOpen && (
           <div className="bw-accountDanger">
             <p className="bw-accountDangerText">
-              this is permanent. type <strong>DELETE MY DATA</strong> to confirm.
+              this is permanent. type <strong>delete my data</strong> to confirm.
             </p>
             <input
               className="bw-input"
@@ -508,7 +506,7 @@ export function AccountPanel({
                 setDeleteConfirmation(event.target.value);
                 setDeleteError(null);
               }}
-              placeholder="DELETE MY DATA"
+              placeholder="delete my data"
               autoComplete="off"
             />
             <div className="bw-accountActions">
@@ -537,7 +535,6 @@ export function AccountPanel({
         )}
 
         {deleteError && <div className="bw-hint">{deleteError}</div>}
-        {deleteSuccess && <div className="bw-hint">your account has been deleted.</div>}
       </section>
 
       {avatarCropOpen && avatarCropFile && (

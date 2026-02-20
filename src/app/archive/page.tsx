@@ -1,10 +1,12 @@
 import { Prisma } from "@prisma/client";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { ArchiveClient, type ArchiveEntry } from "@/components/archive-client";
 import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ONBOARDING_USERNAME_PATH, needsUsernameOnboarding } from "@/lib/onboarding";
 import { getRequestTimeZone } from "@/lib/request-timezone";
 
 export const dynamic = "force-dynamic";
@@ -77,6 +79,10 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
         </main>
       </div>
     );
+  }
+
+  if (needsUsernameOnboarding(session)) {
+    redirect(ONBOARDING_USERNAME_PATH);
   }
 
   const filter = parseFilter(firstSearchParam(params.filter));

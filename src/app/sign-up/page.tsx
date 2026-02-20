@@ -9,10 +9,8 @@ import {
   getPasswordValidationError,
   PASSWORD_REQUIREMENT_LABELS,
 } from "@/lib/password-strength";
-import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-type UsernameAvailabilityState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 type PasswordRequirementKey = keyof typeof PASSWORD_REQUIREMENT_LABELS;
 
 const PASSWORD_REQUIREMENT_KEYS: PasswordRequirementKey[] = ["minLength", "uppercase", "number", "special"];
@@ -24,123 +22,33 @@ const PASSWORD_STRENGTH_SEGMENTS: Record<ReturnType<typeof evaluatePasswordStren
 };
 
 export default function SignUpPage() {
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [usernameStatus, setUsernameStatus] = useState<UsernameAvailabilityState>("idle");
-  const [usernameHint, setUsernameHint] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [termsReadToEnd, setTermsReadToEnd] = useState(false);
+  const [deletedNotice, setDeletedNotice] = useState(false);
 
-  const normalizedUsername = useMemo(() => normalizeUsername(username), [username]);
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
   const emailIsValid = EMAIL_PATTERN.test(normalizedEmail);
-  const usernameValidationError = useMemo(
-    () => (normalizedUsername ? validateNormalizedUsername(normalizedUsername) : null),
-    [normalizedUsername],
-  );
   const passwordValidationError = useMemo(() => getPasswordValidationError(password), [password]);
   const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
-  const confirmPasswordError =
-    confirmPassword.length > 0 && password !== confirmPassword ? "passwords do not match." : null;
   const strengthSegments = PASSWORD_STRENGTH_SEGMENTS[passwordStrength.level];
-  const usernameReady =
-    Boolean(normalizedUsername) &&
-    !usernameValidationError &&
-    (usernameStatus === "available" || usernameStatus === "error");
   const passwordReady = password.length > 0 && !passwordValidationError;
-  const confirmPasswordReady = confirmPassword.length > 0 && !confirmPasswordError;
-  const canSubmit =
-    usernameReady && emailIsValid && passwordReady && confirmPasswordReady && acceptedTerms && !isPending;
-
+  const canSubmit = emailIsValid && passwordReady && acceptedTerms && !isPending;
   useEffect(() => {
-    if (!normalizedUsername) {
-      setUsernameStatus("idle");
-      setUsernameHint(null);
-      return;
-    }
-
-    if (usernameValidationError) {
-      setUsernameStatus("invalid");
-      setUsernameHint(usernameValidationError);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(async () => {
-      setUsernameStatus("checking");
-      setUsernameHint("checking availability...");
-
-      try {
-        const response = await fetch(`/api/username/check?username=${encodeURIComponent(normalizedUsername)}`, {
-          method: "GET",
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const data = (await response.json().catch(() => null)) as
-          | { available?: boolean; normalized?: string; error?: string }
-          | null;
-
-        if (!response.ok) {
-          setUsernameStatus("error");
-          setUsernameHint(data?.error || "could not check username right now.");
-          return;
-        }
-
-        if (data?.available) {
-          setUsernameStatus("available");
-          setUsernameHint(`${data.normalized || normalizedUsername} is available.`);
-          return;
-        }
-
-        setUsernameStatus("taken");
-        setUsernameHint(data?.error || "username is taken.");
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") {
-          return;
-        }
-        setUsernameStatus("error");
-        setUsernameHint("could not check username right now.");
-      }
-    }, 300);
-
-    return () => {
-      controller.abort();
-      clearTimeout(timeout);
-    };
-  }, [normalizedUsername, usernameValidationError]);
+    const params = new URLSearchParams(window.location.search);
+    setDeletedNotice(params.get("deleted") === "1");
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setDone(false);
-
-    if (!normalizedUsername) {
-      setError("username is required.");
-      return;
-    }
-
-    if (usernameValidationError) {
-      setError(usernameValidationError);
-      return;
-    }
-
-    if (usernameStatus === "checking" || usernameStatus === "idle") {
-      setError("wait until username availability check completes.");
-      return;
-    }
-
-    if (usernameStatus === "taken") {
-      setError("username is taken.");
-      return;
-    }
 
     if (!EMAIL_PATTERN.test(normalizedEmail)) {
       setError("enter a valid email.");
@@ -149,11 +57,6 @@ export default function SignUpPage() {
 
     if (passwordValidationError) {
       setError(passwordValidationError);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("passwords do not match.");
       return;
     }
 
@@ -168,10 +71,8 @@ export default function SignUpPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: normalizedUsername,
           email: normalizedEmail,
           password,
-          confirmPassword,
           acceptedTerms,
         }),
       });
@@ -196,8 +97,6 @@ export default function SignUpPage() {
 
       setDone(true);
       setPassword("");
-      setConfirmPassword("");
-      setUsername(normalizedUsername);
     } catch {
       setError("could not create account.");
     } finally {
@@ -225,24 +124,9 @@ export default function SignUpPage() {
           <div className="bw-authLead">
             create a private account for your archive.
           </div>
+          {deletedNotice && <div className="bw-hint">account deleted. you can create a new account now.</div>}
 
           <form onSubmit={handleSubmit} className="bw-panel show bw-authForm" style={{ gap: 10 }}>
-            <input
-              className="bw-input"
-              type="text"
-              autoComplete="username"
-              placeholder="username (3-20, letters/numbers/underscore)"
-              value={username}
-              onChange={(event) => {
-                setUsername(event.target.value.toLowerCase());
-                setUsernameStatus("idle");
-                setUsernameHint(null);
-                setError(null);
-              }}
-              style={{ height: 44 }}
-              required
-            />
-            {usernameHint && <div className="bw-hint">{usernameHint}</div>}
             <input
               className="bw-input"
               type="email"
@@ -316,36 +200,6 @@ export default function SignUpPage() {
               })}
             </ul>
 
-            <div className="bw-passWrap">
-              <input
-                className="bw-input bw-passInput"
-                type={showConfirmPassword ? "text" : "password"}
-                autoComplete="new-password"
-                placeholder="confirm password"
-                value={confirmPassword}
-                onChange={(event) => {
-                  setConfirmPassword(event.target.value);
-                  setError(null);
-                }}
-                style={{ height: 44 }}
-                required
-              />
-              <button
-                type="button"
-                className="bw-passToggle"
-                aria-label={showConfirmPassword ? "hide confirm password" : "show confirm password"}
-                aria-pressed={showConfirmPassword}
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-              >
-                {showConfirmPassword ? "hide" : "show"}
-              </button>
-            </div>
-            {confirmPasswordError && (
-              <div className="bw-hint bw-authErrorText">
-                {confirmPasswordError}
-              </div>
-            )}
-
             <div className="bw-termsAcceptanceRow">
               <label className="bw-termsCheckboxLabel">
                 <input
@@ -378,7 +232,7 @@ export default function SignUpPage() {
           {error && <div className="bw-hint" role="alert">{error}</div>}
           {done && (
             <div className="bw-hint" role="status">
-              account created. check your email to verify before signing in.
+              account created. check your email to verify before continuing.
             </div>
           )}
         </div>

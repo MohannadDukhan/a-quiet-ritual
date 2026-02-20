@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import {
   CollectiveRepliesPanel,
@@ -11,6 +11,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ONBOARDING_USERNAME_PATH, needsUsernameOnboarding } from "@/lib/onboarding";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 import { getRequestTimeZone } from "@/lib/request-timezone";
 import { formatDateTime } from "@/lib/time";
@@ -27,6 +28,9 @@ function formatHandle(username: string): string {
 
 export default async function CollectiveEntryDetailPage({ params }: CollectiveEntryDetailPageProps) {
   const session = await auth();
+  if (needsUsernameOnboarding(session)) {
+    redirect(ONBOARDING_USERNAME_PATH);
+  }
   const canModerate = session?.user?.role === "ADMIN";
   const viewerIsAdmin = session?.user?.role === "ADMIN";
   const viewerUserId = session?.user?.id ?? null;

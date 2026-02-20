@@ -1327,6 +1327,28 @@ body {
   }
 }
 
+.bw-tonePanel {
+  width: min(760px, 94vw);
+  gap: 18px;
+}
+
+.bw-toneLines {
+  display: grid;
+  gap: 10px;
+}
+
+.bw-toneLine {
+  margin: 0;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+
+.bw-toneLine.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .bw-row {
   display: flex;
   align-items: center;
@@ -2387,8 +2409,10 @@ body {
   .bw-anim-rattle,
   .bw-anim-roll,
   .bw-breathe,
-  .bw-lockOverlayPulse {
+  .bw-lockOverlayPulse,
+  .bw-toneLine {
     animation: none !important;
+    transition: none !important;
   }
   .bw-infoCard {
     animation: none !important;

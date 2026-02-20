@@ -11,6 +11,31 @@ const updateSettingsSchema = z.object({
 
 export const runtime = "nodejs";
 
+export async function GET() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      collectiveAnonymous: true,
+    },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "user not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    settings: {
+      collectiveAnonymous: user.collectiveAnonymous,
+    },
+  });
+}
+
 export async function PATCH(request: NextRequest) {
   const session = await auth();
   const userId = session?.user?.id;

@@ -7,7 +7,7 @@ import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp, isSameOrigin } from "@/lib/security";
 
 const deleteAccountSchema = z.object({
-  confirmation: z.literal("DELETE MY DATA"),
+  confirmation: z.literal("delete my data"),
 });
 
 export const runtime = "nodejs";
@@ -52,33 +52,45 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
 
-  await prisma.$transaction([
-    prisma.collectiveReply.updateMany({
-      where: { userId: user.id },
-      data: { userId: null },
-    }),
-    prisma.entry.deleteMany({
-      where: { userId: user.id },
-    }),
-    prisma.account.deleteMany({
-      where: { userId: user.id },
-    }),
-    prisma.session.deleteMany({
-      where: { userId: user.id },
-    }),
-    prisma.verificationToken.deleteMany({
-      where: { identifier: user.email },
-    }),
-    prisma.emailVerificationToken.deleteMany({
-      where: { identifier: user.email },
-    }),
-    prisma.passwordResetToken.deleteMany({
-      where: { identifier: user.email },
-    }),
-    prisma.user.delete({
-      where: { id: user.id },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.collectiveReply.deleteMany({
+        where: {
+          entry: {
+            userId: user.id,
+          },
+        },
+      }),
+      prisma.collectiveReply.deleteMany({
+        where: { userId: user.id },
+      }),
+      prisma.entry.deleteMany({
+        where: { userId: user.id },
+      }),
+      prisma.account.deleteMany({
+        where: { userId: user.id },
+      }),
+      prisma.session.deleteMany({
+        where: { userId: user.id },
+      }),
+      prisma.verificationToken.deleteMany({
+        where: { identifier: user.email },
+      }),
+      prisma.emailVerificationToken.deleteMany({
+        where: { identifier: user.email },
+      }),
+      prisma.passwordResetToken.deleteMany({
+        where: { identifier: user.email },
+      }),
+      prisma.user.deleteMany({
+        where: { id: user.id },
+      }),
+    ]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[account][delete] failed", { userId, message });
+    return NextResponse.json({ error: "could not delete account right now." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

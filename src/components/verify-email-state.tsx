@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { BwNavButton } from "@/components/ui/bw-nav-button";
@@ -11,8 +12,10 @@ type VerifyEmailStateProps = {
 };
 
 export function VerifyEmailState({ email, token }: VerifyEmailStateProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
+  const continueHref = "/sign-in?next=/onboarding/username";
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +57,18 @@ export function VerifyEmailState({ email, token }: VerifyEmailStateProps) {
     };
   }, [email, token]);
 
+  useEffect(() => {
+    if (status !== "success") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      router.replace(continueHref);
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [continueHref, router, status]);
+
   return (
     <div className="bw-bg">
       <div className="bw-top">
@@ -71,7 +86,12 @@ export function VerifyEmailState({ email, token }: VerifyEmailStateProps) {
           {status === "loading" && <div className="bw-hint">verifying...</div>}
           {status === "success" && (
             <div className="bw-hint">
-              email verified. <Link className="bw-authLink" href="/sign-in">sign in</Link>.
+              email verified. continuing...
+              {" "}
+              <Link className="bw-authLink" href={continueHref}>
+                continue
+              </Link>
+              .
             </div>
           )}
           {status === "error" && <div className="bw-hint">{error || "verification failed."}</div>}

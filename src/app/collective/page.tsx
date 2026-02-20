@@ -2,13 +2,18 @@ import { AppHeader } from "@/components/layout/app-header";
 import { CollectiveFeed, type CollectiveFeedEntry } from "@/components/collective-feed";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ONBOARDING_USERNAME_PATH, needsUsernameOnboarding } from "@/lib/onboarding";
 import { getTodaysPrompt } from "@/lib/prompt-service";
 import { getRequestTimeZone } from "@/lib/request-timezone";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function CollectivePage() {
   const session = await auth();
+  if (needsUsernameOnboarding(session)) {
+    redirect(ONBOARDING_USERNAME_PATH);
+  }
   const canModerate = session?.user?.role === "ADMIN";
   const viewerIsAdmin = session?.user?.role === "ADMIN";
   const timeZone = await getRequestTimeZone();

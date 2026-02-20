@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AccountPanel } from "@/components/account-panel";
 import { AppHeader } from "@/components/layout/app-header";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ONBOARDING_USERNAME_PATH, needsUsernameOnboarding } from "@/lib/onboarding";
 import { getProfileSharedEntriesPage } from "@/lib/profile-shared-entries";
 import { getRequestTimeZone } from "@/lib/request-timezone";
 
@@ -11,6 +13,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await auth();
+  if (needsUsernameOnboarding(session)) {
+    redirect(ONBOARDING_USERNAME_PATH);
+  }
   const userId = session?.user?.id;
   const timeZone = await getRequestTimeZone();
 
