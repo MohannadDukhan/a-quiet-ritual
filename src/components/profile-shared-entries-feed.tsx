@@ -116,7 +116,7 @@ export function ProfileSharedEntriesFeed({
   return (
     <div style={{ display: "grid", gap: 0 }}>
       {items.map((entry) => (
-        <Link key={entry.id} href={`/collective/${entry.id}`} className="bw-profileFeedRow">
+        <Link key={entry.id} href={`/entries/${entry.id}`} className="bw-profileFeedRow">
           <div className="bw-profileFeedMeta">
             <span>{formatDateTime(entry.createdAt, timeZone)}</span>
             <span className="bw-collectiveBadge bw-profileFeedBadge">shared</span>

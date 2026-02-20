@@ -22,17 +22,12 @@ type UserRowOwner = {
   id: string;
   username: string;
   email: string;
-  createdAt: string;
-};
-
-type UserRowAdmin = {
-  id: string;
-  username: string;
+  collectiveBanned: boolean;
   createdAt: string;
 };
 
 type AdminUsersResponse = {
-  users?: Array<UserRowOwner | UserRowAdmin>;
+  users?: UserRowOwner[];
   error?: string;
 };
 
@@ -94,8 +89,9 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
   const [expandedEntries, setExpandedEntries] = useState<Record<string, boolean>>({});
   const [usersOpen, setUsersOpen] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
-  const [usersRows, setUsersRows] = useState<Array<UserRowOwner | UserRowAdmin> | null>(null);
+  const [usersRows, setUsersRows] = useState<UserRowOwner[] | null>(null);
   const [usersError, setUsersError] = useState<string | null>(null);
+  const [pendingUsersBanAction, setPendingUsersBanAction] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -104,7 +100,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
     () => new Set(data.bannedUsers.map((user) => user.id)),
     [data.bannedUsers],
   );
-  const usersGridTemplate = canManageRoles ? "minmax(0, 1fr) minmax(0, 1.3fr) 132px" : "minmax(0, 1fr) 132px";
+  const usersGridTemplate = "minmax(0, 1fr) minmax(0, 1.3fr) 132px minmax(0, 120px)";
 
   async function refreshModerationData() {
     const response = await fetch("/api/admin/moderation/today", {
@@ -162,6 +158,50 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
       setUsersError("request failed.");
     } finally {
       setUsersLoading(false);
+    }
+  }
+
+  async function handleUsersListBanToggle(userId: string, username: string, banned: boolean) {
+    const actionLabel = banned ? "ban" : "unban";
+    const userLabel = formatHandle(username);
+    if (!window.confirm(`${actionLabel} ${userLabel} from collective posting?`)) {
+      return;
+    }
+
+    setPendingUsersBanAction(userId);
+    setUsersError(null);
+
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/ban`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ banned }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; collectiveBanned?: boolean }
+        | null;
+
+      if (!response.ok || typeof payload?.collectiveBanned !== "boolean") {
+        setUsersError(payload?.error || "request failed.");
+        return;
+      }
+
+      setUsersRows((prev) =>
+        prev
+          ? prev.map((row) =>
+              row.id === userId
+                ? {
+                    ...row,
+                    collectiveBanned: payload.collectiveBanned ?? row.collectiveBanned,
+                  }
+                : row,
+            )
+          : prev,
+      );
+    } catch {
+      setUsersError("request failed.");
+    } finally {
+      setPendingUsersBanAction(null);
     }
   }
 
@@ -401,64 +441,86 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
 
       <hr className="bw-divider" />
 
-      <section className="bw-section">
-        <div className="bw-sectionHeader">
-          <div className="bw-ui bw-date">users</div>
-          <div className="bw-rowActions" style={{ marginTop: 0 }}>
-            <button className="bw-btnGhost" type="button" disabled={usersLoading} onClick={toggleUsersSection}>
-              {usersOpen ? "hide users" : "view users"}
-            </button>
-            {usersOpen && (
-              <button
-                className="bw-btnGhost"
-                type="button"
-                disabled={usersLoading}
-                onClick={() => {
-                  void loadUsers();
-                }}
-              >
-                {usersLoading ? "loading..." : "refresh"}
-              </button>
-            )}
-          </div>
-        </div>
-        <hr className="bw-divider" />
-
-        {!usersOpen && <div className="bw-hint">view all users.</div>}
-
-        {usersOpen && usersLoading && usersRows === null && <div className="bw-hint">loading users...</div>}
-
-        {usersOpen && usersError && <div className="bw-hint">{usersError}</div>}
-
-        {usersOpen && usersRows && !usersError && (
-          usersRows.length === 0 ? (
-            <div className="bw-hint">no users found.</div>
-          ) : (
-            <div className="bw-lineSection bw-rowList">
-              <div className="bw-rowItem">
-                <div className="bw-rowMeta" style={{ display: "grid", gridTemplateColumns: usersGridTemplate, gap: 12 }}>
-                  <span>username</span>
-                  {canManageRoles && <span>email</span>}
-                  <span>member since</span>
-                </div>
+      {canManageRoles && (
+        <>
+          <section className="bw-section">
+            <div className="bw-sectionHeader">
+              <div className="bw-ui bw-date">users</div>
+              <div className="bw-rowActions" style={{ marginTop: 0 }}>
+                <button className="bw-btnGhost" type="button" disabled={usersLoading} onClick={toggleUsersSection}>
+                  {usersOpen ? "hide users" : "view users"}
+                </button>
+                {usersOpen && (
+                  <button
+                    className="bw-btnGhost"
+                    type="button"
+                    disabled={usersLoading}
+                    onClick={() => {
+                      void loadUsers();
+                    }}
+                  >
+                    {usersLoading ? "loading..." : "refresh"}
+                  </button>
+                )}
               </div>
-              {usersRows.map((user) => (
-                <div key={user.id} className="bw-rowItem bw-rowHover">
-                  <div className="bw-rowMeta" style={{ display: "grid", gridTemplateColumns: usersGridTemplate, gap: 12 }}>
-                    <Link className="bw-handleLink" href={`/u/${encodeURIComponent(user.username)}`}>
-                      {formatHandle(user.username)}
-                    </Link>
-                    {canManageRoles && "email" in user && <span>{user.email}</span>}
-                    <span>{formatMemberSince(user.createdAt)}</span>
-                  </div>
-                </div>
-              ))}
             </div>
-          )
-        )}
-      </section>
+            <hr className="bw-divider" />
 
-      <hr className="bw-divider" />
+            {!usersOpen && <div className="bw-hint">view all users.</div>}
+
+            {usersOpen && usersLoading && usersRows === null && <div className="bw-hint">loading users...</div>}
+
+            {usersOpen && usersError && <div className="bw-hint">{usersError}</div>}
+
+            {usersOpen && usersRows && !usersError && (
+              usersRows.length === 0 ? (
+                <div className="bw-hint">no users found.</div>
+              ) : (
+                <div className="bw-lineSection bw-rowList">
+                  <div className="bw-rowItem">
+                    <div className="bw-rowMeta" style={{ display: "grid", gridTemplateColumns: usersGridTemplate, gap: 12 }}>
+                      <span>username</span>
+                      <span>email</span>
+                      <span>member since</span>
+                      <span>collective</span>
+                    </div>
+                  </div>
+                  {usersRows.map((user) => (
+                    <div key={user.id} className="bw-rowItem bw-rowHover">
+                      <div className="bw-rowMeta" style={{ display: "grid", gridTemplateColumns: usersGridTemplate, gap: 12 }}>
+                        <Link className="bw-handleLink" href={`/u/${encodeURIComponent(user.username)}`}>
+                          {formatHandle(user.username)}
+                        </Link>
+                        <span>{user.email}</span>
+                        <span>{formatMemberSince(user.createdAt)}</span>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          {user.collectiveBanned && <span className="bw-ui bw-date">banned</span>}
+                          <button
+                            className="bw-btnGhost"
+                            type="button"
+                            disabled={pendingUsersBanAction === user.id}
+                            onClick={() => {
+                              void handleUsersListBanToggle(user.id, user.username, !user.collectiveBanned);
+                            }}
+                          >
+                            {pendingUsersBanAction === user.id
+                              ? "saving..."
+                              : user.collectiveBanned
+                                ? "unban"
+                                : "ban"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </section>
+
+          <hr className="bw-divider" />
+        </>
+      )}
 
       <section className="bw-section">
         <div className="bw-sectionHeader">

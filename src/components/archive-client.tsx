@@ -55,7 +55,7 @@ export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
                 <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
               </Link>
             ) : (
-              <Link key={entry.id} href={`/entry/${entry.id}`} className="bw-rowItem bw-rowHover">
+              <Link key={entry.id} href={`/entries/${entry.id}`} className="bw-rowItem bw-rowHover">
                 <div className="bw-rowMeta">
                   <div className="bw-rowMetaLeft bw-badgeGroup">
                     <span>{formatDate(entry.createdAt, timeZone)}</span>

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { PublicProfilePanel } from "@/components/public-profile-panel";
 import { AppHeader } from "@/components/layout/app-header";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getProfileSharedEntriesPage } from "@/lib/profile-shared-entries";
 import { getRequestTimeZone } from "@/lib/request-timezone";
@@ -25,14 +26,16 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     redirect(`/u/${encodeURIComponent(normalizedUsername)}`);
   }
 
-  const [timeZone, user] = await Promise.all([
+  const [timeZone, session, user] = await Promise.all([
     getRequestTimeZone(),
+    auth(),
     prisma.user.findUnique({
       where: { username: normalizedUsername },
       select: {
         id: true,
         username: true,
         image: true,
+        collectiveBanned: true,
         createdAt: true,
       },
     }),
@@ -53,8 +56,11 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
       <main className="bw-journalWrap">
         <PublicProfilePanel
+          profileUserId={user.id}
           username={user.username || normalizedUsername}
           image={user.image}
+          initialCollectiveBanned={user.collectiveBanned}
+          canManageCollective={session?.user?.isOwner === true}
           createdAt={user.createdAt.toISOString()}
           timeZone={timeZone}
           initialSharedEntries={sharedEntriesPage.items}
