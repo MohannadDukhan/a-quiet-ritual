@@ -18,6 +18,16 @@ function addRateLimitHeaders(resetAt: Date) {
   };
 }
 
+function getUtcDayBounds(now: Date = new Date()): { startUtc: Date; endUtc: Date } {
+  const startUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+  );
+  const endUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0),
+  );
+  return { startUtc, endUtc };
+}
+
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
@@ -60,6 +70,40 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { startUtc, endUtc } = getUtcDayBounds();
+  const existingTodayEntry = await prisma.entry.findFirst({
+    where: {
+      userId,
+      type: "JOURNAL",
+      createdAt: {
+        gte: startUtc,
+        lt: endUtc,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+
+  const entrySelect = {
+    id: true,
+    type: true,
+    content: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
+
+  if (existingTodayEntry) {
+    const entry = await prisma.entry.update({
+      where: { id: existingTodayEntry.id },
+      data: {
+        content: parsed.data.content,
+      },
+      select: entrySelect,
+    });
+
+    return NextResponse.json({ entry, updated: true }, { status: 200 });
+  }
+
   const entry = await prisma.entry.create({
     data: {
       userId,
@@ -70,13 +114,7 @@ export async function POST(request: NextRequest) {
       isCollective: false,
       collectivePublishedAt: null,
     },
-    select: {
-      id: true,
-      type: true,
-      content: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: entrySelect,
   });
 
   return NextResponse.json({ entry }, { status: 201 });

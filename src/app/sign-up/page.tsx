@@ -178,6 +178,10 @@ export default function SignUpPage() {
       const data = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
 
       if (!response.ok) {
+        if (response.status === 429 || data?.error === "RATE_LIMITED") {
+          setError("too many requests have been sent. try again in a few minutes.");
+          return;
+        }
         if (data?.code === "TERMS_NOT_ACCEPTED") {
           setError("you must agree to the terms before creating an account.");
           return;

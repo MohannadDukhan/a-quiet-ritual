@@ -7,9 +7,20 @@ import { BwModal } from "@/components/ui/bw-modal";
 
 const JOURNAL_DRAFT_KEY = "bw_journal_draft";
 
-export function JournalEditor() {
+type JournalEditorProps = {
+  initialTodayEntry?: {
+    id: string;
+    content: string;
+  } | null;
+};
+
+export function JournalEditor({ initialTodayEntry = null }: JournalEditorProps) {
   const router = useRouter();
+  const hasTodayEntry = Boolean(initialTodayEntry?.id);
   const [text, setText] = useState(() => {
+    if (initialTodayEntry?.content) {
+      return initialTodayEntry.content;
+    }
     if (typeof window === "undefined") return "";
     try {
       return localStorage.getItem(JOURNAL_DRAFT_KEY) || "";
@@ -87,7 +98,7 @@ export function JournalEditor() {
       <div className="bw-row">
         <div className="bw-ui bw-date">{saved ? "saved." : "private only"}</div>
         <button className="bw-btn" onClick={handleSave} disabled={saving}>
-          {saving ? "saving..." : "save"}
+          {saving ? "saving..." : hasTodayEntry ? "save changes" : "save"}
         </button>
       </div>
 

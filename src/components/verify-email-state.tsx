@@ -29,6 +29,11 @@ export function VerifyEmailState({ email, token }: VerifyEmailStateProps) {
         if (cancelled) return;
 
         if (!response.ok) {
+          if (response.status === 429 || data?.error === "RATE_LIMITED") {
+            setStatus("error");
+            setError("too many requests. try again in a few minutes.");
+            return;
+          }
           setStatus("error");
           setError(data?.error ?? "could not verify email.");
           return;

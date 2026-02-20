@@ -25,11 +25,24 @@ type ArchiveClientProps = {
 
 export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
   const empty = useMemo(() => entries.length === 0, [entries.length]);
-  function previewContent(content: string) {
-    const compact = content.replace(/\s+/g, " ").trim();
-    if (compact.length <= 120) return compact;
-    return `${compact.slice(0, 120).trimEnd()}...`;
+function previewContent(content: string) {
+  const compact = content.replace(/\s+/g, " ").trim();
+  if (compact.length <= 120) return compact;
+  return `${compact.slice(0, 120).trimEnd()}...`;
+}
+
+function isSameUtcDay(dateIso: string, now: Date = new Date()): boolean {
+  const date = new Date(dateIso);
+  if (Number.isNaN(date.getTime())) {
+    return false;
   }
+
+  return (
+    date.getUTCFullYear() === now.getUTCFullYear() &&
+    date.getUTCMonth() === now.getUTCMonth() &&
+    date.getUTCDate() === now.getUTCDate()
+  );
+}
 
   return (
     <>
@@ -47,7 +60,11 @@ export function ArchiveClient({ entries, timeZone }: ArchiveClientProps) {
         <div className="bw-lineSection bw-rowList">
           {entries.map((entry) => (
             entry.type === "JOURNAL" ? (
-              <Link key={entry.id} href={`/journal/${entry.id}`} className="bw-rowItem bw-rowHover">
+              <Link
+                key={entry.id}
+                href={isSameUtcDay(entry.createdAt) ? "/journal" : `/journal/${entry.id}`}
+                className="bw-rowItem bw-rowHover"
+              >
                 <div className="bw-rowMeta">
                   <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
                   <span>{formatDate(entry.createdAt, timeZone)}</span>

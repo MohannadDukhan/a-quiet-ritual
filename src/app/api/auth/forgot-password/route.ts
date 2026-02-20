@@ -9,6 +9,7 @@ import {
   sendPasswordResetEmail,
 } from "@/lib/auth-email";
 import { prisma } from "@/lib/db";
+import { rateLimited } from "@/lib/http-errors";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
 
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
       windowMs: 15 * 60 * 1000,
     });
     if (!ipLimit.ok) {
-      return NextResponse.json(GENERIC_RESPONSE, { status: 200 });
+      const retryAfterSeconds = Math.max(1, Math.ceil((ipLimit.resetAt.getTime() - Date.now()) / 1000));
+      return rateLimited(undefined, retryAfterSeconds);
     }
 
     const json = await request.json().catch(() => null);
@@ -56,7 +58,8 @@ export async function POST(request: NextRequest) {
       windowMs: 15 * 60 * 1000,
     });
     if (!emailLimit.ok) {
-      return NextResponse.json(GENERIC_RESPONSE, { status: 200 });
+      const retryAfterSeconds = Math.max(1, Math.ceil((emailLimit.resetAt.getTime() - Date.now()) / 1000));
+      return rateLimited(undefined, retryAfterSeconds);
     }
 
     const user = await prisma.user.findUnique({

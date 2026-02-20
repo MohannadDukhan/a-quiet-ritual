@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth-email";
 import { roleForEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
+import { rateLimited } from "@/lib/http-errors";
 import { getPasswordValidationError } from "@/lib/password-strength";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
@@ -222,7 +223,8 @@ export async function POST(request: NextRequest) {
       windowMs: 15 * 60 * 1000,
     });
     if (!ipLimit.ok) {
-      return errorResponse(429, "RATE_LIMITED", "Too many signup attempts. Try later.");
+      const retryAfterSeconds = Math.max(1, Math.ceil((ipLimit.resetAt.getTime() - Date.now()) / 1000));
+      return rateLimited(undefined, retryAfterSeconds);
     }
 
     const json = await request.json().catch(() => null);
@@ -268,7 +270,8 @@ export async function POST(request: NextRequest) {
       windowMs: 15 * 60 * 1000,
     });
     if (!emailLimit.ok) {
-      return errorResponse(429, "RATE_LIMITED", "Too many signup attempts. Try later.");
+      const retryAfterSeconds = Math.max(1, Math.ceil((emailLimit.resetAt.getTime() - Date.now()) / 1000));
+      return rateLimited(undefined, retryAfterSeconds);
     }
 
     const existingUser = await prisma.user.findUnique({

@@ -20,6 +20,11 @@ type PromptPayload = {
     text: string;
   };
   dateId: string;
+  existingEntry?: {
+    id: string;
+    content: string;
+    isCollective: boolean;
+  } | null;
 };
 
 const DRAFT_KEY = "bw_entry_draft";
@@ -39,7 +44,7 @@ function fallbackDateId() {
 
 export default function HomePage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
   const [revealed, setRevealed] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -63,6 +68,7 @@ export default function HomePage() {
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
   const nextPromptCountdown = useCountdownToUtcMidnight(revealed);
   const promptText = promptState?.prompt.text ?? "";
+  const isEditingTodayPrompt = Boolean(promptState?.existingEntry?.id);
   const ballPrompt = useMemo(
     () =>
       promptText.length > INSIDE_PROMPT_MAX
@@ -161,6 +167,10 @@ export default function HomePage() {
       }
 
       setPromptState(data);
+      if (data.existingEntry) {
+        setText(data.existingEntry.content);
+        setShareOnCollective(data.existingEntry.isCollective);
+      }
     } catch {
       setPromptError("prompt unavailable right now.");
     } finally {
@@ -241,16 +251,35 @@ export default function HomePage() {
           shareOnCollective,
         }),
       });
+      const data = (await response.json().catch(() => null)) as
+        | {
+            error?: string;
+            entry?: { id: string; content: string; isCollective: boolean };
+          }
+        | null;
 
       if (!response.ok) {
         if (response.status === 401) {
           setNeedsSignIn(true);
           return;
         }
-
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
         setSaveError(data?.error ?? "could not save right now.");
         return;
+      }
+      const savedEntry = data?.entry;
+      if (session?.user?.role === "USER" && savedEntry?.id) {
+        setPromptState((previous) =>
+          previous
+            ? {
+                ...previous,
+                existingEntry: {
+                  id: savedEntry.id,
+                  content: savedEntry.content,
+                  isCollective: savedEntry.isCollective,
+                },
+              }
+            : previous,
+        );
       }
 
       setSaved(true);
@@ -348,7 +377,7 @@ export default function HomePage() {
                   <div className="bw-actions">
                     {saved && <span className="bw-ui bw-date">saved.</span>}
                     <button className="bw-btn" onClick={handleSave} disabled={saving || promptLoading}>
-                      {saving ? "saving..." : "save"}
+                      {saving ? "saving..." : isEditingTodayPrompt ? "save changes" : "save"}
                     </button>
                   </div>
                 </div>

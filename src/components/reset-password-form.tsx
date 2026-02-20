@@ -47,6 +47,10 @@ export function ResetPasswordForm({ email, token }: ResetPasswordFormProps) {
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
 
       if (!response.ok) {
+        if (response.status === 429 || data?.error === "RATE_LIMITED") {
+          setError("too many requests. try again in a few minutes.");
+          return;
+        }
         setError(data?.error ?? "could not reset password.");
         return;
       }

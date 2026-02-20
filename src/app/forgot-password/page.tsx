@@ -10,10 +10,12 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSent(false);
+    setError(null);
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!EMAIL_PATTERN.test(normalizedEmail)) {
@@ -22,11 +24,20 @@ export default function ForgotPasswordPage() {
 
     setIsPending(true);
     try {
-      await fetch("/api/auth/forgot-password", {
+      const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail }),
       });
+      const data = (await response.json().catch(() => null)) as { error?: string; message?: string } | null;
+      if (!response.ok) {
+        if (response.status === 429 || data?.error === "RATE_LIMITED") {
+          setError("too many requests. try again in a few minutes.");
+          return;
+        }
+        setError(data?.message || data?.error || "could not send reset link.");
+        return;
+      }
       setSent(true);
     } finally {
       setIsPending(false);
@@ -74,6 +85,7 @@ export default function ForgotPasswordPage() {
               if an account exists, a reset link has been sent.
             </div>
           )}
+          {error && <div className="bw-hint">{error}</div>}
         </div>
       </main>
     </div>

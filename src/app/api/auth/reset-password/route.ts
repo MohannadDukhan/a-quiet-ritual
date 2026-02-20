@@ -5,6 +5,7 @@ import { z } from "zod";
 import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { hashToken } from "@/lib/auth-tokens";
 import { prisma } from "@/lib/db";
+import { rateLimited } from "@/lib/http-errors";
 import { getPasswordValidationError } from "@/lib/password-strength";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
@@ -37,7 +38,8 @@ export async function POST(request: NextRequest) {
       windowMs: 15 * 60 * 1000,
     });
     if (!ipLimit.ok) {
-      return NextResponse.json({ error: "Too many reset attempts. Try later." }, { status: 429 });
+      const retryAfterSeconds = Math.max(1, Math.ceil((ipLimit.resetAt.getTime() - Date.now()) / 1000));
+      return rateLimited(undefined, retryAfterSeconds);
     }
 
     const json = await request.json().catch(() => null);
@@ -53,7 +55,8 @@ export async function POST(request: NextRequest) {
       windowMs: 15 * 60 * 1000,
     });
     if (!emailLimit.ok) {
-      return NextResponse.json({ error: "Too many reset attempts. Try later." }, { status: 429 });
+      const retryAfterSeconds = Math.max(1, Math.ceil((emailLimit.resetAt.getTime() - Date.now()) / 1000));
+      return rateLimited(undefined, retryAfterSeconds);
     }
 
     const tokenHash = hashToken(parsed.data.token);

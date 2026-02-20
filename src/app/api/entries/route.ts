@@ -70,6 +70,16 @@ function addRateLimitHeaders(resetAt: Date) {
   };
 }
 
+function getUtcDayBounds(now: Date = new Date()): { startUtc: Date; endUtc: Date } {
+  const startUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+  );
+  const endUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0),
+  );
+  return { startUtc, endUtc };
+}
+
 async function getPublicArchiveUserId(request: NextRequest): Promise<string> {
   const email = resolvePublicArchiveUserEmail(request);
   const user = await prisma.user.upsert({
@@ -223,6 +233,7 @@ export async function POST(request: NextRequest) {
     where: { id: userId },
     select: {
       collectiveBanned: true,
+      role: true,
     },
   });
   if (!user) {
@@ -259,6 +270,56 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { startUtc, endUtc } = getUtcDayBounds();
+  const entrySelect = {
+    id: true,
+    type: true,
+    content: true,
+    promptTextSnapshot: true,
+    isCollective: true,
+    collectivePublishedAt: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
+
+  if (user.role === "USER") {
+    const existingTodayEntry = await prisma.entry.findFirst({
+      where: {
+        userId,
+        type: "PROMPT",
+        promptId: prompt.id,
+        createdAt: {
+          gte: startUtc,
+          lt: endUtc,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        collectivePublishedAt: true,
+      },
+    });
+
+    if (existingTodayEntry) {
+      const entry = await prisma.entry.update({
+        where: { id: existingTodayEntry.id },
+        data: {
+          promptTextSnapshot,
+          content: parsed.data.content,
+          isCollective: shareOnCollective,
+          collectivePublishedAt: shareOnCollective
+            ? existingTodayEntry.collectivePublishedAt ?? new Date()
+            : null,
+          collectiveRemovedAt: null,
+          collectiveRemovedReason: null,
+        },
+        select: entrySelect,
+      });
+
+      return NextResponse.json({ entry, updated: true }, { status: 200 });
+    }
+  }
+
   const entry = await prisma.entry.create({
     data: {
       userId,
@@ -269,16 +330,7 @@ export async function POST(request: NextRequest) {
       isCollective: shareOnCollective,
       collectivePublishedAt: shareOnCollective ? new Date() : null,
     },
-    select: {
-      id: true,
-      type: true,
-      content: true,
-      promptTextSnapshot: true,
-      isCollective: true,
-      collectivePublishedAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: entrySelect,
   });
 
   return NextResponse.json({ entry }, { status: 201 });
