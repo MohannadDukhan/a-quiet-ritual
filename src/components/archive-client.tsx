@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 import { InfoPopover } from "@/components/ui/info-popover";
 import { formatDate } from "@/lib/time";
@@ -30,6 +31,11 @@ type ArchiveClientProps = {
   customEnd: string;
   page: number;
   totalPages: number;
+};
+
+type DeleteEntryResponse = {
+  ok?: boolean;
+  error?: string;
 };
 
 function previewContent(content: string) {
@@ -75,6 +81,11 @@ function buildArchiveHref(input: {
   return `/archive?${params.toString()}`;
 }
 
+async function parseDeleteError(response: Response): Promise<string> {
+  const data = (await response.json().catch(() => null)) as DeleteEntryResponse | null;
+  return data?.error || "could not delete right now.";
+}
+
 export function ArchiveClient({
   entries,
   timeZone,
@@ -85,7 +96,28 @@ export function ArchiveClient({
   page,
   totalPages,
 }: ArchiveClientProps) {
-  const empty = useMemo(() => entries.length === 0, [entries.length]);
+  const searchParams = useSearchParams();
+  const [items, setItems] = useState(entries);
+  const [pendingRange, setPendingRange] = useState<ArchiveRange>(range);
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const empty = useMemo(() => items.length === 0, [items.length]);
+
+  useEffect(() => {
+    setItems(entries);
+  }, [entries]);
+
+  useEffect(() => {
+    setPendingRange(range);
+  }, [range]);
+
+  useEffect(() => {
+    if (searchParams.get("deleted") === "1") {
+      setNotice("entry deleted.");
+    }
+  }, [searchParams]);
+
   const previousHref =
     page > 1
       ? buildArchiveHref({
@@ -107,6 +139,30 @@ export function ArchiveClient({
         })
       : null;
 
+  async function handleDeleteEntry(entryId: string) {
+    if (!window.confirm("delete this entry permanently? this cannot be undone.")) {
+      return;
+    }
+
+    setDeleteError(null);
+    setDeletingEntryId(entryId);
+    try {
+      const response = await fetch(`/api/entries/${encodeURIComponent(entryId)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        setDeleteError(await parseDeleteError(response));
+        return;
+      }
+
+      setItems((previous) => previous.filter((entry) => entry.id !== entryId));
+    } catch {
+      setDeleteError("could not delete right now.");
+    } finally {
+      setDeletingEntryId(null);
+    }
+  }
+
   return (
     <>
       <section className="bw-section">
@@ -121,7 +177,7 @@ export function ArchiveClient({
             <label className="bw-ui bw-date" htmlFor="archive-filter-type">
               type
             </label>
-            <select id="archive-filter-type" name="filter" className="bw-input" defaultValue={filter}>
+            <select id="archive-filter-type" name="filter" className="bw-input bw-selectInput" defaultValue={filter}>
               <option value="all">all</option>
               <option value="archive">archive</option>
               <option value="collective">collective</option>
@@ -129,16 +185,24 @@ export function ArchiveClient({
             </select>
 
             <label className="bw-ui bw-date" htmlFor="archive-filter-range">
-              date
+              date (utc)
             </label>
-            <select id="archive-filter-range" name="range" className="bw-input" defaultValue={range}>
+            <select
+              id="archive-filter-range"
+              name="range"
+              className="bw-input bw-selectInput"
+              value={pendingRange}
+              onChange={(event) => {
+                setPendingRange(event.target.value as ArchiveRange);
+              }}
+            >
               <option value="all">all time</option>
               <option value="7d">last 7 days</option>
               <option value="30d">last 30 days</option>
               <option value="custom">custom range</option>
             </select>
 
-            {range === "custom" && (
+            {pendingRange === "custom" && (
               <>
                 <input className="bw-input" type="date" name="start" defaultValue={customStart} />
                 <input className="bw-input" type="date" name="end" defaultValue={customEnd} />
@@ -153,45 +217,72 @@ export function ArchiveClient({
         </form>
       </section>
 
+      {notice && <div className="bw-hint">{notice}</div>}
+      {deleteError && <div className="bw-hint">{deleteError}</div>}
+
       {empty ? (
         <div className="bw-hint" style={{ marginTop: 10 }}>
           nothing here yet.
         </div>
       ) : (
         <div className="bw-lineSection bw-rowList">
-          {entries.map((entry) =>
+          {items.map((entry) =>
             entry.type === "JOURNAL" ? (
-              <Link
-                key={entry.id}
-                href={isSameUtcDay(entry.createdAt) ? "/journal" : `/journal/${entry.id}`}
-                className="bw-rowItem bw-rowHover"
-              >
-                <div className="bw-rowMeta">
-                  <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
-                  <span>{formatDate(entry.createdAt, timeZone)}</span>
-                </div>
-                <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
-              </Link>
-            ) : (
-              <Link key={entry.id} href={`/entries/${entry.id}`} className="bw-rowItem bw-rowHover">
-                <div className="bw-rowMeta">
-                  <div className="bw-rowMetaLeft bw-badgeGroup">
+              <div key={entry.id} className="bw-rowItem bw-rowHover">
+                <Link href={isSameUtcDay(entry.createdAt) ? "/journal" : `/journal/${entry.id}`} className="bw-rowLinkBlock">
+                  <div className="bw-rowMeta">
+                    <span className="bw-ui bw-collectiveBadge">regular journal entry</span>
                     <span>{formatDate(entry.createdAt, timeZone)}</span>
-                    {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
-                    {entry.collectiveRemovedAt && (
-                      <span className="bw-ui bw-removedBadge">
-                        removed from collective
-                        <InfoPopover title="removed from collective" triggerAriaLabel="why was this removed?">
-                          admins removed this from the collective because it didn&apos;t fit the community rules. it
-                          still remains in your private archive.
-                        </InfoPopover>
-                      </span>
-                    )}
                   </div>
+                  <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
+                </Link>
+                <div className="bw-rowActions">
+                  <button
+                    className="bw-rowDeleteAction bw-btnGhost"
+                    type="button"
+                    disabled={deletingEntryId !== null}
+                    onClick={() => {
+                      void handleDeleteEntry(entry.id);
+                    }}
+                  >
+                    {deletingEntryId === entry.id ? "deleting..." : "delete"}
+                  </button>
                 </div>
-                <div className="bw-writing bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
-                <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
-              </Link>
+              </div>
+            ) : (
+              <div key={entry.id} className="bw-rowItem bw-rowHover">
+                <Link href={`/entries/${entry.id}`} className="bw-rowLinkBlock">
+                  <div className="bw-rowMeta">
+                    <div className="bw-rowMetaLeft bw-badgeGroup">
+                      <span>{formatDate(entry.createdAt, timeZone)}</span>
+                      {entry.isCollective && <span className="bw-ui bw-collectiveBadge">shared on collective</span>}
+                      {entry.collectiveRemovedAt && (
+                        <span className="bw-ui bw-removedBadge">
+                          removed from collective
+                          <InfoPopover title="removed from collective" triggerAriaLabel="why was this removed?">
+                            admins removed this from the collective because it didn&apos;t fit the community rules. it
+                            still remains in your private archive.
+                          </InfoPopover>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bw-writing bw-cardPrompt">&quot;{entry.promptText}&quot;</div>
+                  <div className="bw-writing bw-rowBody bw-cardPreview">{previewContent(entry.content) || " "}</div>
+                </Link>
+                <div className="bw-rowActions">
+                  <button
+                    className="bw-rowDeleteAction bw-btnGhost"
+                    type="button"
+                    disabled={deletingEntryId !== null}
+                    onClick={() => {
+                      void handleDeleteEntry(entry.id);
+                    }}
+                  >
+                    {deletingEntryId === entry.id ? "deleting..." : "delete"}
+                  </button>
+                </div>
+              </div>
             ),
           )}
         </div>

@@ -4,6 +4,7 @@ import {
   CollectiveRepliesPanel,
   type CollectiveReplyItem,
 } from "@/components/collective-replies-panel";
+import { EntryDeleteButton } from "@/components/entry-delete-button";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { InfoPopover } from "@/components/ui/info-popover";
@@ -62,12 +63,14 @@ export default async function EntryDetailPage({ params }: EntryDetailPageProps) 
       select: {
         id: true,
         content: true,
+        userId: true,
         createdAt: true,
       },
     });
     replies = replyRows.map((reply) => ({
       id: reply.id,
       content: reply.content,
+      isOwner: Boolean(viewerUserId && reply.userId === viewerUserId),
       createdAt: reply.createdAt.toISOString(),
     }));
 
@@ -113,9 +116,12 @@ export default async function EntryDetailPage({ params }: EntryDetailPageProps) 
 
         <div className="bw-row">
           <div className="bw-ui bw-date">{canViewAsOwner ? "private prompt entry" : "shared prompt entry"}</div>
-          <BwNavButton href="/archive">
-            back to archive
-          </BwNavButton>
+          <div className="bw-actions">
+            {canViewAsOwner && <EntryDeleteButton entryId={entry.id} redirectTo="/archive?deleted=1" />}
+            <BwNavButton href="/archive">
+              back to archive
+            </BwNavButton>
+          </div>
         </div>
       </main>
     </div>

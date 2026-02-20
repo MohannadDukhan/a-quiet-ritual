@@ -6,6 +6,7 @@ import {
   type CollectiveReplyItem,
 } from "@/components/collective-replies-panel";
 import { CollectiveDetailAdminControls } from "@/components/collective-detail-admin-controls";
+import { EntryDeleteButton } from "@/components/entry-delete-button";
 import { AppHeader } from "@/components/layout/app-header";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { auth } from "@/lib/auth";
@@ -28,6 +29,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
   const session = await auth();
   const canModerate = session?.user?.role === "ADMIN";
   const viewerIsAdmin = session?.user?.role === "ADMIN";
+  const viewerUserId = session?.user?.id ?? null;
   const timeZone = await getRequestTimeZone();
   const { id } = await params;
   const todaysPrompt = await getTodaysPrompt();
@@ -41,6 +43,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
     },
     select: {
       id: true,
+      userId: true,
       content: true,
       createdAt: true,
       user: {
@@ -58,6 +61,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
 
   const anonymousPost = entry.user.collectiveAnonymous === true;
   const hideUsername = anonymousPost && !viewerIsAdmin;
+  const canDeleteAsOwner = Boolean(viewerUserId && viewerUserId === entry.userId);
 
   const replies = await prisma.collectiveReply.findMany({
     where: { entryId: entry.id },
@@ -65,12 +69,14 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
     select: {
       id: true,
       content: true,
+      userId: true,
       createdAt: true,
     },
   });
   const serializedReplies: CollectiveReplyItem[] = replies.map((reply) => ({
     id: reply.id,
     content: reply.content,
+    isOwner: Boolean(viewerUserId && reply.userId === viewerUserId),
     createdAt: reply.createdAt.toISOString(),
   }));
 
@@ -108,9 +114,18 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
 
         <div className="bw-row" style={{ marginTop: 4 }}>
           <div className="bw-ui bw-date">today&rsquo;s collective entry</div>
-          <BwNavButton href="/collective">
-            back to collective
-          </BwNavButton>
+          <div className="bw-actions">
+            {canDeleteAsOwner && (
+              <EntryDeleteButton
+                entryId={entry.id}
+                redirectTo="/collective?deleted=1"
+                confirmMessage="delete this shared entry and all replies permanently?"
+              />
+            )}
+            <BwNavButton href="/collective">
+              back to collective
+            </BwNavButton>
+          </div>
         </div>
       </main>
     </div>

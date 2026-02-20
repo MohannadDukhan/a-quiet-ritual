@@ -68,7 +68,10 @@ export default function HomePage() {
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
   const nextPromptCountdown = useCountdownToUtcMidnight(revealed);
   const promptText = promptState?.prompt.text ?? "";
-  const isEditingTodayPrompt = Boolean(promptState?.existingEntry?.id);
+  const isStandardUser = session?.user?.role === "USER";
+  const hasTodayPromptEntry = Boolean(promptState?.existingEntry?.id);
+  const promptLockedForToday = hasTodayPromptEntry;
+  const promptLockedNotice = "you’ve already answered today’s prompt.";
   const ballPrompt = useMemo(
     () =>
       promptText.length > INSIDE_PROMPT_MAX
@@ -234,6 +237,10 @@ export default function HomePage() {
       setSaveError("wait for the prompt to load.");
       return;
     }
+    if (promptLockedForToday) {
+      setSaveError(promptLockedNotice);
+      return;
+    }
 
     if (status !== "authenticated") {
       setNeedsSignIn(true);
@@ -254,6 +261,8 @@ export default function HomePage() {
       const data = (await response.json().catch(() => null)) as
         | {
             error?: string;
+            message?: string;
+            entryId?: string;
             entry?: { id: string; content: string; isCollective: boolean };
           }
         | null;
@@ -261,6 +270,22 @@ export default function HomePage() {
       if (!response.ok) {
         if (response.status === 401) {
           setNeedsSignIn(true);
+          return;
+        }
+        if (data?.error === "PROMPT_ALREADY_SUBMITTED") {
+          setPromptState((previous) =>
+            previous
+              ? {
+                  ...previous,
+                  existingEntry: {
+                    id: data.entryId || previous.existingEntry?.id || "locked",
+                    content: trimmed,
+                    isCollective: shareOnCollective,
+                  },
+                }
+              : previous,
+          );
+          setSaveError(promptLockedNotice);
           return;
         }
         setSaveError(data?.error ?? "could not save right now.");
@@ -304,6 +329,9 @@ export default function HomePage() {
 
   const rootClass = ["bw-bg", revealed ? "bw-revealed" : ""].filter(Boolean).join(" ");
   const dateLabel = promptState?.dateId ?? fallbackDateId();
+  const savedModalDescription = isStandardUser
+    ? "your entry is saved. you can’t change it. if you want, you can read what others wrote on the collective."
+    : "your entry is saved.";
   const ballStyle = {
     width: `min(${ballSize}px, 82vw)`,
     height: `min(${ballSize}px, 82vw)`,
@@ -340,11 +368,17 @@ export default function HomePage() {
               <>
                 {showFullPromptBelow && <div className="bw-writing bw-prompt">&quot;{promptText}&quot;</div>}
                 <div className="bw-ui bw-nextPromptCountdown">next prompt in {nextPromptCountdown}</div>
+                {promptLockedForToday && <div className="bw-ui bw-hint">{promptLockedNotice}</div>}
 
                 <textarea
-                  className="bw-writing bw-textarea"
+                  className={`bw-writing bw-textarea${promptLockedForToday ? " bw-contentBlurred" : ""}`}
                   value={text}
+                  readOnly={promptLockedForToday}
+                  aria-readonly={promptLockedForToday}
                   onChange={(event) => {
+                    if (promptLockedForToday) {
+                      return;
+                    }
                     setText(event.target.value);
                     setSaved(false);
                     setSaveError(null);
@@ -358,7 +392,11 @@ export default function HomePage() {
                       className="bw-checkbox"
                       type="checkbox"
                       checked={shareOnCollective}
+                      disabled={promptLockedForToday}
                       onChange={(event) => {
+                        if (promptLockedForToday) {
+                          return;
+                        }
                         setShareOnCollective(event.target.checked);
                         setSaved(false);
                       }}
@@ -376,8 +414,8 @@ export default function HomePage() {
                   <div className="bw-ui bw-date">{dateLabel}</div>
                   <div className="bw-actions">
                     {saved && <span className="bw-ui bw-date">saved.</span>}
-                    <button className="bw-btn" onClick={handleSave} disabled={saving || promptLoading}>
-                      {saving ? "saving..." : isEditingTodayPrompt ? "save changes" : "save"}
+                    <button className="bw-btn" onClick={handleSave} disabled={saving || promptLoading || promptLockedForToday}>
+                      {saving ? "saving..." : promptLockedForToday ? "saved" : "save"}
                     </button>
                   </div>
                 </div>
@@ -406,7 +444,7 @@ export default function HomePage() {
       <BwModal
         open={showSavedModal}
         title="saved."
-        description="nothing else is required today. if you want, you can read what others wrote on the collective."
+        description={savedModalDescription}
         primaryLabel="go to collective"
         onPrimary={goToCollectiveFromModal}
         onClose={closeSavedModal}

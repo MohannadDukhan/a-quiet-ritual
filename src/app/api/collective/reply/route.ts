@@ -110,5 +110,13 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ reply }, { status: 201 });
+  return NextResponse.json(
+    {
+      reply: {
+        ...reply,
+        isOwner: true,
+      },
+    },
+    { status: 201 },
+  );
 }

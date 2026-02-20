@@ -8,6 +8,7 @@ import { getClientIp, isSameOrigin } from "@/lib/security";
 
 const createJournalEntrySchema = z.object({
   content: z.string().trim().min(1).max(8000),
+  mode: z.enum(["append", "replace"]).optional(),
 });
 
 export const runtime = "nodejs";
@@ -81,7 +82,10 @@ export async function POST(request: NextRequest) {
       },
     },
     orderBy: { createdAt: "desc" },
-    select: { id: true },
+    select: {
+      id: true,
+      content: true,
+    },
   });
 
   const entrySelect = {
@@ -93,10 +97,21 @@ export async function POST(request: NextRequest) {
   } as const;
 
   if (existingTodayEntry) {
+    const mode = parsed.data.mode ?? "append";
+    const nextContent =
+      mode === "replace"
+        ? parsed.data.content
+        : existingTodayEntry.content.trim().length > 0
+          ? `${existingTodayEntry.content}\n\n${parsed.data.content}`
+          : parsed.data.content;
+    if (nextContent.length > 8000) {
+      return NextResponse.json({ error: "entry is too long." }, { status: 400 });
+    }
+
     const entry = await prisma.entry.update({
       where: { id: existingTodayEntry.id },
       data: {
-        content: parsed.data.content,
+        content: nextContent,
       },
       select: entrySelect,
     });

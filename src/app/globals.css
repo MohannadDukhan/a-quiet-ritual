@@ -2146,6 +2146,18 @@ body {
   flex-wrap: wrap;
 }
 
+.bw-rowDeleteAction {
+  opacity: 0.56;
+  transition: opacity 140ms ease;
+}
+
+.bw-rowItem:hover .bw-rowDeleteAction,
+.bw-rowItem:focus-within .bw-rowDeleteAction,
+.bw-rowDeleteAction:hover,
+.bw-rowDeleteAction:focus-visible {
+  opacity: 1;
+}
+
 .bw-rowNestedList {
   margin-top: 14px;
   margin-left: 14px;
@@ -2484,6 +2496,22 @@ body {
 
   font-size: 13px;
   outline: none;
+}
+
+.bw-selectInput {
+  background: rgba(8, 8, 10, 0.85);
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.bw-selectInput option {
+  background: #0a0a0c;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.bw-contentBlurred {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
 }
 
 .bw-input::placeholder {
@@ -3148,6 +3176,16 @@ body.bw-light .bw-card {
   background: rgba(255, 255, 255, 0.72);
   border-color: rgba(20, 20, 20, 0.12);
   color: rgba(18, 18, 18, 0.86);
+}
+
+body.bw-light .bw-selectInput {
+  background: rgba(255, 255, 255, 0.86);
+  color: rgba(18, 18, 18, 0.86);
+}
+
+body.bw-light .bw-selectInput option {
+  background: #f8f8f6;
+  color: rgba(18, 18, 18, 0.88);
 }
 
 body.bw-light .bw-fragInput::placeholder,

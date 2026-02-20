@@ -58,6 +58,11 @@ export function CollectiveFeed({ entries, timeZone, canModerate }: CollectiveFee
     if (searchParams.get("removed") === "1") {
       setNotice("removed from collective.");
       setError(null);
+      return;
+    }
+    if (searchParams.get("deleted") === "1") {
+      setNotice("entry deleted.");
+      setError(null);
     }
   }, [searchParams]);
 

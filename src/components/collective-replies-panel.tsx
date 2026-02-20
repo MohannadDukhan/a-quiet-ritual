@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/time";
 export type CollectiveReplyItem = {
   id: string;
   content: string;
+  isOwner: boolean;
   createdAt: string;
 };
 
@@ -39,6 +40,7 @@ export function CollectiveRepliesPanel({
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
   const signInHref = useMemo(
     () => `/sign-in?next=${encodeURIComponent(signInNextPath)}`,
     [signInNextPath],
@@ -90,6 +92,31 @@ export function CollectiveRepliesPanel({
     }
   }
 
+  async function handleDeleteReply(replyId: string) {
+    if (!window.confirm("delete this reply?")) {
+      return;
+    }
+
+    setError(null);
+    setDeletingReplyId(replyId);
+    try {
+      const response = await fetch(`/api/replies/${encodeURIComponent(replyId)}`, {
+        method: "DELETE",
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        setError(data?.error || "could not delete reply right now.");
+        return;
+      }
+
+      setReplies((prev) => prev.filter((reply) => reply.id !== replyId));
+    } catch {
+      setError("could not delete reply right now.");
+    } finally {
+      setDeletingReplyId(null);
+    }
+  }
+
   return (
     <section className="bw-section" aria-label="replies">
       <div className="bw-ui bw-date">replies</div>
@@ -109,6 +136,20 @@ export function CollectiveRepliesPanel({
                 </div>
               </div>
               <div className="bw-writing bw-rowBody">{reply.content}</div>
+              {reply.isOwner && (
+                <div className="bw-rowActions">
+                  <button
+                    className="bw-rowDeleteAction bw-btnGhost"
+                    type="button"
+                    disabled={deletingReplyId !== null}
+                    onClick={() => {
+                      void handleDeleteReply(reply.id);
+                    }}
+                  >
+                    {deletingReplyId === reply.id ? "deleting..." : "delete"}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

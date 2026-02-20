@@ -60,7 +60,16 @@ function parseUtcDateInput(value: string | undefined): Date | null {
     return null;
   }
 
-  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  const parsed = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 function addUtcDays(date: Date, days: number): Date {

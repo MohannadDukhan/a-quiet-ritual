@@ -294,29 +294,18 @@ export async function POST(request: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        collectivePublishedAt: true,
-      },
+      select: { id: true },
     });
 
     if (existingTodayEntry) {
-      const entry = await prisma.entry.update({
-        where: { id: existingTodayEntry.id },
-        data: {
-          promptTextSnapshot,
-          content: parsed.data.content,
-          isCollective: shareOnCollective,
-          collectivePublishedAt: shareOnCollective
-            ? existingTodayEntry.collectivePublishedAt ?? new Date()
-            : null,
-          collectiveRemovedAt: null,
-          collectiveRemovedReason: null,
+      return NextResponse.json(
+        {
+          error: "PROMPT_ALREADY_SUBMITTED",
+          message: "your entry is saved. you can’t change it.",
+          entryId: existingTodayEntry.id,
         },
-        select: entrySelect,
-      });
-
-      return NextResponse.json({ entry, updated: true }, { status: 200 });
+        { status: 409 },
+      );
     }
   }
 
