@@ -4,7 +4,7 @@ import { z } from "zod";
 import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { hashToken } from "@/lib/auth-tokens";
 import { prisma } from "@/lib/db";
-import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
 
 const verifyEmailSchema = z.object({
@@ -22,9 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     const ip = getClientIp(request);
-    const ipLimit = consumeMemoryRateLimit({
-      namespace: "verify-email-ip",
-      key: ip,
+    const ipLimit = await consumeRateLimit({
+      key: `verify-ip:${ip}`,
       limit: 30,
       windowMs: 15 * 60 * 1000,
     });
@@ -78,6 +77,6 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const stack = error instanceof Error ? error.stack : undefined;
     console.error("VERIFY_EMAIL_ERROR", { message, stack });
-    return NextResponse.json({ error: "VERIFY_EMAIL_ERROR", message }, { status: 500 });
+    return NextResponse.json({ error: "could not verify email right now." }, { status: 500 });
   }
 }

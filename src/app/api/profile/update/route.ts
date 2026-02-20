@@ -18,6 +18,7 @@ export const runtime = "nodejs";
 const AVATAR_MAX_BYTES = 250 * 1024;
 const IMAGE_DATA_URL_MAX_LENGTH = 500_000;
 const IMAGE_DATA_URL_PATTERN = /^data:image\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/;
+const ALLOWED_AVATAR_MIME_SUBTYPES = new Set(["png", "jpg", "jpeg", "webp"]);
 
 function parseImageDataUrl(value: string): { mime: string; base64: string } | null {
   const trimmed = value.trim();
@@ -43,6 +44,9 @@ function validateImageDataUrl(value: string): string | null {
   const parsed = parseImageDataUrl(value);
   if (!parsed) {
     return "avatar image must be a valid data:image payload.";
+  }
+  if (!ALLOWED_AVATAR_MIME_SUBTYPES.has(parsed.mime)) {
+    return "avatar image must be png, jpg, jpeg, or webp.";
   }
 
   const bytes = Buffer.from(parsed.base64, "base64");

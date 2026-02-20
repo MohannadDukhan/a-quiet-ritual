@@ -5,7 +5,8 @@ import { z } from "zod";
 import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { hashToken } from "@/lib/auth-tokens";
 import { prisma } from "@/lib/db";
-import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
+import { getPasswordValidationError } from "@/lib/password-strength";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
 
 const resetPasswordSchema = z
@@ -30,9 +31,8 @@ export async function POST(request: NextRequest) {
     }
 
     const ip = getClientIp(request);
-    const ipLimit = consumeMemoryRateLimit({
-      namespace: "reset-password-ip",
-      key: ip,
+    const ipLimit = await consumeRateLimit({
+      key: `reset-ip:${ip}`,
       limit: 20,
       windowMs: 15 * 60 * 1000,
     });
@@ -47,9 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     const email = parsed.data.email.toLowerCase();
-    const emailLimit = consumeMemoryRateLimit({
-      namespace: "reset-password-email-ip",
-      key: `${email}:${ip}`,
+    const emailLimit = await consumeRateLimit({
+      key: `reset-email-ip:${email}:${ip}`,
       limit: 8,
       windowMs: 15 * 60 * 1000,
     });
@@ -84,6 +83,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired reset link." }, { status: 400 });
     }
 
+    const passwordValidationError = getPasswordValidationError(parsed.data.password);
+    if (passwordValidationError) {
+      return NextResponse.json({ error: passwordValidationError }, { status: 400 });
+    }
+
     const newPasswordHash = await bcrypt.hash(parsed.data.password, 12);
 
     await prisma.$transaction([
@@ -102,6 +106,6 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const stack = error instanceof Error ? error.stack : undefined;
     console.error("RESET_PASSWORD_ERROR", { message, stack });
-    return NextResponse.json({ error: "RESET_PASSWORD_ERROR", message }, { status: 500 });
+    return NextResponse.json({ error: "could not reset password right now." }, { status: 500 });
   }
 }

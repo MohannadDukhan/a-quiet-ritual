@@ -4,27 +4,39 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
-import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
 import { ensurePrimaryAdminUserByUserId, isOwnerEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
 
+type AuthorizeHeaderBag = Headers | Record<string, string | undefined>;
+
+function getAuthorizeHeaderValue(headers: AuthorizeHeaderBag, headerName: string): string | null {
+  if (headers instanceof Headers) {
+    return headers.get(headerName);
+  }
+
+  return headers[headerName] ?? headers[headerName.toLowerCase()] ?? headers[headerName.toUpperCase()] ?? null;
+}
+
 function getIpFromAuthorizeRequest(req: unknown): string {
-  const headers = (req as { headers?: Record<string, string | undefined> } | undefined)?.headers;
+  const headers = (req as { headers?: AuthorizeHeaderBag } | undefined)?.headers;
   if (!headers) return "unknown";
 
-  const forwardedFor = headers["x-forwarded-for"] || headers["X-Forwarded-For"];
+  const realIp = getAuthorizeHeaderValue(headers, "x-real-ip")?.trim();
+  if (realIp) {
+    return realIp;
+  }
+
+  const forwardedFor = getAuthorizeHeaderValue(headers, "x-forwarded-for");
   if (forwardedFor) {
     const first = forwardedFor.split(",")[0]?.trim();
     if (first) return first;
   }
-
-  const realIp = headers["x-real-ip"] || headers["X-Real-IP"];
-  if (realIp) return realIp;
 
   return "unknown";
 }
@@ -65,9 +77,8 @@ export const authOptions: ExtendedAuthOptions = {
         const password = parsed.data.password;
         const ip = getIpFromAuthorizeRequest(req);
 
-        const ipLimit = consumeMemoryRateLimit({
-          namespace: "credentials-ip",
-          key: ip,
+        const ipLimit = await consumeRateLimit({
+          key: `credentials-ip:${ip}`,
           limit: 20,
           windowMs: 15 * 60 * 1000,
         });
@@ -75,9 +86,8 @@ export const authOptions: ExtendedAuthOptions = {
           throw new Error("TOO_MANY_ATTEMPTS");
         }
 
-        const emailLimit = consumeMemoryRateLimit({
-          namespace: "credentials-email-ip",
-          key: `${email}:${ip}`,
+        const emailLimit = await consumeRateLimit({
+          key: `credentials-email-ip:${email}:${ip}`,
           limit: 8,
           windowMs: 15 * 60 * 1000,
         });

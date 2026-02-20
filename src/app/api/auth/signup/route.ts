@@ -13,8 +13,8 @@ import {
 } from "@/lib/auth-email";
 import { roleForEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
-import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
 import { getPasswordValidationError } from "@/lib/password-strength";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
 import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
@@ -97,7 +97,7 @@ function isTestingModeRestriction(error: unknown) {
 function logEmailSendFailure(email: string, error: unknown) {
   const details = getEmailErrorDetails(error);
   console.error("[auth][signup] verification email send failed", {
-    email,
+    email: redactEmail(email),
     statusCode: details.statusCode,
     providerCode: details.providerCode,
     testingRestriction: isTestingModeRestriction(error),
@@ -105,11 +105,23 @@ function logEmailSendFailure(email: string, error: unknown) {
   });
 }
 
+function redactEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) {
+    return "***";
+  }
+  return `${(local || "").slice(0, 1)}***@${domain}`;
+}
+
 function getVerificationUrl(email: string, rawToken: string) {
   return `${getAuthBaseUrl()}/verify-email?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(email)}`;
 }
 
 async function createVerificationToken(email: string) {
+  await prisma.emailVerificationToken.deleteMany({
+    where: { identifier: email },
+  });
+
   const rawToken = createRawToken();
   const tokenHash = hashToken(rawToken);
 
@@ -173,7 +185,7 @@ async function cleanupFailedNewSignup(email: string, userId: string, tokenHash: 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown cleanup error";
     console.warn("[auth][signup] cleanup after failed signup email send failed", {
-      email,
+      email: redactEmail(email),
       userId,
       message,
     });
@@ -204,9 +216,8 @@ export async function POST(request: NextRequest) {
     }
 
     const ip = getClientIp(request);
-    const ipLimit = consumeMemoryRateLimit({
-      namespace: "signup-ip",
-      key: ip,
+    const ipLimit = await consumeRateLimit({
+      key: `signup-ip:${ip}`,
       limit: 10,
       windowMs: 15 * 60 * 1000,
     });
@@ -251,9 +262,8 @@ export async function POST(request: NextRequest) {
 
     normalizedEmailForCatch = email;
     normalizedUsernameForCatch = username;
-    const emailLimit = consumeMemoryRateLimit({
-      namespace: "signup-email-ip",
-      key: `${email}:${ip}`,
+    const emailLimit = await consumeRateLimit({
+      key: `signup-email-ip:${email}:${ip}`,
       limit: 4,
       windowMs: 15 * 60 * 1000,
     });

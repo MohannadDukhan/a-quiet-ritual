@@ -1,14 +1,19 @@
 import { NextRequest } from "next/server";
 
-export function getClientIp(request: NextRequest): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
+function firstForwardedIp(value: string | null): string | null {
+  if (!value) {
+    return null;
   }
+  const first = value.split(",")[0]?.trim();
+  return first || null;
+}
 
-  const realIp = request.headers.get("x-real-ip");
+export function getClientIp(request: NextRequest): string {
+  const realIp = request.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
+
+  const forwardedIp = firstForwardedIp(request.headers.get("x-forwarded-for"));
+  if (forwardedIp) return forwardedIp;
 
   return "unknown";
 }

@@ -9,7 +9,7 @@ import {
   sendPasswordResetEmail,
 } from "@/lib/auth-email";
 import { prisma } from "@/lib/db";
-import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security";
 
 const forgotPasswordSchema = z.object({
@@ -33,9 +33,8 @@ export async function POST(request: NextRequest) {
     }
 
     const ip = getClientIp(request);
-    const ipLimit = consumeMemoryRateLimit({
-      namespace: "forgot-password-ip",
-      key: ip,
+    const ipLimit = await consumeRateLimit({
+      key: `forgot-ip:${ip}`,
       limit: 20,
       windowMs: 15 * 60 * 1000,
     });
@@ -51,9 +50,8 @@ export async function POST(request: NextRequest) {
 
     const email = parsed.data.email.toLowerCase();
 
-    const emailLimit = consumeMemoryRateLimit({
-      namespace: "forgot-password-email-ip",
-      key: `${email}:${ip}`,
+    const emailLimit = await consumeRateLimit({
+      key: `forgot-email-ip:${email}:${ip}`,
       limit: 5,
       windowMs: 15 * 60 * 1000,
     });
@@ -76,6 +74,9 @@ export async function POST(request: NextRequest) {
       const rawToken = createRawToken();
       const tokenHash = hashToken(rawToken);
 
+      await prisma.emailVerificationToken.deleteMany({
+        where: { identifier: email },
+      });
       await prisma.emailVerificationToken.create({
         data: {
           identifier: email,
@@ -99,6 +100,9 @@ export async function POST(request: NextRequest) {
     const rawToken = createRawToken();
     const tokenHash = hashToken(rawToken);
 
+    await prisma.passwordResetToken.deleteMany({
+      where: { identifier: email },
+    });
     await prisma.passwordResetToken.create({
       data: {
         identifier: email,
