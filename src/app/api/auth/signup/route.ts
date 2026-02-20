@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { TERMS_VERSION } from "@/content/terms";
 import { assertSameOrigin } from "@/lib/assert-same-origin";
 import { createRawToken, hashToken, tokenExpiry } from "@/lib/auth-tokens";
 import {
@@ -22,6 +23,7 @@ const signupSchema = z
     username: z.string().trim(),
     password: z.string().min(10).max(128),
     confirmPassword: z.string().min(10).max(128),
+    acceptedTerms: z.boolean(),
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: "passwords do not match",
@@ -216,6 +218,9 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return errorResponse(400, "INVALID_INPUT", "Invalid signup input.");
     }
+    if (!parsed.data.acceptedTerms) {
+      return errorResponse(400, "TERMS_NOT_ACCEPTED", "you must agree to the terms before creating an account.");
+    }
 
     if (!process.env.RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is not set");
@@ -279,6 +284,8 @@ export async function POST(request: NextRequest) {
         displayName: username,
         passwordHash,
         role: roleForEmail(email),
+        termsAcceptedAt: new Date(),
+        termsVersion: TERMS_VERSION,
       },
       select: { id: true },
     });

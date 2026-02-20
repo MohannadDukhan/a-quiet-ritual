@@ -1330,6 +1330,42 @@ body {
   color: rgba(255, 255, 255, 0.78);
 }
 
+.bw-termsModal {
+  width: min(760px, calc(100vw - 36px));
+}
+
+.bw-termsTitleText {
+  margin-right: 32px;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.bw-termsModalLead {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.bw-termsModalScroll {
+  margin-top: 12px;
+  max-height: min(65vh, 620px);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 14px;
+}
+
+.bw-termsText {
+  margin: 0;
+  font-family: var(--bw-body-font);
+  font-size: 13px;
+  line-height: 1.72;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: pre-wrap;
+  text-transform: none;
+}
+
 .bw-date {
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -1953,6 +1989,94 @@ body {
   text-transform: lowercase;
   color: rgba(255, 255, 255, 0.56);
   font-family: var(--bw-body-font);
+}
+
+.bw-termsPageTitle {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: none;
+}
+
+.bw-termsPageLead {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.66;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.56);
+  text-transform: none;
+}
+
+.bw-termsPanel {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(8, 8, 10, 0.5);
+  padding: 14px;
+  max-height: calc(100svh - 220px);
+  overflow-y: auto;
+}
+
+.bw-termsAcceptanceRow {
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bw-termsCheckboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.74);
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+}
+
+.bw-termsViewButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bw-footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px 14px 14px;
+}
+
+.bw-footerLink {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+}
+
+.bw-footerLink:hover,
+.bw-footerLink:focus-visible {
+  color: rgba(255, 255, 255, 0.74);
+  text-decoration: underline;
+}
+
+.bw-appShell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.bw-appContent {
+  flex: 1;
+  min-height: 0;
 }
 
 .bw-block {
@@ -2750,6 +2874,33 @@ body.bw-light .bw-uiModalSecondary {
   background: rgba(20, 20, 20, 0.03);
   border-color: rgba(20, 20, 20, 0.18);
   color: rgba(18, 18, 18, 0.8);
+}
+
+body.bw-light .bw-termsModalScroll,
+body.bw-light .bw-termsPanel {
+  border-color: rgba(20, 20, 20, 0.15);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+body.bw-light .bw-termsText {
+  color: rgba(18, 18, 18, 0.82);
+}
+
+body.bw-light .bw-termsPageTitle {
+  color: rgba(18, 18, 18, 0.88);
+}
+
+body.bw-light .bw-termsPageLead {
+  color: rgba(18, 18, 18, 0.56);
+}
+
+body.bw-light .bw-footerLink {
+  color: rgba(18, 18, 18, 0.5);
+}
+
+body.bw-light .bw-footerLink:hover,
+body.bw-light .bw-footerLink:focus-visible {
+  color: rgba(18, 18, 18, 0.72);
 }
 
 body.bw-light .bw-modalSub,

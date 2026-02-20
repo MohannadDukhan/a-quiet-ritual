@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import { AuthProvider } from "@/components/auth-provider";
+import { Footer } from "@/components/layout/footer";
 import { TimeZoneCookieSync } from "@/components/timezone-cookie-sync";
 
 export const metadata = {
@@ -17,7 +18,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="bw-body">
         <TimeZoneCookieSync />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <div className="bw-appShell">
+            <div className="bw-appContent">{children}</div>
+            <Footer />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { TermsModal } from "@/components/terms/terms-modal";
 import { BwNavButton } from "@/components/ui/bw-nav-button";
 import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
@@ -18,6 +19,9 @@ export default function SignUpPage() {
   const [done, setDone] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<UsernameAvailabilityState>("idle");
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [termsReadToEnd, setTermsReadToEnd] = useState(false);
 
   const normalizedUsername = useMemo(() => normalizeUsername(username), [username]);
 
@@ -116,6 +120,11 @@ export default function SignUpPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setError("you must agree to the terms before creating an account.");
+      return;
+    }
+
     setIsPending(true);
     try {
       const response = await fetch("/api/auth/signup", {
@@ -126,11 +135,16 @@ export default function SignUpPage() {
           email: normalizedEmail,
           password,
           confirmPassword,
+          acceptedTerms,
         }),
       });
-      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      const data = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
 
       if (!response.ok) {
+        if (data?.code === "TERMS_NOT_ACCEPTED") {
+          setError("you must agree to the terms before creating an account.");
+          return;
+        }
         setError(data?.error ?? "could not create account.");
         return;
       }
@@ -208,7 +222,31 @@ export default function SignUpPage() {
               required
             />
 
-            <button className="bw-btn" type="submit" disabled={isPending}>
+            <div className="bw-termsAcceptanceRow">
+              <label className="bw-termsCheckboxLabel">
+                <input
+                  type="checkbox"
+                  className="bw-checkbox"
+                  checked={acceptedTerms}
+                  disabled={!termsReadToEnd}
+                  onChange={(event) => {
+                    setAcceptedTerms(event.target.checked);
+                    setError(null);
+                  }}
+                />
+                <span>i agree to the terms</span>
+              </label>
+              <button
+                type="button"
+                className="bw-link bw-termsViewButton"
+                onClick={() => setTermsModalOpen(true)}
+              >
+                view terms
+              </button>
+            </div>
+            {!termsReadToEnd && <div className="bw-hint">scroll to the bottom to enable</div>}
+
+            <button className="bw-btn" type="submit" disabled={isPending || !acceptedTerms}>
               {isPending ? "creating..." : "create account"}
             </button>
           </form>
@@ -221,6 +259,12 @@ export default function SignUpPage() {
           )}
         </div>
       </main>
+
+      <TermsModal
+        open={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        onReadToEnd={() => setTermsReadToEnd(true)}
+      />
     </div>
   );
 }
