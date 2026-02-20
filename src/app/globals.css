@@ -1239,6 +1239,15 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.bw-textareaShell {
+  position: relative;
+  width: min(720px, 92vw);
+}
+
+.bw-textareaShell .bw-textarea {
+  width: 100%;
+}
+
 .bw-textarea::placeholder {
   color: rgba(255, 255, 255, 0.28);
 }
@@ -1254,6 +1263,68 @@ body {
 
 .bw-textarea::placeholder {
   color: var(--text-faint);
+}
+
+.bw-lockOverlay {
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(6, 6, 8, 0.52);
+  backdrop-filter: blur(1px);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 16px;
+}
+
+.bw-lockOverlayInteractive {
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, opacity 180ms ease;
+}
+
+.bw-lockOverlayInteractive:hover,
+.bw-lockOverlayInteractive:focus-visible {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(6, 6, 8, 0.44);
+  outline: none;
+}
+
+.bw-lockOverlayTitle {
+  font-family: var(--bw-body-font);
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.bw-lockOverlayHint {
+  font-family: var(--bw-body-font);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.bw-lockOverlayPulse:hover {
+  animation: bwLockOverlayPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes bwLockOverlayPulse {
+  0% {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(6, 6, 8, 0.52);
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(6, 6, 8, 0.4);
+  }
+  100% {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(6, 6, 8, 0.52);
+  }
 }
 
 .bw-row {
@@ -2315,7 +2386,8 @@ body {
   .bw-anim-orbit,
   .bw-anim-rattle,
   .bw-anim-roll,
-  .bw-breathe {
+  .bw-breathe,
+  .bw-lockOverlayPulse {
     animation: none !important;
   }
   .bw-infoCard {
@@ -3022,6 +3094,19 @@ body.bw-light .bw-textarea:focus {
     0 12px 40px rgba(20, 20, 20, 0.14),
     0 0 0 1px rgba(70, 70, 90, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+body.bw-light .bw-lockOverlay {
+  border-color: rgba(20, 20, 20, 0.2);
+  background: rgba(246, 246, 242, 0.62);
+}
+
+body.bw-light .bw-lockOverlayTitle {
+  color: rgba(18, 18, 18, 0.84);
+}
+
+body.bw-light .bw-lockOverlayHint {
+  color: rgba(18, 18, 18, 0.58);
 }
 
 body.bw-light .bw-btn,

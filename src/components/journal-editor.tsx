@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { BwModal } from "@/components/ui/bw-modal";
@@ -14,18 +14,32 @@ type JournalEditorProps = {
   } | null;
 };
 
-type JournalSaveResponse = {
-  entry?: {
-    id: string;
-    content: string;
-  };
+type JournalEntryPayload = {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type JournalEntryResponse = {
+  entry?: JournalEntryPayload | null;
   error?: string;
 };
+
+function getLocalDayBoundsIso(now: Date = new Date()): { startTs: string; endTs: string } {
+  const startLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return {
+    startTs: startLocal.toISOString(),
+    endTs: endLocal.toISOString(),
+  };
+}
 
 export function JournalEditor({ initialTodayEntry = null }: JournalEditorProps) {
   const router = useRouter();
   const [hasTodayEntry, setHasTodayEntry] = useState(Boolean(initialTodayEntry?.id));
-  const [isAddMoreMode, setIsAddMoreMode] = useState(!initialTodayEntry?.id);
+  const [isEditing, setIsEditing] = useState(!initialTodayEntry?.id);
+  const [loadingEntry, setLoadingEntry] = useState(true);
   const [text, setText] = useState(() => {
     if (initialTodayEntry?.content) {
       return initialTodayEntry.content;
@@ -42,8 +56,49 @@ export function JournalEditor({ initialTodayEntry = null }: JournalEditorProps) 
   const [error, setError] = useState<string | null>(null);
   const [showSavedModal, setShowSavedModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const isLockedView = hasTodayEntry && !isAddMoreMode;
-  const journalLockedNotice = "you’ve already written in your journal today.";
+  const journalLockedNotice = "you've already written in your journal today.";
+  const dayBounds = useMemo(() => getLocalDayBoundsIso(), []);
+  const isLockedView = hasTodayEntry && !isEditing;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTodayEntry() {
+      try {
+        const params = new URLSearchParams({
+          startTs: dayBounds.startTs,
+          endTs: dayBounds.endTs,
+        });
+        const response = await fetch(`/api/journal?${params.toString()}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = (await response.json().catch(() => null)) as JournalEntryResponse | null;
+        if (!response.ok || cancelled) {
+          return;
+        }
+        if (data?.entry?.id) {
+          setText(data.entry.content);
+          setHasTodayEntry(true);
+          setIsEditing(false);
+          try {
+            localStorage.removeItem(JOURNAL_DRAFT_KEY);
+          } catch {
+            // ignore storage errors
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingEntry(false);
+        }
+      }
+    }
+
+    void loadTodayEntry();
+    return () => {
+      cancelled = true;
+    };
+  }, [dayBounds.endTs, dayBounds.startTs]);
 
   async function handleSave() {
     if (isLockedView) {
@@ -66,21 +121,20 @@ export function JournalEditor({ initialTodayEntry = null }: JournalEditorProps) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: trimmed,
-          mode: "append",
+          startTs: dayBounds.startTs,
+          endTs: dayBounds.endTs,
         }),
       });
-      const data = (await response.json().catch(() => null)) as JournalSaveResponse | null;
+      const data = (await response.json().catch(() => null)) as JournalEntryResponse | null;
 
-      if (!response.ok) {
+      if (!response.ok || !data?.entry) {
         setError(data?.error ?? "could not save right now.");
         return;
       }
 
-      if (data?.entry?.content) {
-        setText(data.entry.content);
-      }
+      setText(data.entry.content);
       setHasTodayEntry(true);
-      setIsAddMoreMode(false);
+      setIsEditing(false);
       setSaved(true);
       setShowSavedModal(true);
       try {
@@ -95,9 +149,8 @@ export function JournalEditor({ initialTodayEntry = null }: JournalEditorProps) 
     }
   }
 
-  function handleAddMore() {
-    setIsAddMoreMode(true);
-    setText("");
+  function handleUnlockOverlay() {
+    setIsEditing(true);
     setSaved(false);
     setError(null);
     window.requestAnimationFrame(() => {
@@ -112,42 +165,50 @@ export function JournalEditor({ initialTodayEntry = null }: JournalEditorProps) 
         <p className="bw-ui bw-journalSub">no prompt today. just you.</p>
       </div>
 
-      {hasTodayEntry && <div className="bw-ui bw-hint">{journalLockedNotice}</div>}
+      <div className="bw-textareaShell">
+        <textarea
+          ref={textareaRef}
+          className={`bw-writing bw-textarea${isLockedView ? " bw-contentBlurred" : ""}`}
+          value={text}
+          readOnly={isLockedView}
+          aria-readonly={isLockedView}
+          onChange={(event) => {
+            if (isLockedView) {
+              return;
+            }
+            const value = event.target.value;
+            setText(value);
+            setSaved(false);
+            setError(null);
+            try {
+              localStorage.setItem(JOURNAL_DRAFT_KEY, value);
+            } catch {
+              // ignore storage errors
+            }
+          }}
+          placeholder={isLockedView ? "" : "write anything. what's on your mind."}
+        />
 
-      <textarea
-        ref={textareaRef}
-        className={`bw-writing bw-textarea${isLockedView ? " bw-contentBlurred" : ""}`}
-        value={text}
-        readOnly={isLockedView}
-        aria-readonly={isLockedView}
-        onChange={(event) => {
-          if (isLockedView) {
-            return;
-          }
-          const value = event.target.value;
-          setText(value);
-          setSaved(false);
-          setError(null);
-          try {
-            localStorage.setItem(JOURNAL_DRAFT_KEY, value);
-          } catch {
-            // ignore storage errors
-          }
-        }}
-        placeholder={isLockedView ? "" : "write anything. what's on your mind."}
-      />
-
-      <div className="bw-row">
-        <div className="bw-ui bw-date">{saved ? "saved." : "private only"}</div>
-        {isLockedView ? (
-          <button className="bw-btnGhost" type="button" onClick={handleAddMore}>
-            add more
-          </button>
-        ) : (
-          <button className="bw-btn" onClick={handleSave} disabled={saving}>
-            {saving ? "saving..." : "save"}
+        {isLockedView && (
+          <button
+            className="bw-lockOverlay bw-lockOverlayInteractive bw-lockOverlayPulse"
+            type="button"
+            onClick={handleUnlockOverlay}
+            aria-label="unlock journal editor"
+          >
+            <span className="bw-lockOverlayTitle">{journalLockedNotice}</span>
+            <span className="bw-lockOverlayHint">click to edit or add more.</span>
           </button>
         )}
+      </div>
+
+      <div className="bw-row">
+        <div className="bw-ui bw-date">
+          {loadingEntry ? "loading..." : saved ? "saved." : "private only"}
+        </div>
+        <button className="bw-btn" onClick={handleSave} disabled={saving || loadingEntry || isLockedView}>
+          {saving ? "saving..." : "save"}
+        </button>
       </div>
 
       {error && <div className="bw-hint">{error}</div>}

@@ -70,8 +70,8 @@ export default function HomePage() {
   const promptText = promptState?.prompt.text ?? "";
   const isStandardUser = session?.user?.role === "USER";
   const hasTodayPromptEntry = Boolean(promptState?.existingEntry?.id);
-  const promptLockedForToday = hasTodayPromptEntry;
-  const promptLockedNotice = "you’ve already answered today’s prompt.";
+  const promptLockedForToday = isStandardUser && hasTodayPromptEntry;
+  const promptLockedNotice = "you've already answered today's prompt.";
   const ballPrompt = useMemo(
     () =>
       promptText.length > INSIDE_PROMPT_MAX
@@ -330,7 +330,7 @@ export default function HomePage() {
   const rootClass = ["bw-bg", revealed ? "bw-revealed" : ""].filter(Boolean).join(" ");
   const dateLabel = promptState?.dateId ?? fallbackDateId();
   const savedModalDescription = isStandardUser
-    ? "your entry is saved. you can’t change it. if you want, you can read what others wrote on the collective."
+    ? "your entry is saved. you can't change it. if you want, you can read what others wrote on the collective."
     : "your entry is saved.";
   const ballStyle = {
     width: `min(${ballSize}px, 82vw)`,
@@ -368,23 +368,28 @@ export default function HomePage() {
               <>
                 {showFullPromptBelow && <div className="bw-writing bw-prompt">&quot;{promptText}&quot;</div>}
                 <div className="bw-ui bw-nextPromptCountdown">next prompt in {nextPromptCountdown}</div>
-                {promptLockedForToday && <div className="bw-ui bw-hint">{promptLockedNotice}</div>}
-
-                <textarea
-                  className={`bw-writing bw-textarea${promptLockedForToday ? " bw-contentBlurred" : ""}`}
-                  value={text}
-                  readOnly={promptLockedForToday}
-                  aria-readonly={promptLockedForToday}
-                  onChange={(event) => {
-                    if (promptLockedForToday) {
-                      return;
-                    }
-                    setText(event.target.value);
-                    setSaved(false);
-                    setSaveError(null);
-                  }}
-                  placeholder="write anything. nothing to prove."
-                />
+                <div className="bw-textareaShell">
+                  <textarea
+                    className={`bw-writing bw-textarea${promptLockedForToday ? " bw-contentBlurred" : ""}`}
+                    value={text}
+                    readOnly={promptLockedForToday}
+                    aria-readonly={promptLockedForToday}
+                    onChange={(event) => {
+                      if (promptLockedForToday) {
+                        return;
+                      }
+                      setText(event.target.value);
+                      setSaved(false);
+                      setSaveError(null);
+                    }}
+                    placeholder="write anything. nothing to prove."
+                  />
+                  {promptLockedForToday && (
+                    <div className="bw-lockOverlay">
+                      <span className="bw-lockOverlayTitle">{promptLockedNotice}</span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="bw-checkRow">
                   <label className="bw-ui bw-checkLabel">

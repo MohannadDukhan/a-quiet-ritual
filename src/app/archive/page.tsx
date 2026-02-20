@@ -47,71 +47,15 @@ function parsePage(value: string | undefined): number {
   return parsed;
 }
 
-function parseUtcDateInput(value: string | undefined): Date | null {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+function parseIsoTimestamp(value: string | undefined): Date | null {
+  if (!value) {
     return null;
   }
-
-  const [yearRaw, monthRaw, dayRaw] = value.split("-");
-  const year = Number.parseInt(yearRaw, 10);
-  const month = Number.parseInt(monthRaw, 10);
-  const day = Number.parseInt(dayRaw, 10);
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
     return null;
   }
-
-  const parsed = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
   return parsed;
-}
-
-function addUtcDays(date: Date, days: number): Date {
-  const next = new Date(date.getTime());
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
-function resolveDateRangeBounds(
-  range: ArchiveRange,
-  startRaw: string | undefined,
-  endRaw: string | undefined,
-): { gte?: Date; lt?: Date; startInput: string; endInput: string } {
-  const now = new Date();
-  const todayStartUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-
-  if (range === "7d" || range === "30d") {
-    const days = range === "7d" ? 7 : 30;
-    const startUtc = addUtcDays(todayStartUtc, -(days - 1));
-    const endUtcExclusive = addUtcDays(todayStartUtc, 1);
-    return { gte: startUtc, lt: endUtcExclusive, startInput: "", endInput: "" };
-  }
-
-  if (range === "custom") {
-    let startUtc = parseUtcDateInput(startRaw);
-    let endUtc = parseUtcDateInput(endRaw);
-
-    if (startUtc && endUtc && startUtc.getTime() > endUtc.getTime()) {
-      const temp = startUtc;
-      startUtc = endUtc;
-      endUtc = temp;
-    }
-
-    return {
-      gte: startUtc || undefined,
-      lt: endUtc ? addUtcDays(endUtc, 1) : undefined,
-      startInput: startRaw || "",
-      endInput: endRaw || "",
-    };
-  }
-
-  return { startInput: "", endInput: "" };
 }
 
 export default async function ArchivePage({ searchParams }: ArchivePageProps) {
@@ -138,9 +82,12 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
   const filter = parseFilter(firstSearchParam(params.filter));
   const range = parseRange(firstSearchParam(params.range));
   const requestedPage = parsePage(firstSearchParam(params.page));
-  const startRaw = firstSearchParam(params.start);
-  const endRaw = firstSearchParam(params.end);
-  const dateBounds = resolveDateRangeBounds(range, startRaw, endRaw);
+  const customStart = firstSearchParam(params.start) || "";
+  const customEnd = firstSearchParam(params.end) || "";
+  const startTs = firstSearchParam(params.startTs) || "";
+  const endTs = firstSearchParam(params.endTs) || "";
+  const startDate = parseIsoTimestamp(startTs);
+  const endDate = parseIsoTimestamp(endTs);
 
   const where: Prisma.EntryWhereInput = {
     userId,
@@ -156,10 +103,10 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
     where.type = "JOURNAL";
   }
 
-  if (dateBounds.gte || dateBounds.lt) {
+  if (startDate || endDate) {
     where.createdAt = {
-      ...(dateBounds.gte ? { gte: dateBounds.gte } : {}),
-      ...(dateBounds.lt ? { lt: dateBounds.lt } : {}),
+      ...(startDate ? { gte: startDate } : {}),
+      ...(endDate ? { lt: endDate } : {}),
     };
   }
 
@@ -212,8 +159,10 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
           timeZone={timeZone}
           filter={filter}
           range={range}
-          customStart={dateBounds.startInput}
-          customEnd={dateBounds.endInput}
+          customStart={customStart}
+          customEnd={customEnd}
+          startTs={startTs}
+          endTs={endTs}
           page={page}
           totalPages={totalPages}
         />

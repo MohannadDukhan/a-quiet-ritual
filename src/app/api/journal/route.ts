@@ -8,7 +8,8 @@ import { getClientIp, isSameOrigin } from "@/lib/security";
 
 const createJournalEntrySchema = z.object({
   content: z.string().trim().min(1).max(8000),
-  mode: z.enum(["append", "replace"]).optional(),
+  startTs: z.string().min(1),
+  endTs: z.string().min(1),
 });
 
 export const runtime = "nodejs";
@@ -27,6 +28,55 @@ function getUtcDayBounds(now: Date = new Date()): { startUtc: Date; endUtc: Date
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0),
   );
   return { startUtc, endUtc };
+}
+
+function parseIsoTimestamp(value: string): Date | null {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed;
+}
+
+function resolveJournalBounds(startTs: string | null, endTs: string | null): { startUtc: Date; endUtc: Date } {
+  const parsedStart = startTs ? parseIsoTimestamp(startTs) : null;
+  const parsedEnd = endTs ? parseIsoTimestamp(endTs) : null;
+  if (parsedStart && parsedEnd && parsedStart.getTime() < parsedEnd.getTime()) {
+    return { startUtc: parsedStart, endUtc: parsedEnd };
+  }
+  return getUtcDayBounds();
+}
+
+export async function GET(request: NextRequest) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const startTs = request.nextUrl.searchParams.get("startTs");
+  const endTs = request.nextUrl.searchParams.get("endTs");
+  const { startUtc, endUtc } = resolveJournalBounds(startTs, endTs);
+
+  const entry = await prisma.entry.findFirst({
+    where: {
+      userId,
+      type: "JOURNAL",
+      createdAt: {
+        gte: startUtc,
+        lt: endUtc,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return NextResponse.json({ entry });
 }
 
 export async function POST(request: NextRequest) {
@@ -71,7 +121,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { startUtc, endUtc } = getUtcDayBounds();
+  const { startUtc, endUtc } = resolveJournalBounds(parsed.data.startTs, parsed.data.endTs);
   const existingTodayEntry = await prisma.entry.findFirst({
     where: {
       userId,
@@ -97,21 +147,10 @@ export async function POST(request: NextRequest) {
   } as const;
 
   if (existingTodayEntry) {
-    const mode = parsed.data.mode ?? "append";
-    const nextContent =
-      mode === "replace"
-        ? parsed.data.content
-        : existingTodayEntry.content.trim().length > 0
-          ? `${existingTodayEntry.content}\n\n${parsed.data.content}`
-          : parsed.data.content;
-    if (nextContent.length > 8000) {
-      return NextResponse.json({ error: "entry is too long." }, { status: 400 });
-    }
-
     const entry = await prisma.entry.update({
       where: { id: existingTodayEntry.id },
       data: {
-        content: nextContent,
+        content: parsed.data.content,
       },
       select: entrySelect,
     });
