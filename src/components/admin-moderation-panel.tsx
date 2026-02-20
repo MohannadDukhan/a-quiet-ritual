@@ -18,6 +18,24 @@ type ApiResponse = {
   error?: string;
 };
 
+type UserRowOwner = {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+};
+
+type UserRowAdmin = {
+  id: string;
+  username: string;
+  createdAt: string;
+};
+
+type AdminUsersResponse = {
+  users?: Array<UserRowOwner | UserRowAdmin>;
+  error?: string;
+};
+
 const PREVIEW_LENGTH = 140;
 
 function previewText(value: string, maxLength: number = PREVIEW_LENGTH): string {
@@ -54,12 +72,30 @@ function formatUserLabel(username: string | null): string {
   return username ? formatHandle(username) : "deleted user";
 }
 
+function formatMemberSince(dateIso: string): string {
+  const parsed = new Date(dateIso);
+  if (Number.isNaN(parsed.getTime())) {
+    return "unknown";
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+    .format(parsed)
+    .toLowerCase();
+}
+
 export function AdminModerationPanel({ initialData, initialPromptDays, timeZone, canManageRoles }: AdminModerationPanelProps) {
   const [data, setData] = useState(initialData);
   const [promptDays, setPromptDays] = useState(initialPromptDays);
   const [editingPromptDate, setEditingPromptDate] = useState<string | null>(null);
   const [promptDraft, setPromptDraft] = useState("");
   const [expandedEntries, setExpandedEntries] = useState<Record<string, boolean>>({});
+  const [usersOpen, setUsersOpen] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersRows, setUsersRows] = useState<Array<UserRowOwner | UserRowAdmin> | null>(null);
+  const [usersError, setUsersError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -68,6 +104,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
     () => new Set(data.bannedUsers.map((user) => user.id)),
     [data.bannedUsers],
   );
+  const usersGridTemplate = canManageRoles ? "minmax(0, 1fr) minmax(0, 1.3fr) 132px" : "minmax(0, 1fr) 132px";
 
   async function refreshModerationData() {
     const response = await fetch("/api/admin/moderation/today", {
@@ -103,6 +140,28 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
           text: firstDay.promptText,
         },
       }));
+    }
+  }
+
+  async function loadUsers() {
+    setUsersLoading(true);
+    setUsersError(null);
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const payload = (await response.json().catch(() => null)) as AdminUsersResponse | null;
+      if (!response.ok) {
+        setUsersError(payload?.error || "request failed.");
+        return;
+      }
+      setUsersRows(payload?.users ?? []);
+    } catch {
+      setUsersError("request failed.");
+    } finally {
+      setUsersLoading(false);
     }
   }
 
@@ -315,6 +374,14 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
     }
   }
 
+  function toggleUsersSection() {
+    const nextOpen = !usersOpen;
+    setUsersOpen(nextOpen);
+    if (nextOpen && usersRows === null && !usersLoading) {
+      void loadUsers();
+    }
+  }
+
   return (
     <div className="bw-section">
       <section className="bw-section">
@@ -330,6 +397,65 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
         </div>
         <p className="bw-pageLead">moderate today&apos;s collective and manage prompts.</p>
         <div className="bw-ui bw-date">today&apos;s prompt: {data.prompt.text}</div>
+      </section>
+
+      <hr className="bw-divider" />
+
+      <section className="bw-section">
+        <div className="bw-sectionHeader">
+          <div className="bw-ui bw-date">users</div>
+          <div className="bw-rowActions" style={{ marginTop: 0 }}>
+            <button className="bw-btnGhost" type="button" disabled={usersLoading} onClick={toggleUsersSection}>
+              {usersOpen ? "hide users" : "view users"}
+            </button>
+            {usersOpen && (
+              <button
+                className="bw-btnGhost"
+                type="button"
+                disabled={usersLoading}
+                onClick={() => {
+                  void loadUsers();
+                }}
+              >
+                {usersLoading ? "loading..." : "refresh"}
+              </button>
+            )}
+          </div>
+        </div>
+        <hr className="bw-divider" />
+
+        {!usersOpen && <div className="bw-hint">view all users.</div>}
+
+        {usersOpen && usersLoading && usersRows === null && <div className="bw-hint">loading users...</div>}
+
+        {usersOpen && usersError && <div className="bw-hint">{usersError}</div>}
+
+        {usersOpen && usersRows && !usersError && (
+          usersRows.length === 0 ? (
+            <div className="bw-hint">no users found.</div>
+          ) : (
+            <div className="bw-lineSection bw-rowList">
+              <div className="bw-rowItem">
+                <div className="bw-rowMeta" style={{ display: "grid", gridTemplateColumns: usersGridTemplate, gap: 12 }}>
+                  <span>username</span>
+                  {canManageRoles && <span>email</span>}
+                  <span>member since</span>
+                </div>
+              </div>
+              {usersRows.map((user) => (
+                <div key={user.id} className="bw-rowItem bw-rowHover">
+                  <div className="bw-rowMeta" style={{ display: "grid", gridTemplateColumns: usersGridTemplate, gap: 12 }}>
+                    <Link className="bw-handleLink" href={`/u/${encodeURIComponent(user.username)}`}>
+                      {formatHandle(user.username)}
+                    </Link>
+                    {canManageRoles && "email" in user && <span>{user.email}</span>}
+                    <span>{formatMemberSince(user.createdAt)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
       </section>
 
       <hr className="bw-divider" />
