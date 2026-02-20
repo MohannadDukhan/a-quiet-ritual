@@ -12,6 +12,7 @@ import {
 import { AppHeader } from "@/components/layout/app-header";
 import { BwModal } from "@/components/ui/bw-modal";
 import { InfoPopover } from "@/components/ui/info-popover";
+import { useCountdownToUtcMidnight } from "@/hooks/use-countdown-to-utc-midnight";
 
 type PromptPayload = {
   prompt: {
@@ -60,6 +61,7 @@ export default function HomePage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const ballSize = revealed ? REVEALED_SIZE : IDLE_SIZE;
+  const nextPromptCountdown = useCountdownToUtcMidnight(revealed);
   const promptText = promptState?.prompt.text ?? "";
   const ballPrompt = useMemo(
     () =>
@@ -308,6 +310,7 @@ export default function HomePage() {
             {revealed && (
               <>
                 {showFullPromptBelow && <div className="bw-writing bw-prompt">&quot;{promptText}&quot;</div>}
+                <div className="bw-ui bw-nextPromptCountdown">next prompt in {nextPromptCountdown}</div>
 
                 <textarea
                   className="bw-writing bw-textarea"

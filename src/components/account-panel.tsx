@@ -3,6 +3,7 @@
 import { signOut } from "next-auth/react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
 import { ProfileSharedEntriesFeed } from "@/components/profile-shared-entries-feed";
 import { formatDate } from "@/lib/time";
 import type { ProfileSharedEntryItem } from "@/lib/profile-shared-entries";
@@ -36,9 +37,6 @@ type UpdateProfileResponse = {
 type UsernameAvailabilityState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
 const DELETE_CONFIRMATION_TEXT = "DELETE MY DATA";
-const AVATAR_DIMENSION = 320;
-const AVATAR_TARGET_BYTES = 150 * 1024;
-const AVATAR_MAX_BYTES = 250 * 1024;
 
 function formatMemberSince(createdAt: string, timeZone: string): string {
   const date = new Date(createdAt);
@@ -52,106 +50,6 @@ function formatMemberSince(createdAt: string, timeZone: string): string {
   })
     .format(date)
     .toLowerCase();
-}
-
-function loadImageFromFile(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const image = new Image();
-
-    image.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("could not read image file."));
-    };
-
-    image.src = objectUrl;
-  });
-}
-
-function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), type, quality);
-  });
-}
-
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") {
-        reject(new Error("could not process image."));
-        return;
-      }
-      resolve(result);
-    };
-    reader.onerror = () => reject(new Error("could not process image."));
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function buildAvatarDataUrl(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("select an image file.");
-  }
-
-  const image = await loadImageFromFile(file);
-  const width = image.naturalWidth;
-  const height = image.naturalHeight;
-  if (!width || !height) {
-    throw new Error("could not read image size.");
-  }
-
-  const square = Math.min(width, height);
-  const sx = Math.floor((width - square) / 2);
-  const sy = Math.floor((height - square) / 2);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = AVATAR_DIMENSION;
-  canvas.height = AVATAR_DIMENSION;
-
-  const context = canvas.getContext("2d");
-  if (!context) {
-    throw new Error("could not prepare image.");
-  }
-
-  context.drawImage(image, sx, sy, square, square, 0, 0, AVATAR_DIMENSION, AVATAR_DIMENSION);
-
-  const encoders: Array<{ type: string; qualities: number[] }> = [
-    { type: "image/webp", qualities: [0.9, 0.82, 0.74, 0.66, 0.58, 0.5] },
-    { type: "image/jpeg", qualities: [0.88, 0.8, 0.72, 0.64, 0.56, 0.48] },
-  ];
-
-  let smallestBlob: Blob | null = null;
-  for (const encoder of encoders) {
-    for (const quality of encoder.qualities) {
-      const blob = await canvasToBlob(canvas, encoder.type, quality);
-      if (!blob) {
-        continue;
-      }
-
-      if (!smallestBlob || blob.size < smallestBlob.size) {
-        smallestBlob = blob;
-      }
-
-      if (blob.size <= AVATAR_TARGET_BYTES) {
-        return blobToDataUrl(blob);
-      }
-    }
-  }
-
-  if (!smallestBlob) {
-    throw new Error("could not process image.");
-  }
-  if (smallestBlob.size > AVATAR_MAX_BYTES) {
-    throw new Error("avatar image must be 250kb or less.");
-  }
-
-  return blobToDataUrl(smallestBlob);
 }
 
 export function AccountPanel({
@@ -170,6 +68,8 @@ export function AccountPanel({
   const [usernameDraft, setUsernameDraft] = useState(initialUsername);
   const [savePending, setSavePending] = useState(false);
   const [avatarUploadPending, setAvatarUploadPending] = useState(false);
+  const [avatarCropFile, setAvatarCropFile] = useState<File | null>(null);
+  const [avatarCropOpen, setAvatarCropOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<UsernameAvailabilityState>("idle");
@@ -342,12 +242,24 @@ export function AccountPanel({
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      setProfileError("select an image file.");
+      setProfileNotice(null);
+      return;
+    }
+
+    setProfileError(null);
+    setProfileNotice(null);
+    setAvatarCropFile(file);
+    setAvatarCropOpen(true);
+  }
+
+  async function handleAvatarCropSave(imageDataUrl: string) {
     setAvatarUploadPending(true);
     setProfileError(null);
     setProfileNotice(null);
 
     try {
-      const imageDataUrl = await buildAvatarDataUrl(file);
       const response = await fetch("/api/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -361,12 +273,23 @@ export function AccountPanel({
 
       setImage(data?.user?.image ?? imageDataUrl);
       setProfileNotice("avatar updated.");
+      setAvatarCropOpen(false);
+      setAvatarCropFile(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "could not update avatar.";
       setProfileError(message);
+      throw new Error(message);
     } finally {
       setAvatarUploadPending(false);
     }
+  }
+
+  function handleAvatarCropCancel() {
+    if (avatarUploadPending) {
+      return;
+    }
+    setAvatarCropOpen(false);
+    setAvatarCropFile(null);
   }
 
   function resetProfileEdit() {
@@ -554,6 +477,17 @@ export function AccountPanel({
         {deleteError && <div className="bw-hint">{deleteError}</div>}
         {deleteSuccess && <div className="bw-hint">your account has been deleted.</div>}
       </section>
+
+      {avatarCropOpen && avatarCropFile && (
+        <AvatarCropModal
+          key={`${avatarCropFile.name}:${avatarCropFile.size}:${avatarCropFile.lastModified}`}
+          open={avatarCropOpen}
+          file={avatarCropFile}
+          saving={avatarUploadPending}
+          onCancel={handleAvatarCropCancel}
+          onSave={handleAvatarCropSave}
+        />
+      )}
     </div>
   );
 }

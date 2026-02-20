@@ -1204,6 +1204,16 @@ body {
   padding: 0 8px;
 }
 
+.bw-nextPromptCountdown {
+  text-align: center;
+  margin-top: 4px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.48);
+  text-transform: lowercase;
+}
+
 .bw-textarea {
   width: min(720px, 92vw);
   min-height: 240px;
@@ -1520,6 +1530,30 @@ body {
   color: rgba(255, 255, 255, 0.82);
   white-space: pre-wrap;
   text-transform: none;
+}
+
+.bw-avatarCropModal {
+  width: min(560px, calc(100vw - 36px));
+}
+
+.bw-avatarCropFrame {
+  margin-top: 12px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.bw-avatarCropControls {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.bw-avatarCropSlider {
+  width: 100%;
+  accent-color: rgba(255, 255, 255, 0.68);
 }
 
 .bw-date {
@@ -2907,6 +2941,10 @@ body.bw-light .bw-prompt {
   color: rgba(30, 30, 30, 0.72);
 }
 
+body.bw-light .bw-nextPromptCountdown {
+  color: rgba(18, 18, 18, 0.48);
+}
+
 body.bw-light .bw-link,
 body.bw-light .bw-miniLink,
 body.bw-light .bw-songLink {
@@ -3045,6 +3083,15 @@ body.bw-light .bw-uiModalSecondary {
   background: rgba(20, 20, 20, 0.03);
   border-color: rgba(20, 20, 20, 0.18);
   color: rgba(18, 18, 18, 0.8);
+}
+
+body.bw-light .bw-avatarCropFrame {
+  border-color: rgba(20, 20, 20, 0.18);
+  background: rgba(20, 20, 20, 0.08);
+}
+
+body.bw-light .bw-avatarCropSlider {
+  accent-color: rgba(20, 20, 20, 0.62);
 }
 
 body.bw-light .bw-termsModalScroll,
