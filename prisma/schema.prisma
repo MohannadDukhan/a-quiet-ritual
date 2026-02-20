@@ -20,6 +20,7 @@ model User {
   termsAcceptedAt DateTime?
   termsVersion  String?
   collectiveBanned Boolean @default(false)
+  collectiveAnonymous Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]

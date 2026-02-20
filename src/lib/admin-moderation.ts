@@ -17,6 +17,7 @@ export type AdminModerationEntry = {
   userId: string;
   userUsername: string | null;
   userImage: string | null;
+  authorAnonymous: boolean;
   replies: AdminModerationReply[];
 };
 
@@ -54,6 +55,7 @@ export async function getAdminModerationTodayData(): Promise<AdminModerationToda
         select: {
           username: true,
           image: true,
+          collectiveAnonymous: true,
         },
       },
       collectiveReplies: {
@@ -96,6 +98,7 @@ export async function getAdminModerationTodayData(): Promise<AdminModerationToda
       userId: entry.userId,
       userUsername: entry.user.username,
       userImage: entry.user.image,
+      authorAnonymous: entry.user.collectiveAnonymous,
       replies: entry.collectiveReplies.map((reply) => ({
         id: reply.id,
         content: reply.content,

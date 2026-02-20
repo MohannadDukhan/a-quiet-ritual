@@ -39,6 +39,7 @@ export default async function AccountPage() {
       createdAt: true,
       username: true,
       image: true,
+      collectiveAnonymous: true,
     },
   });
 
@@ -72,6 +73,7 @@ export default async function AccountPage() {
           emailVerified={Boolean(user.emailVerified)}
           initialUsername={user.username || "anonymous"}
           initialImage={user.image}
+          initialCollectiveAnonymous={user.collectiveAnonymous}
           initialSharedEntries={sharedEntriesPage.items}
           initialSharedEntriesNextCursor={sharedEntriesPage.nextCursor}
           timeZone={timeZone}

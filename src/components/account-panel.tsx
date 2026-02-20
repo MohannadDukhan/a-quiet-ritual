@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
 import { ProfileSharedEntriesFeed } from "@/components/profile-shared-entries-feed";
+import { BwModal } from "@/components/ui/bw-modal";
 import { formatDate } from "@/lib/time";
 import type { ProfileSharedEntryItem } from "@/lib/profile-shared-entries";
 import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
@@ -16,6 +17,7 @@ type AccountPanelProps = {
   timeZone: string;
   initialUsername: string;
   initialImage: string | null;
+  initialCollectiveAnonymous: boolean;
   initialSharedEntries: ProfileSharedEntryItem[];
   initialSharedEntriesNextCursor: string | null;
 };
@@ -31,6 +33,14 @@ type UpdateProfileResponse = {
   user?: {
     username?: string | null;
     image?: string | null;
+  };
+};
+
+type UpdateProfileSettingsResponse = {
+  ok?: boolean;
+  error?: string;
+  settings?: {
+    collectiveAnonymous?: boolean;
   };
 };
 
@@ -59,6 +69,7 @@ export function AccountPanel({
   timeZone,
   initialUsername,
   initialImage,
+  initialCollectiveAnonymous,
   initialSharedEntries,
   initialSharedEntriesNextCursor,
 }: AccountPanelProps) {
@@ -74,6 +85,12 @@ export function AccountPanel({
   const [profileError, setProfileError] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<UsernameAvailabilityState>("idle");
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSavePending, setSettingsSavePending] = useState(false);
+  const [collectiveAnonymous, setCollectiveAnonymous] = useState(initialCollectiveAnonymous);
+  const [settingsDraftCollectiveAnonymous, setSettingsDraftCollectiveAnonymous] = useState(initialCollectiveAnonymous);
+  const [settingsNotice, setSettingsNotice] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
@@ -300,6 +317,42 @@ export function AccountPanel({
     setProfileError(null);
   }
 
+  function openSettings() {
+    setSettingsDraftCollectiveAnonymous(collectiveAnonymous);
+    setSettingsError(null);
+    setSettingsNotice(null);
+    setSettingsOpen(true);
+  }
+
+  async function handleSaveSettings() {
+    setSettingsSavePending(true);
+    setSettingsError(null);
+    setSettingsNotice(null);
+
+    try {
+      const response = await fetch("/api/profile/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          collectiveAnonymous: settingsDraftCollectiveAnonymous,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as UpdateProfileSettingsResponse | null;
+      if (!response.ok || !data?.ok || typeof data.settings?.collectiveAnonymous !== "boolean") {
+        setSettingsError(data?.error || "could not update settings.");
+        return;
+      }
+
+      setCollectiveAnonymous(data.settings.collectiveAnonymous);
+      setSettingsNotice("settings saved.");
+      setSettingsOpen(false);
+    } catch {
+      setSettingsError("could not update settings.");
+    } finally {
+      setSettingsSavePending(false);
+    }
+  }
+
   return (
     <div className="bw-profileWrap">
       <section className="bw-profileHeader" aria-label="profile header">
@@ -354,9 +407,18 @@ export function AccountPanel({
               >
                 {editOpen ? "close edit" : "edit profile"}
               </button>
+              <button
+                className="bw-btnGhost"
+                type="button"
+                disabled={savePending || signOutPending || deletePending || avatarUploadPending}
+                onClick={openSettings}
+              >
+                settings
+              </button>
             </div>
             <div className="bw-ui bw-date">a quiet personal profile</div>
             {memberSince && <div className="bw-ui bw-date">member since {memberSince}</div>}
+            {collectiveAnonymous && <div className="bw-ui bw-date">collective posts are anonymous</div>}
           </div>
         </div>
 
@@ -488,6 +550,47 @@ export function AccountPanel({
           onSave={handleAvatarCropSave}
         />
       )}
+
+      <BwModal
+        open={settingsOpen}
+        title="settings"
+        description="manage how your collective posts appear."
+        primaryLabel={settingsSavePending ? "saving..." : "save settings"}
+        onPrimary={() => {
+          if (settingsSavePending) {
+            return;
+          }
+          void handleSaveSettings();
+        }}
+        onClose={() => {
+          if (settingsSavePending) {
+            return;
+          }
+          setSettingsOpen(false);
+          setSettingsError(null);
+          setSettingsNotice(null);
+        }}
+      >
+        <div className="bw-checkRow" style={{ marginTop: 10 }}>
+          <label className="bw-ui bw-checkLabel">
+            <input
+              className="bw-checkbox"
+              type="checkbox"
+              checked={settingsDraftCollectiveAnonymous}
+              disabled={settingsSavePending}
+              onChange={(event) => {
+                setSettingsDraftCollectiveAnonymous(event.target.checked);
+                setSettingsError(null);
+                setSettingsNotice(null);
+              }}
+            />
+            <span>post anonymously on collective</span>
+          </label>
+        </div>
+        <div className="bw-hint">when enabled, your shared prompt entries show as anonymous to users.</div>
+        {settingsError && <div className="bw-hint">{settingsError}</div>}
+        {settingsNotice && <div className="bw-hint">{settingsNotice}</div>}
+      </BwModal>
     </div>
   );
 }

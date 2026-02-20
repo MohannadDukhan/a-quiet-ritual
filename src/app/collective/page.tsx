@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function CollectivePage() {
   const session = await auth();
   const canModerate = session?.user?.role === "ADMIN";
+  const viewerIsAdmin = session?.user?.role === "ADMIN";
   const timeZone = await getRequestTimeZone();
   const todaysPrompt = await getTodaysPrompt();
   const entries = await prisma.entry.findMany({
@@ -26,16 +27,23 @@ export default async function CollectivePage() {
       user: {
         select: {
           username: true,
+          collectiveAnonymous: true,
         },
       },
     },
   });
-  const serializedEntries: CollectiveFeedEntry[] = entries.map((entry) => ({
-    id: entry.id,
-    content: entry.content,
-    createdAt: entry.createdAt.toISOString(),
-    username: entry.user.username,
-  }));
+  const serializedEntries: CollectiveFeedEntry[] = entries.map((entry) => {
+    const anonymousPost = entry.user.collectiveAnonymous === true;
+    const hideUsername = anonymousPost && !viewerIsAdmin;
+
+    return {
+      id: entry.id,
+      content: entry.content,
+      createdAt: entry.createdAt.toISOString(),
+      username: hideUsername ? null : entry.user.username,
+      anonymousPost,
+    };
+  });
 
   return (
     <div className="bw-bg">

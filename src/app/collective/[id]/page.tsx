@@ -27,6 +27,7 @@ function formatHandle(username: string): string {
 export default async function CollectiveEntryDetailPage({ params }: CollectiveEntryDetailPageProps) {
   const session = await auth();
   const canModerate = session?.user?.role === "ADMIN";
+  const viewerIsAdmin = session?.user?.role === "ADMIN";
   const timeZone = await getRequestTimeZone();
   const { id } = await params;
   const todaysPrompt = await getTodaysPrompt();
@@ -45,6 +46,7 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
       user: {
         select: {
           username: true,
+          collectiveAnonymous: true,
         },
       },
     },
@@ -53,6 +55,9 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
   if (!entry) {
     notFound();
   }
+
+  const anonymousPost = entry.user.collectiveAnonymous === true;
+  const hideUsername = anonymousPost && !viewerIsAdmin;
 
   const replies = await prisma.collectiveReply.findMany({
     where: { entryId: entry.id },
@@ -77,10 +82,13 @@ export default async function CollectiveEntryDetailPage({ params }: CollectiveEn
         <section className="bw-section">
           <div className="bw-rowMeta">
             <div>{formatDateTime(entry.createdAt, timeZone)}</div>
-            {entry.user.username ? (
-              <Link className="bw-ui bw-handleLink" href={`/u/${encodeURIComponent(entry.user.username)}`}>
-                {formatHandle(entry.user.username)}
-              </Link>
+            {!hideUsername && entry.user.username ? (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <Link className="bw-ui bw-handleLink" href={`/u/${encodeURIComponent(entry.user.username)}`}>
+                  {formatHandle(entry.user.username)}
+                </Link>
+                {canModerate && anonymousPost && <span className="bw-ui bw-date">(anonymous post)</span>}
+              </div>
             ) : (
               <span className="bw-ui">anonymous</span>
             )}

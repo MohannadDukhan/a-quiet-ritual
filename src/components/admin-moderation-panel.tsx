@@ -560,6 +560,7 @@ export function AdminModerationPanel({ initialData, initialPromptDays, timeZone,
                       <span>{formatDateTime(entry.createdAt, timeZone)}</span>
                       <span className="bw-fragDot">-</span>
                       <span>{formatUserLabel(entry.userUsername)}</span>
+                      {entry.authorAnonymous && <span className="bw-ui bw-date">(anonymous post)</span>}
                     </div>
                   </div>
                   <div className="bw-writing bw-rowBody">{previewText(entry.content)}</div>

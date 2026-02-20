@@ -11,6 +11,7 @@ export type CollectiveFeedEntry = {
   content: string;
   createdAt: string;
   username: string | null;
+  anonymousPost: boolean;
 };
 
 type CollectiveFeedProps = {
@@ -108,9 +109,12 @@ export function CollectiveFeed({ entries, timeZone, canModerate }: CollectiveFee
                   <span>{formatDateTime(entry.createdAt, timeZone)}</span>
                   <span className="bw-fragDot">-</span>
                   {entry.username ? (
-                    <Link className="bw-handleLink" href={`/u/${encodeURIComponent(entry.username)}`}>
-                      {formatHandle(entry.username)}
-                    </Link>
+                    <>
+                      <Link className="bw-handleLink" href={`/u/${encodeURIComponent(entry.username)}`}>
+                        {formatHandle(entry.username)}
+                      </Link>
+                      {canModerate && entry.anonymousPost && <span className="bw-ui bw-date">(anonymous post)</span>}
+                    </>
                   ) : (
                     <span>anonymous</span>
                   )}
