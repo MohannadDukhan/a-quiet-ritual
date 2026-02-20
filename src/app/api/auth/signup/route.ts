@@ -14,6 +14,7 @@ import {
 import { roleForEmail } from "@/lib/admin-role";
 import { prisma } from "@/lib/db";
 import { consumeMemoryRateLimit } from "@/lib/memory-rate-limit";
+import { getPasswordValidationError } from "@/lib/password-strength";
 import { getClientIp } from "@/lib/security";
 import { normalizeUsername, validateNormalizedUsername } from "@/lib/username";
 
@@ -21,8 +22,8 @@ const signupSchema = z
   .object({
     email: z.string().trim().email(),
     username: z.string().trim(),
-    password: z.string().min(10).max(128),
-    confirmPassword: z.string().min(10).max(128),
+    password: z.string().max(128),
+    confirmPassword: z.string().max(128),
     acceptedTerms: z.boolean(),
   })
   .refine((value) => value.password === value.confirmPassword, {
@@ -216,10 +217,19 @@ export async function POST(request: NextRequest) {
     const json = await request.json().catch(() => null);
     const parsed = signupSchema.safeParse(json);
     if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      if (firstIssue?.message === "passwords do not match") {
+        return errorResponse(400, "INVALID_INPUT", "passwords do not match.");
+      }
       return errorResponse(400, "INVALID_INPUT", "Invalid signup input.");
     }
     if (!parsed.data.acceptedTerms) {
       return errorResponse(400, "TERMS_NOT_ACCEPTED", "you must agree to the terms before creating an account.");
+    }
+
+    const passwordValidationError = getPasswordValidationError(parsed.data.password);
+    if (passwordValidationError) {
+      return errorResponse(400, "WEAK_PASSWORD", passwordValidationError);
     }
 
     if (!process.env.RESEND_API_KEY) {

@@ -230,7 +230,7 @@ Email: blndwave.co@gmail.com
 
 BLNDWAVE Privacy Policy
 
-Last Updated: 02/19/2926
+Last Updated: 02/19/2026
 
 BLNDWAVE (“BLNDWAVE,” “we,” “us,” or “our”) respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use the BLNDWAVE website and services (the “Service”).
 

@@ -66,7 +66,7 @@ export function VerifyEmailState({ email, token }: VerifyEmailStateProps) {
           {status === "loading" && <div className="bw-hint">verifying...</div>}
           {status === "success" && (
             <div className="bw-hint">
-              email verified. <Link className="bw-link" href="/sign-in">sign in</Link>.
+              email verified. <Link className="bw-authLink" href="/sign-in">sign in</Link>.
             </div>
           )}
           {status === "error" && <div className="bw-hint">{error || "verification failed."}</div>}

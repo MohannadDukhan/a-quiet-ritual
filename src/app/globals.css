@@ -352,6 +352,162 @@ body {
   text-decoration: underline;
 }
 
+.bw-authLink {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.54);
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+  text-decoration: none;
+  transition: color 140ms ease, opacity 140ms ease;
+}
+
+.bw-authLink:hover,
+.bw-authLink:focus-visible {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: underline;
+}
+
+.bw-authTitle {
+  margin: 0;
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+}
+
+.bw-authLead {
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: 0.045em;
+  color: rgba(255, 255, 255, 0.62);
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+}
+
+.bw-authForm {
+  margin-top: 4px;
+}
+
+.bw-authErrorText {
+  margin-top: -4px;
+}
+
+.bw-passWrap {
+  position: relative;
+}
+
+.bw-passInput {
+  padding-right: 68px;
+}
+
+.bw-passToggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+  cursor: pointer;
+}
+
+.bw-passToggle:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.bw-passToggle:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(5, 5, 5, 0.96),
+    0 0 0 4px rgba(255, 255, 255, 0.54);
+}
+
+.bw-passStrength {
+  margin-top: 1px;
+  display: grid;
+  gap: 6px;
+}
+
+.bw-passStrengthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bw-passStrengthTitle,
+.bw-passStrengthValue {
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.44);
+  font-family: var(--bw-body-font);
+}
+
+.bw-passStrengthValue {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.bw-passMeter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.bw-passMeterSegment {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background-color 140ms ease;
+}
+
+.bw-passMeterSegment.is-active {
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.bw-passChecklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.bw-passRequirement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.055em;
+  color: rgba(255, 255, 255, 0.42);
+  text-transform: lowercase;
+  font-family: var(--bw-body-font);
+}
+
+.bw-passRequirement.is-done {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.bw-passRequirementIcon {
+  width: 11px;
+  text-align: center;
+}
+
 /* stage */
 .bw-stage {
   min-height: 100svh;
@@ -2708,6 +2864,12 @@ body {
   color: rgba(255, 255, 255, 0.35);
 }
 
+.bw-input:focus,
+.bw-input:focus-visible {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
 .bw-modalMeta {
   margin-top: 8px;
   font-size: 12px;
@@ -2751,10 +2913,19 @@ body.bw-light .bw-songLink {
   color: rgba(82, 72, 126, 0.86);
 }
 
+body.bw-light .bw-authLink {
+  color: rgba(18, 18, 18, 0.56);
+}
+
 body.bw-light .bw-link:hover,
 body.bw-light .bw-miniLink:hover,
 body.bw-light .bw-songLink:hover {
   color: rgba(58, 50, 98, 0.96);
+}
+
+body.bw-light .bw-authLink:hover,
+body.bw-light .bw-authLink:focus-visible {
+  color: rgba(18, 18, 18, 0.8);
 }
 
 body.bw-light .bw-handleLink {
@@ -2935,6 +3106,49 @@ body.bw-light .bw-card {
 body.bw-light .bw-fragInput::placeholder,
 body.bw-light .bw-input::placeholder {
   color: rgba(18, 18, 18, 0.4);
+}
+
+body.bw-light .bw-authTitle {
+  color: rgba(18, 18, 18, 0.88);
+}
+
+body.bw-light .bw-authLead {
+  color: rgba(18, 18, 18, 0.58);
+}
+
+body.bw-light .bw-passToggle {
+  border-color: rgba(20, 20, 20, 0.2);
+  background: rgba(20, 20, 20, 0.04);
+  color: rgba(18, 18, 18, 0.7);
+}
+
+body.bw-light .bw-passToggle:hover {
+  border-color: rgba(20, 20, 20, 0.32);
+  color: rgba(18, 18, 18, 0.84);
+}
+
+body.bw-light .bw-passStrengthTitle {
+  color: rgba(18, 18, 18, 0.48);
+}
+
+body.bw-light .bw-passStrengthValue {
+  color: rgba(18, 18, 18, 0.64);
+}
+
+body.bw-light .bw-passMeterSegment {
+  background: rgba(20, 20, 20, 0.12);
+}
+
+body.bw-light .bw-passMeterSegment.is-active {
+  background: rgba(20, 20, 20, 0.4);
+}
+
+body.bw-light .bw-passRequirement {
+  color: rgba(18, 18, 18, 0.46);
+}
+
+body.bw-light .bw-passRequirement.is-done {
+  color: rgba(18, 18, 18, 0.68);
 }
 
 body.bw-light .bw-replyInput {

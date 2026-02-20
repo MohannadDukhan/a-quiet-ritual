@@ -109,7 +109,7 @@ export function ResetPasswordForm({ email, token }: ResetPasswordFormProps) {
           {error && <div className="bw-hint">{error}</div>}
           {done && (
             <div className="bw-hint">
-              password reset complete. <Link className="bw-link" href="/sign-in">sign in</Link>.
+              password reset complete. <Link className="bw-authLink" href="/sign-in">sign in</Link>.
             </div>
           )}
         </div>
